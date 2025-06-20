@@ -1,0 +1,167 @@
+{% extends "base.html" %} 
+{% block title %}Ecoles{% endblock %} 
+{% block content %} 
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Ecoles</h3>
+      <p class="mb-4">Gestion de toutes les écoles</p>
+    </div>
+
+    <div class="row mb-4">
+<div class="col-lg-12 col-md-6 mb-md-0 mb-4"> 
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <p class="text-sm mb-0"><span>Liste des écoles enregistrées</span></p>
+              </div>
+              <div class="col-lg-6 col-5 text-end">
+                <button
+                  class="btn btn-sm btn-dark"
+                  data-bs-toggle="modal"
+                  data-bs-target="#addEcoleModal"
+                >
+                  Ajouter une école
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Ecole</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ecole in ecoles %}
+                  <tr>
+                    <td class="border">{{ ecole.nom }}</td>
+                    <td class="border">{{ ecole.adresse }}</td>
+                    <td class="border">
+                      <a
+                        href="#"
+                        class="btn btn-sm btn-outline-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addEcoleModal"
+                        data-id="{{ ecole.id }}"
+                        data-nom="{{ ecole.nom }}"
+                        data-adresse="{{ ecole.adresse }}"
+                        title="Modifier"
+                      >Modifier
+                      </a>
+
+                      <a
+                        href="{% url 'supprimer_ecole' ecole.id %}"
+                        class="btn btn-sm btn-outline-danger"
+                        title="Supprimer"
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette école ?')"
+                      >Supprimer
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center">
+                      Aucune école disponible.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="addEcoleModal"
+      tabindex="-1"
+      aria-labelledby="addEcoleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <form method="POST" action="{% url 'ajouter_ecole' %}">
+          {% csrf_token %}
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addEcoleModalLabel">
+                Ajouter une école
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Fermer"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="ecole_id" id="ecoleIdInput" />
+              <div class="mb-3">
+                <label for="nom" class="form-label">Nom de l'école</label>
+                <input type="text" class="form-control border border-secondary" name="nom" required />
+              </div>
+              <div class="mb-3">
+                <label for="adresse" class="form-label">Adresse de l'école</label>
+                <input
+                  type="text"
+                  class="form-control border border-secondary"
+                  name="adresse"
+                  required
+                />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-dark">Enregistrer</button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">Annuler
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const addEcoleModal = document.getElementById("addEcoleModal");
+  addEcoleModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute("data-id");
+    const nom = button.getAttribute("data-nom");
+    const adresse = button.getAttribute("data-adresse");
+
+    const form = addEcoleModal.querySelector("form");
+    const nomInput = form.querySelector('input[name="nom"]');
+    const adresseInput = form.querySelector('input[name="adresse"]');
+    const idInput = form.querySelector('input[name="ecole_id"]');
+
+    if (id) {
+      nomInput.value = nom;
+      adresseInput.value = adresse;
+      idInput.value = id;
+      form.action = `/ecoles/modifier/${id}/`;
+      addEcoleModal.querySelector(".modal-title").textContent =
+        "Modifier une école";
+    } else {
+      nomInput.value = "";
+      adresseInput.value = "";
+      idInput.value = "";
+      form.action = "{% url 'ajouter_ecole' %}";
+      addEcoleModal.querySelector(".modal-title").textContent =
+        "Ajouter une école";
+    }
+  });
+</script>
+{% endblock %}

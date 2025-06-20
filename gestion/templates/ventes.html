@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}
+  Ventes
+{% endblock %}
+{% block content %}
+{% load static %}
+  <div class="container-fluid py-2">
+    <div class="row">
+      <div class="ms-3">
+        <h3 class="mb-0 h4 font-weight-bolder">Ventes</h3>
+        <p class="mb-4">Gestion des ventes enregistrées</p>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-lg-12 col-md-6 mb-md-0 mb-4">
+          <div class="card">
+            <div class="card-header pb-0">
+              <div class="row">
+                <div class="col-lg-6 col-7">
+                  <p class="text-sm mb-0">Liste des ventes</p>
+                </div>
+                <div class="col-lg-6 col-5 text-end">
+                  <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#ajouterVenteModal">Ajouter une vente</button>
+                </div>
+                {% if messages %}
+                  <div class="container">
+                    {% for message in messages %}
+                      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" style="color: white" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="card-body p-4 pb-2">
+              <div class="mb-3">
+                <input type="text" id="searchInput" class="form-control border border-secondary" placeholder="Rechercher par nom d'école...">
+              </div>
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>École</th>
+                      <th>Montant Total</th>
+                      <th>Montant Payé</th>
+                      <th>Montant Restant</th>
+                      <th>Statut</th>
+                      <th>Date Limite</th>
+                      <th>Tranches</th>
+                      <th>Facture</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for vente in ventes %}
+                      <tr class="{% if vente.est_en_retard %}
+                          table-danger
+                        {% elif vente.est_reglee %}
+                          table-success
+                        {% endif %}">
+                        <td class="border">{{ vente.ecole.nom }}</td>
+                        <td class="border">{{ vente.montant_total }} F</td>
+                        <td class="border">{{ vente.montant_paye|default:0 }} F</td>
+                        <td class="border">{{ vente.montant_restant }} F</td>
+                        <td class="border">
+                          <span class="badge 
+                            {% if vente.est_reglee %}
+                              bg-success
+
+                            {% elif vente.est_en_retard %}
+                              bg-danger
+
+                            {% else %}
+                              bg-warning
+
+                            {% endif %}">
+                            {{ vente.statut_paiement }}
+
+                          </span>
+                        </td>
+                        <td class="border">{{ vente.date_paiement|date:'d/m/Y H:i' }}</td>
+                        <td class="border">{{ vente.nombre_tranches_payees }}/3</td>
+                        <td class="border">
+                          {% if vente.facture_pdf %}
+                            <a href="{{ vente.facture_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-info">Voir</a>
+                          {% else %}
+                            N/A
+                          {% endif %}
+                        </td>
+                        <td class="border">
+                          {% if not vente.est_reglee and vente.peut_ajouter_tranche %}
+                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paiementModal{{ vente.id }}">Payer</button>
+                          {% endif %}
+                          <a href="{% url 'detail_vente' vente.id %}" class="btn btn-sm btn-outline-secondary">Voir détails</a>
+                        </td>
+                      </tr>
+
+                      <!-- Modal pour paiement -->
+                      <div class="modal fade" id="paiementModal{{ vente.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                          <form method="POST" action="{% url 'ajouter_paiement' vente.id %}">
+                            {% csrf_token %}
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">Ajouter un paiement - {{ vente.ecole.nom }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="mb-3">
+                                  <p>
+                                    <strong>Montant total:</strong> {{ vente.montant_total }} F
+                                  </p>
+                                  <p>
+                                    <strong>Montant restant:</strong> {{ vente.montant_restant }} F
+                                  </p>
+                                  <p>
+                                    <strong>Tranche:</strong> {{ vente.nombre_tranches_payees|add:1 }}/3
+                                  </p>
+                                  {% if vente.est_en_retard %}
+                                    <div class="alert alert-warning">
+                                      <strong>Attention:</strong> Date limite dépassée !
+                                    </div>
+                                  {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                  <label for="montant{{ vente.id }}" class="form-label">Montant à payer (F)</label>
+                                  <input type="number" name="montant" id="montant{{ vente.id }}" class="form-control border border-secondary" min="1" max="{{ vente.montant_restant }}" required />
+                                  <div class="form-text">Maximum: {{ vente.montant_restant }} F</div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    {% empty %}
+                      <tr>
+                        <td colspan="9" class="text-center">Aucune vente.</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal pour ajouter une vente -->
+      <div class="modal fade" id="ajouterVenteModal" tabindex="-1" aria-labelledby="ajouterVenteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <form method="POST" action="{% url 'ajouter_vente' %}">
+            {% csrf_token %}
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="ajouterVenteLabel">Ajouter une vente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="ecole" class="form-label">École</label>
+                  <select name="ecole" id="ecole" class="form-select border border-secondary" required>
+                    <option value="">Sélectionner une école</option>
+                    {% for ecole in ecoles %}
+                      <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="date_paiement" class="form-label">Date limite de paiement</label>
+                  <input type="datetime-local" name="date_paiement" id="date_paiement" class="form-control border border-secondary" required />
+                  <div class="form-text">L'école peut payer en 3 tranches maximum avant cette date</div>
+                </div>
+
+                <!-- Section dynamique pour les lignes de vente -->
+                <div id="cahiers-container">
+                  <div class="row align-items-end mb-2 cahier-row">
+                    <div class="col-md-6">
+                      <label class="form-label">Cahier</label>
+                      <select name="cahiers[]" class="form-select border border-secondary" required>
+                        <option value="">Choisir un cahier</option>
+                        {% for cahier in cahiers %}
+                          <option value="{{ cahier.id }}">{{ cahier.titre }} - Stock: {{ cahier.quantite_stock }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Quantité</label>
+                      <input type="number" name="quantites[]" class="form-control border border-secondary" min="1" required />
+                    </div>
+                    <div class="col-md-2">
+                      <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" id="addCahierRow" class="btn btn-secondary btn-sm mt-2">+ Ajouter un cahier</button>
+              </div>
+              <div class="modal-footer">
+                <button type="submit" class="btn btn-dark">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.getElementById('addCahierRow').addEventListener('click', function () {
+      const container = document.getElementById('cahiers-container')
+      const row = container.querySelector('.cahier-row')
+      const clone = row.cloneNode(true)
+    
+      // Réinitialise les valeurs
+      clone.querySelectorAll('select, input').forEach((el) => (el.value = ''))
+      container.appendChild(clone)
+    })
+    
+    // Supprimer une ligne
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('remove-row')) {
+        const rows = document.querySelectorAll('.cahier-row')
+        if (rows.length > 1) {
+          e.target.closest('.cahier-row').remove()
+        } else {
+          alert('Au moins un cahier est requis.')
+        }
+      }
+    })
+  </script>
+  <script>
+  document.getElementById('searchInput').addEventListener('input', function () {
+    const searchValue = this.value.toLowerCase()
+    const rows = document.querySelectorAll('table tbody tr')
+
+    rows.forEach(row => {
+      const ecoleCell = row.querySelector('td') 
+      if (ecoleCell) {
+        const ecoleName = ecoleCell.textContent.toLowerCase()
+        row.style.display = ecoleName.includes(searchValue) ? '' : 'none'
+      }
+    })
+  })
+</script>
+
+{% endblock %}

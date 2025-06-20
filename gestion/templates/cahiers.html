@@ -1,0 +1,224 @@
+{% extends "base.html" %} 
+{% block title %}Cahiers{% endblock %} 
+{% block content %} 
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Cahiers</h3>
+      <p class="mb-4">Gestion de tous vos cahiers</p>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-lg-12 col-md-6 mb-md-0 mb-4">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <p class="text-sm mb-0"><span>Liste des cahiers</span></p>
+              </div>
+              <div class="col-lg-6 col-5 text-end">
+                <button
+                  class="btn btn-sm btn-success me-2"
+                  data-bs-toggle="modal"
+                  data-bs-target="#ajouterStockModal"
+                >
+                  Ajouter un stock
+                </button>
+                <button
+                  class="btn btn-sm btn-dark"
+                  data-bs-toggle="modal"
+                  data-bs-target="#addCahierModal"
+                >
+                  Ajouter un cahier
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Titre</th>
+                    <th scope="col">Prix</th>
+                    <th scope="col">Quantité en stock</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cahier in cahiers %}
+                  <tr>
+                    <td class="border">{{ cahier.titre }}</td>
+                    <td class="border">{{ cahier.prix }} FCFA</td>
+                    <td class="border">{{ cahier.quantite_stock }}</td>
+                    <td class="border">
+                      <a
+                        href="#"
+                        class="btn btn-sm btn-outline-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addCahierModal"
+                        data-id="{{ cahier.id }}"
+                        data-titre="{{ cahier.titre }}"
+                        data-prix="{{ cahier.prix }}"
+                        data-quantite="{{ cahier.quantite_stock }}"
+                        title="Modifier"
+                      >Modifier
+                      </a>
+
+                      <a
+                        href="{% url 'supprimer_cahier' cahier.id %}"
+                        class="btn btn-sm btn-outline-danger"
+                        title="Supprimer"
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce cahier ?')"
+                      >Supprimer
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center">
+                      Aucun cahier disponible.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="addCahierModal"
+      tabindex="-1"
+      aria-labelledby="addCahierModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <form method="POST" action="{% url 'ajouter_cahier' %}">
+          {% csrf_token %}
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addCahierModalLabel">
+                Ajouter un cahier
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Fermer"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" name="cahier_id" id="cahierIdInput" />
+              <div class="mb-3">
+                <label for="titre" class="form-label">Titre</label>
+                <input type="text" class="form-control border border-secondary" name="titre" required />
+              </div>
+              <div class="mb-3">
+                <label for="prix" class="form-label">Prix</label>
+                <input
+                  type="number"
+                  class="form-control border border-secondary"
+                  name="prix"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="quantite_stock" class="form-label">Quantité en stock</label>
+                <input
+                  type="number"
+                  class="form-control border border-secondary"
+                  name="quantite_stock"
+                  required/>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-dark">Enregistrer</button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">Annuler
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Ajouter Stock -->
+<div class="modal fade" id="ajouterStockModal" tabindex="-1" aria-labelledby="ajouterStockModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="{% url 'ajouter_stock' %}">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ajouterStockModalLabel">Ajouter un stock</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="cahier_id" class="form-label">Cahier</label>
+            <select class="form-select border border-secondary" name="cahier_id" required>
+              <option value="" disabled selected>Choisissez un cahier</option>
+              {% for cahier in cahiers %}
+                <option value="{{ cahier.id }}">{{ cahier.titre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="quantite" class="form-label">Quantité à ajouter</label>
+            <input type="number" class="form-control border border-secondary" name="quantite" min="1" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Ajouter</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+  </div>
+</div>
+
+<script>
+  const addCahierModal = document.getElementById("addCahierModal");
+  addCahierModal.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute("data-id");
+    const titre = button.getAttribute("data-titre");
+    const prix = button.getAttribute("data-prix");
+    const quantite = button.getAttribute("data-quantite");
+
+    const form = addCahierModal.querySelector("form");
+    const titreInput = form.querySelector('input[name="titre"]');
+    const prixInput = form.querySelector('input[name="prix"]');
+    const quantiteInput = form.querySelector('input[name="quantite_stock"]');
+    const idInput = form.querySelector('input[name="cahier_id"]');
+
+    if (id) {
+      titreInput.value = titre;
+      prixInput.value = prix;
+      quantiteInput.value = quantite;
+      idInput.value = id;
+      form.action = `/cahiers/modifier/${id}/`;
+      addCahierModal.querySelector(".modal-title").textContent =
+        "Modifier un cahier";
+    } else {
+      titreInput.value = "";
+      prixInput.value = "";
+      quantiteInput.value = "";
+      idInput.value = "";
+      form.action = "{% url 'ajouter_cahier' %}";
+      addCahierModal.querySelector(".modal-title").textContent =
+        "Ajouter un cahier";
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #000; padding: 6px; }
+    th { background-color: #f0f0f0; }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>Récapitulatif des ventes - {{ ecole.nom }}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date de paiement</th>
+        <th>Montant total</th>
+        <th>Montant payé</th>
+        <th>Montant restant</th>
+        <th>Statut</th>
+        <th>Dates des paiements</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for vente in ventes %}
+      <tr>
+        <td>{{ vente.date_paiement|date:"d/m/Y" }}</td>
+        <td>{{ vente.montant_total }}</td>
+        <td>{{ vente.montant_paye }}</td>
+        <td>{{ vente.montant_restant }}</td>
+        <td>{{ vente.statut_paiement }}</td>
+        <td>
+          {% for paiement in vente.paiements.all %}
+            {{ paiement.date_paiement|date:"d/m/Y" }}{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
