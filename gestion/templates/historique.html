@@ -31,8 +31,12 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+  let ecoleSelectionnee = null;
+  
   $('#ecole-select').on('change', function () {
     let ecoleId = $(this).val();
+    ecoleSelectionnee = ecoleId;
+    
     if (!ecoleId) {
       $('#ventes-container').html('');
       return;
@@ -81,25 +85,175 @@
                   </tbody>
                 </table>
               </div>
-              <div class="mt-3">
-                <button onclick="window.print()" class="btn btn-primary me-2">🖨️ Imprimer</button>
-                <a href="#" id="whatsapp-link" target="_blank" class="btn btn-success">📤 Partager par WhatsApp</a>
+              <div class="mt-3 d-flex flex-wrap gap-2">
+                <button onclick="imprimerPDF()" class="btn btn-primary">
+                  <i class="fas fa-print"></i> 🖨️ Imprimer PDF
+                </button>
+                <button onclick="partagerWhatsApp()" class="btn btn-success">
+                  <i class="fab fa-whatsapp"></i> 📤 Partager par WhatsApp
+                </button>
+                <button onclick="partagerBluetooth()" class="btn btn-info">
+                  <i class="fas fa-bluetooth"></i> 📶 Partager par Bluetooth
+                </button>
+                <button onclick="telechargerPDF()" class="btn btn-secondary">
+                  <i class="fas fa-download"></i> 💾 Télécharger PDF
+                </button>
               </div>
             </div>
           </div>
         </div>`;
 
       $('#ventes-container').html(html);
-
-      // Construire le message WhatsApp
-      let message = "Récapitulatif des ventes :\n";
-      data.ventes.forEach(v => {
-        message += `📅 ${v.date} - 💰 ${v.montant_total} F | 🧾 Payé: ${v.montant_paye} F | Reste: ${v.montant_restant} F | Statut: ${v.statut}\n`;
-      });
-
-      let whatsappLink = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      $('#whatsapp-link').attr('href', whatsappLink);
     });
   });
+
+  // Fonction pour imprimer le PDF
+  function imprimerPDF() {
+    if (!ecoleSelectionnee) {
+      alert('Veuillez sélectionner une école');
+      return;
+    }
+    
+    // Ouvrir le PDF dans une nouvelle fenêtre pour impression
+    const pdfUrl = `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+    const printWindow = window.open(pdfUrl, '_blank');
+    
+    // Attendre que le PDF se charge puis déclencher l'impression
+    printWindow.onload = function() {
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    };
+  }
+
+  // Fonction pour télécharger le PDF
+  function telechargerPDF() {
+    if (!ecoleSelectionnee) {
+      alert('Veuillez sélectionner une école');
+      return;
+    }
+    
+    const pdfUrl = `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `ventes_ecole_${ecoleSelectionnee}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Fonction pour partager via WhatsApp
+  function partagerWhatsApp() {
+    if (!ecoleSelectionnee) {
+      alert('Veuillez sélectionner une école');
+      return;
+    }
+    
+    // Vérifier si l'API Web Share est supportée
+    if (navigator.share) {
+      // Créer un lien vers le PDF
+      const pdfUrl = window.location.origin + `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+      const message = `📊 Récapitulatif des ventes\n\nVoici le récapitulatif détaillé des ventes : ${pdfUrl}`;
+      
+      navigator.share({
+        title: 'Récapitulatif des ventes',
+        text: message,
+        url: pdfUrl
+      }).catch(err => {
+        console.log('Erreur de partage:', err);
+        // Fallback vers WhatsApp Web
+        partagerWhatsAppFallback();
+      });
+    } else {
+      // Fallback pour les navigateurs qui ne supportent pas l'API Web Share
+      partagerWhatsAppFallback();
+    }
+  }
+
+  function partagerWhatsAppFallback() {
+    const pdfUrl = window.location.origin + `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+    const message = `📊 Récapitulatif des ventes\n\nVoici le récapitulatif détaillé des ventes de l'école :\n${pdfUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  }
+
+  // Fonction pour partager via Bluetooth
+  function partagerBluetooth() {
+    if (!ecoleSelectionnee) {
+      alert('Veuillez sélectionner une école');
+      return;
+    }
+    
+    // Vérifier si l'API Web Share est supportée
+    if (navigator.share) {
+      const pdfUrl = window.location.origin + `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+      
+      // Fetch le PDF et le partager
+      fetch(pdfUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          const file = new File([blob], `ventes_ecole_${ecoleSelectionnee}.pdf`, { type: 'application/pdf' });
+          
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              title: 'Récapitulatif des ventes',
+              text: 'Récapitulatif des ventes de l\'école',
+              files: [file]
+            }).catch(err => {
+              console.log('Erreur de partage Bluetooth:', err);
+              alert('Erreur lors du partage Bluetooth. Veuillez réessayer.');
+            });
+          } else {
+            alert('Le partage de fichiers n\'est pas supporté sur ce navigateur/appareil.');
+          }
+        })
+        .catch(err => {
+          console.error('Erreur lors du téléchargement du PDF:', err);
+          alert('Erreur lors de la préparation du fichier pour le partage.');
+        });
+    } else {
+      alert('Le partage n\'est pas supporté sur ce navigateur. Veuillez télécharger le PDF et le partager manuellement.');
+    }
+  }
+
+  // Fonction alternative pour Bluetooth sur mobile
+  function partagerBluetoothMobile() {
+    if (!ecoleSelectionnee) {
+      alert('Veuillez sélectionner une école');
+      return;
+    }
+    
+    // Pour Android, on peut essayer d'utiliser l'intent Android
+    if (/Android/i.test(navigator.userAgent)) {
+      const pdfUrl = window.location.origin + `/generer-pdf-ventes/${ecoleSelectionnee}/`;
+      const bluetoothIntent = `intent://send?type=application/pdf&extra_stream=${encodeURIComponent(pdfUrl)}#Intent;scheme=content;package=com.android.bluetooth;end`;
+      
+      try {
+        window.location.href = bluetoothIntent;
+      } catch (e) {
+        alert('Impossible d\'ouvrir le partage Bluetooth. Téléchargez le PDF et partagez-le manuellement.');
+      }
+    } else {
+      alert('Le partage Bluetooth direct n\'est pas disponible sur cette plateforme. Téléchargez le PDF et utilisez les paramètres de votre appareil pour le partager via Bluetooth.');
+    }
+  }
 </script>
+
+<style>
+  .btn i {
+    margin-right: 5px;
+  }
+  
+  .gap-2 {
+    gap: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .d-flex.flex-wrap .btn {
+      margin-bottom: 0.5rem;
+      flex: 1;
+      min-width: calc(50% - 0.25rem);
+    }
+  }
+</style>
 {% endblock %}

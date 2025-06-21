@@ -22,4 +22,6 @@ urlpatterns = [
     path('ventes/<uuid:vente_id>/', views.detail_vente, name='detail_vente'),
     path('ventes-ecole/', views.ventes_par_ecole, name='ventes_par_ecole'),
     path('ventes-ajax/<uuid:ecole_id>/', views.ventes_ajax, name='ventes_ajax'),
+
+    path('generer-pdf-ventes/<uuid:ecole_id>/', views.generer_pdf_ventes_ecole, name='generer_pdf_ventes_ecole'),
 ]

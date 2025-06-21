@@ -437,3 +437,133 @@ def ajouter_stock(request):
 
         messages.success(request, f'Stock ajouté pour le cahier "{cahier.titre}".')
     return redirect('cahiers')
+
+def generer_pdf_ventes_ecole(request, ecole_id):
+    """Génère un PDF récapitulatif des ventes pour une école donnée"""
+    ecole = get_object_or_404(Ecoles, id=ecole_id)
+    ventes = Vente.objects.filter(ecole=ecole).prefetch_related('paiements', 'lignes')
+    
+    if not ventes.exists():
+        return HttpResponse("Aucune vente trouvée pour cette école.", status=404)
+    
+    # Création du PDF
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    
+    # En-tête du document
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(2 * cm, height - 2 * cm, "RÉCAPITULATIF DES VENTES")
+    
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(2 * cm, height - 2.8 * cm, f"École: {ecole.nom}")
+    p.drawString(2 * cm, height - 3.4 * cm, f"Adresse: {ecole.adresse}")
+    
+    p.setFont("Helvetica", 10)
+    p.drawString(2 * cm, height - 4 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    
+    # Préparation des données du tableau
+    donnees_tableau = [
+        ["Date", "Montant Total", "Montant Payé", "Montant Restant", "Statut", "Dates Paiements"]
+    ]
+    
+    montant_total_general = 0
+    montant_paye_general = 0
+    
+    for vente in ventes:
+        paiements = vente.paiements.all()
+        dates_paiements = ", ".join([p.date_paiement.strftime('%d/%m/%Y') for p in paiements])
+        if not dates_paiements:
+            dates_paiements = "Aucun paiement"
+        
+        montant_total_general += vente.montant_total
+        montant_paye_general += vente.montant_paye
+        
+        donnees_tableau.append([
+            vente.date_paiement.strftime('%d/%m/%Y') if vente.date_paiement else 'N/A',
+            f"{vente.montant_total:.0f} F",
+            f"{vente.montant_paye:.0f} F", 
+            f"{vente.montant_restant():.0f} F",
+            vente.statut_paiement(),
+            dates_paiements[:30] + "..." if len(dates_paiements) > 30 else dates_paiements
+        ])
+    
+    # Ligne de total
+    donnees_tableau.append([
+        "TOTAL",
+        f"{montant_total_general:.0f} F",
+        f"{montant_paye_general:.0f} F",
+        f"{montant_total_general - montant_paye_general:.0f} F",
+        "",
+        ""
+    ])
+    
+    # Création et style du tableau
+    table = Table(donnees_tableau, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2*cm, 4*cm])
+    table.setStyle(TableStyle([
+        # En-tête
+        ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        
+        # Corps du tableau
+        ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 9),
+        ('GRID', (0, 0), (-1, -2), 1, colors.black),
+        
+        # Ligne de total
+        ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 10),
+        ('GRID', (0, -1), (-1, -1), 2, colors.black),
+    ]))
+    
+    # Positionnement du tableau
+    table.wrapOn(p, width, height)
+    table.drawOn(p, 1 * cm, height - 15 * cm)
+    
+    # Statistiques en bas
+    y_position = height - 16 * cm
+    p.setFont("Helvetica-Bold", 11)
+    p.drawString(2 * cm, y_position, "STATISTIQUES:")
+    
+    p.setFont("Helvetica", 10)
+    p.drawString(2 * cm, y_position - 0.7 * cm, f"• Nombre total de ventes: {ventes.count()}")
+    p.drawString(2 * cm, y_position - 1.4 * cm, f"• Montant total des ventes: {montant_total_general:.0f} F")
+    p.drawString(2 * cm, y_position - 2.1 * cm, f"• Montant total payé: {montant_paye_general:.0f} F")
+    p.drawString(2 * cm, y_position - 2.8 * cm, f"• Montant restant à payer: {montant_total_general - montant_paye_general:.0f} F")
+    
+    if montant_total_general > 0:
+        pourcentage_paye = (montant_paye_general / montant_total_general) * 100
+        p.drawString(2 * cm, y_position - 3.5 * cm, f"• Pourcentage payé: {pourcentage_paye:.1f}%")
+    
+    # Ventes en retard
+    ventes_en_retard = ventes.filter(
+        date_paiement__lt=timezone.now().date()
+    ).exclude(id__in=[v.id for v in ventes if v.est_reglee()])
+    
+    if ventes_en_retard.exists():
+        p.setFont("Helvetica-Bold", 10)
+        p.setFillColor(colors.red)
+        p.drawString(2 * cm, y_position - 4.5 * cm, f"⚠ ATTENTION: {ventes_en_retard.count()} vente(s) en retard de paiement")
+        p.setFillColor(colors.black)
+    
+    # Pied de page
+    p.setFont("Helvetica", 8)
+    p.drawString(2 * cm, 2 * cm, f"Document généré le {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+    p.drawString(2 * cm, 1.5 * cm, "Système de Gestion des Ventes de Cahiers")
+    
+    p.showPage()
+    p.save()
+    
+    # Retour du PDF
+    pdf = buffer.getvalue()
+    buffer.close()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ventes_{ecole.nom.replace(" ", "_")}_{timezone.now().strftime("%Y%m%d")}.pdf"'
+    
+    return response
