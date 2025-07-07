@@ -289,38 +289,88 @@ def ajouter_vente(request):
                 cahier.quantite_stock -= qte
                 cahier.save()
 
-            # Génération du PDF
+            # Génération du PDF avec papier en-tête
             buffer = BytesIO()
             p = canvas.Canvas(buffer, pagesize=A4)
             width, height = A4
 
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(2 * cm, height - 2 * cm, "Facture de Vente")
-            p.setFont("Helvetica", 11)
-            p.drawString(2 * cm, height - 2.8 * cm, f"École : {ecole.nom}")
-            p.drawString(2 * cm, height - 3.5 * cm, f"Date limite de paiement : {date_paiement}")
+            # En-tête de l'entreprise
+            p.setFont("Helvetica-Bold", 16)
+            p.drawString(2 * cm, height - 2 * cm, "COLLECTION")
+            
+            p.setFont("Helvetica", 9)
+            p.drawString(2 * cm, height - 2.5 * cm, "SIÈGE SOCIAL : Carré N° 3489 AGLA ZONE A Maison KPOSSA Philomène,")
+            p.drawString(2 * cm, height - 2.8 * cm, "Vons Restaurant « LE PANTAGRUEL » en face de l'Entrée Principale du Stade de l'Amitié")
+            
+            # Ligne de séparation
+            p.line(2 * cm, height - 3.2 * cm, width - 2 * cm, height - 3.2 * cm)
+            
+            # Informations de contact
+            p.setFont("Helvetica", 8)
+            p.drawString(2 * cm, height - 3.6 * cm, f"N° IFU : 120140545030")
+            p.drawString(8 * cm, height - 3.6 * cm, f"Email : simplicesantanna@gmail.com")
+            
+            p.drawString(2 * cm, height - 4 * cm, f"MOBILE : (00229) 01 96 62 28 62 / 01 95 69 05 69 / 01 40 59 36 59")
+            p.drawString(2 * cm, height - 4.4 * cm, f"FIXE : (00229) 21 32 72 92")
+            
+            # Nom du promoteur
+            p.setFont("Helvetica-Bold", 10)
+            p.drawString(width - 6 * cm, height - 4.8 * cm, "Le Promoteur")
+            p.drawString(width - 6 * cm, height - 5.2 * cm, "Sant-Anna Simplice")
 
-            table = Table(lignes_facture, colWidths=[7*cm, 3*cm, 3*cm, 3*cm])
+            # Titre de la facture
+            p.setFont("Helvetica-Bold", 16)
+            text_width = p.stringWidth("FACTURE DE VENTE", "Helvetica-Bold", 16)
+            p.drawString((width - text_width) / 2, height - 6.5 * cm, "FACTURE DE VENTE")
+
+            # Informations de la vente
+            p.setFont("Helvetica", 11)
+            p.drawString(2 * cm, height - 7.5 * cm, f"École : {ecole.nom}")
+            p.drawString(2 * cm, height - 8 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
+            p.drawString(2 * cm, height - 8.5 * cm, f"Date limite de paiement : {date_paiement}")
+            p.drawString(2 * cm, height - 9 * cm, f"Facture N° : {vente.id:06d}")
+
+            # Tableau des articles
+            table = Table(lignes_facture, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.grey),
                 ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('GRID', (0,0), (-1,-1), 1, colors.black),
                 ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,0), (-1,-1), 10),
                 ('BOTTOMPADDING', (0,0), (-1,0), 8),
+                ('TOPPADDING', (0,1), (-1,-1), 4),
+                ('BOTTOMPADDING', (0,1), (-1,-1), 4),
             ]))
             table.wrapOn(p, width, height)
-            table.drawOn(p, 2 * cm, height - 12 * cm)
+            table.drawOn(p, 2 * cm, height - 15 * cm)
 
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(2 * cm, height - 13.5 * cm, f"Montant total : {montant_total:.2f} F")
+            # Montant total
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(width - 8 * cm, height - 16.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
+
+            # Conditions de paiement
             p.setFont("Helvetica", 10)
-            p.drawString(2 * cm, height - 14.5 * cm, "Paiement possible en 3 tranches maximum")
-            p.drawString(2 * cm, height - 16 * cm, "Signature du vendeur :")
-            p.drawString(10 * cm, height - 16 * cm, "Signature de l'école :")
+            p.drawString(2 * cm, height - 18 * cm, "Conditions de paiement :")
+            p.drawString(2 * cm, height - 18.5 * cm, "• Paiement possible en 3 tranches maximum")
+            p.drawString(2 * cm, height - 19 * cm, "• Règlement par chèque, espèces ou virement")
 
-            p.line(2 * cm, height - 16.3 * cm, 7 * cm, height - 16.3 * cm)
-            p.line(10 * cm, height - 16.3 * cm, 16 * cm, height - 16.3 * cm)
+            # Signatures
+            p.setFont("Helvetica", 10)
+            p.drawString(2 * cm, height - 21 * cm, "Signature du vendeur :")
+            p.drawString(11 * cm, height - 21 * cm, "Signature de l'école :")
+
+            # Lignes pour les signatures
+            p.line(2 * cm, height - 21.8 * cm, 8 * cm, height - 21.8 * cm)
+            p.line(11 * cm, height - 21.8 * cm, 17 * cm, height - 21.8 * cm)
+
+            # Pied de page
+            p.setFont("Helvetica-Oblique", 8)
+            footer_text = "Merci pour votre confiance - COLLECTION"
+            footer_width = p.stringWidth(footer_text, "Helvetica-Oblique", 8)
+            p.drawString((width - footer_width) / 2, 2 * cm, footer_text)
 
             p.showPage()
             p.save()
@@ -333,7 +383,6 @@ def ajouter_vente(request):
         except Exception as e:
             messages.error(request, f"Erreur : {str(e)}")
         return redirect('ventes')
-
 
 def ajouter_paiement(request, vente_id):
     vente = get_object_or_404(Vente, id=vente_id)
