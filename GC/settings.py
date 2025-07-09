@@ -25,12 +25,12 @@ SECRET_KEY = 'django-insecure-6ofh@$h(g(29($kwx)9ixvd2l+a#p#a2)93xpol&u#1$o#cuh7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['visibledifference.onrender.com']
+ALLOWED_HOSTS = ['visibledifference.onrender.com', '127.0.0.1']
 
 
 # Application definition
 
-INSTALLED_APPS = [
+INSTALLED_APPS = [  
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

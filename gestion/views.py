@@ -14,6 +14,11 @@ import json
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.http import JsonResponse
+import os
+from django.conf import settings
+from PyPDF2 import PdfReader, PdfWriter
+from django.core.paginator import Paginator
+
 
 
 def home(request):
@@ -225,23 +230,28 @@ def supprimer_ecole(request, ecole_id):
 
 
 def ventes(request):
-    # Vérifier les ventes en retard et afficher une alerte
     ventes_en_retard = Vente.objects.filter(
         date_paiement__lt=timezone.now()
     ).exclude(id__in=Vente.objects.filter(paiements__isnull=False).annotate(
         total_paye=models.Sum('paiements__montant')
     ).filter(total_paye__gte=models.F('lignes__montant')))
-    
+
     if ventes_en_retard.exists():
         messages.warning(request, f"Attention : {ventes_en_retard.count()} vente(s) en retard de paiement !")
+
+    ventes_liste = Vente.objects.prefetch_related('lignes__cahier', 'ecole', 'paiements').all()
     
+    # Ajout de la pagination
+    paginator = Paginator(ventes_liste, 5)  
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'ventes': Vente.objects.prefetch_related('lignes__cahier', 'ecole', 'paiements'),
+        'page_obj': page_obj,
         'cahiers': Cahiers.objects.all(),
         'ecoles': Ecoles.objects.all()
     }
     return render(request, 'ventes.html', context)
-
 
 def ajouter_vente(request):
     if request.method == "POST":
@@ -289,51 +299,21 @@ def ajouter_vente(request):
                 cahier.quantite_stock -= qte
                 cahier.save()
 
-            # Génération du PDF avec papier en-tête
+            # Génération du PDF dans un buffer avec uniquement le tableau
             buffer = BytesIO()
             p = canvas.Canvas(buffer, pagesize=A4)
-            width, height = A4
 
-            # En-tête de l'entreprise
-            p.setFont("Helvetica-Bold", 16)
-            p.drawString(2 * cm, height - 2 * cm, "COLLECTION")
-            
-            p.setFont("Helvetica", 9)
-            p.drawString(2 * cm, height - 2.5 * cm, "SIÈGE SOCIAL : Carré N° 3489 AGLA ZONE A Maison KPOSSA Philomène,")
-            p.drawString(2 * cm, height - 2.8 * cm, "Vons Restaurant « LE PANTAGRUEL » en face de l'Entrée Principale du Stade de l'Amitié")
-            
-            # Ligne de séparation
-            p.line(2 * cm, height - 3.2 * cm, width - 2 * cm, height - 3.2 * cm)
-            
-            # Informations de contact
-            p.setFont("Helvetica", 8)
-            p.drawString(2 * cm, height - 3.6 * cm, f"N° IFU : 120140545030")
-            p.drawString(8 * cm, height - 3.6 * cm, f"Email : simplicesantanna@gmail.com")
-            
-            p.drawString(2 * cm, height - 4 * cm, f"MOBILE : (00229) 01 96 62 28 62 / 01 95 69 05 69 / 01 40 59 36 59")
-            p.drawString(2 * cm, height - 4.4 * cm, f"FIXE : (00229) 21 32 72 92")
-            
-            # Nom du promoteur
-            p.setFont("Helvetica-Bold", 10)
-            p.drawString(width - 6 * cm, height - 4.8 * cm, "Le Promoteur")
-            p.drawString(width - 6 * cm, height - 5.2 * cm, "Sant-Anna Simplice")
-
-            # Titre de la facture
-            p.setFont("Helvetica-Bold", 16)
-            text_width = p.stringWidth("FACTURE DE VENTE", "Helvetica-Bold", 16)
-            p.drawString((width - text_width) / 2, height - 6.5 * cm, "FACTURE DE VENTE")
-
-            # Informations de la vente
+            # Informations texte (facultatif) — à ajuster selon ton design
             p.setFont("Helvetica", 11)
-            p.drawString(2 * cm, height - 7.5 * cm, f"École : {ecole.nom}")
-            p.drawString(2 * cm, height - 8 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
-            p.drawString(2 * cm, height - 8.5 * cm, f"Date limite de paiement : {date_paiement}")
-            p.drawString(2 * cm, height - 9 * cm, f"Facture N° : {vente.id:06d}")
+            p.drawString(2 * cm, 22.5 * cm, f"École : {ecole.nom}")
+            p.drawString(2 * cm, 22 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
+            p.drawString(2 * cm, 21.5 * cm, f"Date limite de paiement : {date_paiement}")
+            p.drawString(2 * cm, 21 * cm, f"Facture N° : {str(vente.id)[:8]}")
 
-            # Tableau des articles
+            # Création du tableau des lignes de vente
             table = Table(lignes_facture, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
             table.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.grey),
+                ('BACKGROUND', (0,0), (-1,0), colors.blue),
                 ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('GRID', (0,0), (-1,-1), 1, colors.black),
@@ -344,45 +324,47 @@ def ajouter_vente(request):
                 ('TOPPADDING', (0,1), (-1,-1), 4),
                 ('BOTTOMPADDING', (0,1), (-1,-1), 4),
             ]))
-            table.wrapOn(p, width, height)
-            table.drawOn(p, 2 * cm, height - 15 * cm)
+
+            # Positionner le tableau (ajuste si nécessaire)
+            table.wrapOn(p, *A4)
+            table.drawOn(p, 2 * cm, 18 * cm)
 
             # Montant total
             p.setFont("Helvetica-Bold", 14)
-            p.drawString(width - 8 * cm, height - 16.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
+            p.drawString(2 * cm, 13.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
 
-            # Conditions de paiement
-            p.setFont("Helvetica", 10)
-            p.drawString(2 * cm, height - 18 * cm, "Conditions de paiement :")
-            p.drawString(2 * cm, height - 18.5 * cm, "• Paiement possible en 3 tranches maximum")
-            p.drawString(2 * cm, height - 19 * cm, "• Règlement par chèque, espèces ou virement")
-
-            # Signatures
-            p.setFont("Helvetica", 10)
-            p.drawString(2 * cm, height - 21 * cm, "Signature du vendeur :")
-            p.drawString(11 * cm, height - 21 * cm, "Signature de l'école :")
-
-            # Lignes pour les signatures
-            p.line(2 * cm, height - 21.8 * cm, 8 * cm, height - 21.8 * cm)
-            p.line(11 * cm, height - 21.8 * cm, 17 * cm, height - 21.8 * cm)
-
-            # Pied de page
-            p.setFont("Helvetica-Oblique", 8)
-            footer_text = "Merci pour votre confiance - COLLECTION"
-            footer_width = p.stringWidth(footer_text, "Helvetica-Oblique", 8)
-            p.drawString((width - footer_width) / 2, 2 * cm, footer_text)
-
-            p.showPage()
             p.save()
+            buffer.seek(0)
 
-            pdf_content = buffer.getvalue()
-            vente.facture_pdf.save(f"facture_{vente.id}.pdf", ContentFile(pdf_content))
-            vente.save()
+            # Fusion avec le PDF existant (papier en-tête)
+            papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/papier.pdf')
+            modele_pdf = PdfReader(papier_en_tete_path)
+            tableau_pdf = PdfReader(buffer)
+
+            writer = PdfWriter()
+            page_modele = modele_pdf.pages[0]
+            page_tableau = tableau_pdf.pages[0]
+
+            page_modele.merge_page(page_tableau)
+            writer.add_page(page_modele)
+
+            # Enregistrement dans un buffer final
+            final_buffer = BytesIO()
+            writer.write(final_buffer)
+            final_buffer.seek(0)
+
+            # Sauvegarde dans le modèle
+            filename = f"facture_{vente.id}.pdf"
+            vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
 
             messages.success(request, "Vente enregistrée avec succès.")
+
         except Exception as e:
+            print(f"Erreur générale : {e}")
             messages.error(request, f"Erreur : {str(e)}")
+
         return redirect('ventes')
+
 
 def ajouter_paiement(request, vente_id):
     vente = get_object_or_404(Vente, id=vente_id)
@@ -487,132 +469,113 @@ def ajouter_stock(request):
         messages.success(request, f'Stock ajouté pour le cahier "{cahier.titre}".')
     return redirect('cahiers')
 
+
 def generer_pdf_ventes_ecole(request, ecole_id):
-    """Génère un PDF récapitulatif des ventes pour une école donnée"""
     ecole = get_object_or_404(Ecoles, id=ecole_id)
     ventes = Vente.objects.filter(ecole=ecole).prefetch_related('paiements', 'lignes')
-    
+
     if not ventes.exists():
         return HttpResponse("Aucune vente trouvée pour cette école.", status=404)
-    
-    # Création du PDF
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    
-    # En-tête du document
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(2 * cm, height - 2 * cm, "RÉCAPITULATIF DES VENTES")
-    
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(2 * cm, height - 2.8 * cm, f"École: {ecole.nom}")
-    p.drawString(2 * cm, height - 3.4 * cm, f"Adresse: {ecole.adresse}")
-    
-    p.setFont("Helvetica", 10)
-    p.drawString(2 * cm, height - 4 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
-    
-    # Préparation des données du tableau
-    donnees_tableau = [
-        ["Date", "Montant Total", "Montant Payé", "Montant Restant", "Statut", "Dates Paiements"]
-    ]
-    
+
+    donnees_tableau = [["Limite paiement", "Montant Total", "Montant Payé", "Montant Restant", "Statut", "Dates Paiements"]]
     montant_total_general = 0
     montant_paye_general = 0
-    
+
     for vente in ventes:
         paiements = vente.paiements.all()
-        dates_paiements = ", ".join([p.date_paiement.strftime('%d/%m/%Y') for p in paiements])
-        if not dates_paiements:
-            dates_paiements = "Aucun paiement"
-        
+        dates_paiements = ", ".join([p.date_paiement.strftime('%d/%m/%Y') for p in paiements]) or "Aucun paiement"
         montant_total_general += vente.montant_total
         montant_paye_general += vente.montant_paye
-        
+
         donnees_tableau.append([
-            vente.date_paiement.strftime('%d/%m/%Y') if vente.date_paiement else 'N/A',
+            vente.date_paiement.strftime('%d/%m/%Y') if vente.date_paiement else "N/A",
             f"{vente.montant_total:.0f} F",
-            f"{vente.montant_paye:.0f} F", 
+            f"{vente.montant_paye:.0f} F",
             f"{vente.montant_restant():.0f} F",
             vente.statut_paiement(),
             dates_paiements[:30] + "..." if len(dates_paiements) > 30 else dates_paiements
         ])
-    
+
     # Ligne de total
     donnees_tableau.append([
         "TOTAL",
         f"{montant_total_general:.0f} F",
         f"{montant_paye_general:.0f} F",
         f"{montant_total_general - montant_paye_general:.0f} F",
-        "",
-        ""
+        "", ""
     ])
-    
-    # Création et style du tableau
-    table = Table(donnees_tableau, colWidths=[2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2*cm, 4*cm])
+
+    # 2. Génération du contenu dynamique sur une page blanche
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    y_start = 22.5 * cm  # descend sous le logo
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(2 * cm, y_start, "RÉCAPITULATIF DES VENTES")
+
+    p.setFont("Helvetica", 11)
+    p.drawString(2 * cm, y_start - 0.8 * cm, f"École: {ecole.nom}")
+    p.drawString(2 * cm, y_start - 1.4 * cm, f"Adresse: {ecole.adresse}")
+    p.drawString(2 * cm, y_start - 2 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
+
+    # Tableau des ventes
+    table = Table(donnees_tableau, colWidths=[3*cm]*4 + [2.5*cm, 4*cm])
     table.setStyle(TableStyle([
-        # En-tête
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        
-        # Corps du tableau
-        ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -2), 9),
-        ('GRID', (0, 0), (-1, -2), 1, colors.black),
-        
-        # Ligne de total
+        ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, -1), (-1, -1), 10),
-        ('GRID', (0, -1), (-1, -1), 2, colors.black),
     ]))
-    
-    # Positionnement du tableau
+
     table.wrapOn(p, width, height)
-    table.drawOn(p, 1 * cm, height - 15 * cm)
-    
-    # Statistiques en bas
-    y_position = height - 16 * cm
+    table.drawOn(p, 1.2 * cm, 12.5 * cm) 
+
+    # Statistiques
+    y_stat = 11 * cm
     p.setFont("Helvetica-Bold", 11)
-    p.drawString(2 * cm, y_position, "STATISTIQUES:")
-    
+    p.drawString(2 * cm, y_stat, "STATISTIQUES:")
+
     p.setFont("Helvetica", 10)
-    p.drawString(2 * cm, y_position - 0.7 * cm, f"• Nombre total de ventes: {ventes.count()}")
-    p.drawString(2 * cm, y_position - 1.4 * cm, f"• Montant total des ventes: {montant_total_general:.0f} F")
-    p.drawString(2 * cm, y_position - 2.1 * cm, f"• Montant total payé: {montant_paye_general:.0f} F")
-    p.drawString(2 * cm, y_position - 2.8 * cm, f"• Montant restant à payer: {montant_total_general - montant_paye_general:.0f} F")
-    
+    p.drawString(2 * cm, y_stat - 0.6 * cm, f"• Nombre total de ventes: {ventes.count()}")
+    p.drawString(2 * cm, y_stat - 1.2 * cm, f"• Montant total des ventes: {montant_total_general:.0f} F")
+    p.drawString(2 * cm, y_stat - 1.8 * cm, f"• Montant total payé: {montant_paye_general:.0f} F")
+    p.drawString(2 * cm, y_stat - 2.4 * cm, f"• Montant restant: {montant_total_general - montant_paye_general:.0f} F")
     if montant_total_general > 0:
-        pourcentage_paye = (montant_paye_general / montant_total_general) * 100
-        p.drawString(2 * cm, y_position - 3.5 * cm, f"• Pourcentage payé: {pourcentage_paye:.1f}%")
-    
-    # Ventes en retard
-    ventes_en_retard = ventes.filter(
-        date_paiement__lt=timezone.now().date()
-    ).exclude(id__in=[v.id for v in ventes if v.est_reglee()])
-    
+        p.drawString(2 * cm, y_stat - 3 * cm, f"• Pourcentage payé: {(montant_paye_general / montant_total_general) * 100:.1f}%")
+
+    ventes_en_retard = ventes.filter(date_paiement__lt=timezone.now().date()).exclude(id__in=[v.id for v in ventes if v.est_reglee()])
     if ventes_en_retard.exists():
         p.setFont("Helvetica-Bold", 10)
         p.setFillColor(colors.red)
-        p.drawString(2 * cm, y_position - 4.5 * cm, f"⚠ ATTENTION: {ventes_en_retard.count()} vente(s) en retard de paiement")
+        p.drawString(2 * cm, y_stat - 4 * cm, f"⚠ {ventes_en_retard.count()} vente(s) en retard de paiement")
         p.setFillColor(colors.black)
-    
-    # Pied de page
-    p.setFont("Helvetica", 8)
-    p.drawString(2 * cm, 2 * cm, f"Document généré le {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
-    p.drawString(2 * cm, 1.5 * cm, "Système de Gestion des Ventes de Cahiers")
-    
-    p.showPage()
+
     p.save()
-    
-    # Retour du PDF
-    pdf = buffer.getvalue()
-    buffer.close()
-    
-    response = HttpResponse(pdf, content_type='application/pdf')
+    buffer.seek(0)
+
+    # 3. Superposition avec le modèle papier en-tête
+    papier_path = os.path.join(settings.BASE_DIR, 'static/admin/papier.pdf')
+    template_pdf = PdfReader(papier_path)
+    content_pdf = PdfReader(buffer)
+
+    writer = PdfWriter()
+    page_template = template_pdf.pages[0]
+    page_content = content_pdf.pages[0]
+    page_template.merge_page(page_content)
+    writer.add_page(page_template)
+
+    final_buffer = BytesIO()
+    writer.write(final_buffer)
+    final_buffer.seek(0)
+
+    # 4. Retour du PDF
+    response = HttpResponse(final_buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="ventes_{ecole.nom.replace(" ", "_")}_{timezone.now().strftime("%Y%m%d")}.pdf"'
-    
     return response

@@ -27,7 +27,9 @@
                     {% for message in messages %}
                       <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" style="color: white" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>                      
                       </div>
                     {% endfor %}
                   </div>
@@ -54,7 +56,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for vente in ventes %}
+                    {% for vente in page_obj %}
                       <tr class="{% if vente.est_en_retard %}
                           table-danger
                         {% elif vente.est_reglee %}
@@ -145,6 +147,39 @@
                     {% endfor %}
                   </tbody>
                 </table>
+                <nav aria-label="Pagination">
+                  <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><<</a>
+                      </li>
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link"><<</span>
+                      </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                      {% if page_obj.number == num %}
+                        <li class="page-item active">
+                          <span class="page-link">{{ num }}</span>
+                        </li>
+                      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                      {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">>></a>
+                      </li>
+                    {% else %}
+                      <li class="page-item disabled">
+                        <span class="page-link">>></span>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </nav>
               </div>
             </div>
           </div>
