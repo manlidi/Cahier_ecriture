@@ -304,7 +304,7 @@ def ajouter_vente(request):
             p = canvas.Canvas(buffer, pagesize=A4)
 
             # Informations texte (facultatif) — à ajuster selon ton design
-            p.setFont("Helvetica", 11)
+            p.setFont("Arial", 11)
             p.drawString(2 * cm, 22.5 * cm, f"École : {ecole.nom}")
             p.drawString(2 * cm, 22 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
             p.drawString(2 * cm, 21.5 * cm, f"Date limite de paiement : {date_paiement}")
@@ -317,21 +317,25 @@ def ajouter_vente(request):
                 ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('GRID', (0,0), (-1,-1), 1, colors.black),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTNAME', (0,0), (-1,0), 'Arial-Bold'),
+                ('FONTNAME', (0,1), (-1,-1), 'Arial'),
                 ('FONTSIZE', (0,0), (-1,-1), 10),
                 ('BOTTOMPADDING', (0,0), (-1,0), 8),
                 ('TOPPADDING', (0,1), (-1,-1), 4),
                 ('BOTTOMPADDING', (0,1), (-1,-1), 4),
             ]))
 
-            # Positionner le tableau (ajuste si nécessaire)
-            table.wrapOn(p, *A4)
-            table.drawOn(p, 2 * cm, 18 * cm)
+            table_width, table_height = table.wrap(0, 0)
 
-            # Montant total
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(2 * cm, 13.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
+            table_top_y = 18 * cm
+            table_bottom_y = table_top_y - table_height
+
+            # Dessiner le tableau
+            table.drawOn(p, 2 * cm, table_bottom_y)
+
+            # Écrire le total juste en dessous du tableau, sans espace
+            p.setFont("Arial-Bold", 14)
+            p.drawString(2 * cm, table_bottom_y - 0.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
 
             p.save()
             buffer.seek(0)
@@ -512,10 +516,10 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     y_start = 22.5 * cm  # descend sous le logo
 
-    p.setFont("Helvetica-Bold", 14)
+    p.setFont("Arial-Bold", 14)
     p.drawString(2 * cm, y_start, "RÉCAPITULATIF DES VENTES")
 
-    p.setFont("Helvetica", 11)
+    p.setFont("Arial", 11)
     p.drawString(2 * cm, y_start - 0.8 * cm, f"École: {ecole.nom}")
     p.drawString(2 * cm, y_start - 1.4 * cm, f"Adresse: {ecole.adresse}")
     p.drawString(2 * cm, y_start - 2 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
@@ -526,12 +530,12 @@ def generer_pdf_ventes_ecole(request, ecole_id):
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Arial-Bold'),
+        ('FONTNAME', (0, 1), (-1, -2), 'Arial'),
         ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Arial-Bold'),
     ]))
 
     table.wrapOn(p, width, height)
@@ -539,10 +543,10 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     # Statistiques
     y_stat = 11 * cm
-    p.setFont("Helvetica-Bold", 11)
+    p.setFont("Arial-Bold", 11)
     p.drawString(2 * cm, y_stat, "STATISTIQUES:")
 
-    p.setFont("Helvetica", 10)
+    p.setFont("Arial", 10)
     p.drawString(2 * cm, y_stat - 0.6 * cm, f"• Nombre total de ventes: {ventes.count()}")
     p.drawString(2 * cm, y_stat - 1.2 * cm, f"• Montant total des ventes: {montant_total_general:.0f} F")
     p.drawString(2 * cm, y_stat - 1.8 * cm, f"• Montant total payé: {montant_paye_general:.0f} F")
@@ -552,7 +556,7 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     ventes_en_retard = ventes.filter(date_paiement__lt=timezone.now().date()).exclude(id__in=[v.id for v in ventes if v.est_reglee()])
     if ventes_en_retard.exists():
-        p.setFont("Helvetica-Bold", 10)
+        p.setFont("Arial-Bold", 10)
         p.setFillColor(colors.red)
         p.drawString(2 * cm, y_stat - 4 * cm, f"⚠ {ventes_en_retard.count()} vente(s) en retard de paiement")
         p.setFillColor(colors.black)
