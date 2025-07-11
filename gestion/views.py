@@ -253,7 +253,9 @@ def ventes(request):
     }
     return render(request, 'ventes.html', context)
 
-def ajouter_vente(request):
+
+
+def ajouter_vente(request): 
     if request.method == "POST":
         try:
             ecole = Ecoles.objects.get(id=request.POST['ecole'])
@@ -270,6 +272,7 @@ def ajouter_vente(request):
                 date_paiement=date_paiement,
             )
 
+            # Créer le tableau complet avec en-tête + données
             lignes_facture = [["Cahier", "Quantité", "Prix Unitaire", "Total"]]
             montant_total = 0
 
@@ -299,58 +302,110 @@ def ajouter_vente(request):
                 cahier.quantite_stock -= qte
                 cahier.save()
 
-            # Génération du PDF dans un buffer avec uniquement le tableau
+            # Génération du PDF dans un buffer
             buffer = BytesIO()
             p = canvas.Canvas(buffer, pagesize=A4)
 
-            # Informations texte (facultatif) — à ajuster selon ton design
-            p.setFont("Arial", 11)
-            p.drawString(2 * cm, 22.5 * cm, f"École : {ecole.nom}")
-            p.drawString(2 * cm, 22 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
-            p.drawString(2 * cm, 21.5 * cm, f"Date limite de paiement : {date_paiement}")
-            p.drawString(2 * cm, 21 * cm, f"Facture N° : {str(vente.id)[:8]}")
-
-            # Création du tableau des lignes de vente
+            # Informations texte - repositionnées pour laisser encore plus d'espace
+            p.setFont("Helvetica", 11)
+            p.drawString(2 * cm, 22 * cm, f"École : {ecole.nom}")
+            p.drawString(2 * cm, 21.5 * cm, f"Date : {datetime.now().strftime('%d/%m/%Y')}")
+            p.drawString(2 * cm, 21 * cm, f"Date limite de paiement : {date_paiement}")
+            p.drawString(2 * cm, 20.5 * cm, f"Facture N° : {str(vente.id)[:8]}")
+  
+            # POSITION FIXE pour le tableau - plus bas pour ne pas entrer dans l'en-tête
+            position_y_tableau = 16 * cm
+            
+            # Créer le tableau complet
             table = Table(lignes_facture, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
-            table.setStyle(TableStyle([
+            
+            # Styles du tableau - padding réduit pour plus de compacité
+            styles = [
+                # En-tête avec fond bleu
                 ('BACKGROUND', (0,0), (-1,0), colors.blue),
                 ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 10),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 3),
+                
+                # Données avec police normale
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,1), (-1,-1), 10),
+                ('TOPPADDING', (0,1), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,1), (-1,-1), 3),
+                
+                # Alignement et bordures
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('GRID', (0,0), (-1,-1), 1, colors.black),
-                ('FONTNAME', (0,0), (-1,0), 'Arial-Bold'),
-                ('FONTNAME', (0,1), (-1,-1), 'Arial'),
-                ('FONTSIZE', (0,0), (-1,-1), 10),
-                ('BOTTOMPADDING', (0,0), (-1,0), 8),
-                ('TOPPADDING', (0,1), (-1,-1), 4),
-                ('BOTTOMPADDING', (0,1), (-1,-1), 4),
-            ]))
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ]
+            
+            # Ajouter l'alternance de couleurs pour les lignes de données (à partir de la ligne 1)
+            for i in range(1, len(lignes_facture), 2):
+                styles.append(('BACKGROUND', (0,i), (-1,i), colors.lightgrey))
+            
+            table.setStyle(TableStyle(styles))
+            
+            # Positionner le tableau à une position fixe
+            table.wrapOn(p, *A4)
+            table.drawOn(p, 2 * cm, position_y_tableau)
+            
+            # Calculer la position pour le montant total - vraiment collé au tableau
+            hauteur_tableau = table._height
+            position_y_total = position_y_tableau - hauteur_tableau - 0.1 * cm
 
-            table_width, table_height = table.wrap(0, 0)
-
-            table_top_y = 18 * cm
-            table_bottom_y = table_top_y - table_height
-
-            # Dessiner le tableau
-            table.drawOn(p, 2 * cm, table_bottom_y)
-
-            # Écrire le total juste en dessous du tableau, sans espace
-            p.setFont("Arial-Bold", 14)
-            p.drawString(2 * cm, table_bottom_y - 0.5 * cm, f"Montant total : {montant_total:.2f} F CFA")
+            # Montant total
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(2 * cm, position_y_total, f"Montant total : {montant_total:.2f} F CFA")
 
             p.save()
             buffer.seek(0)
 
             # Fusion avec le PDF existant (papier en-tête)
             papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/papier.pdf')
-            modele_pdf = PdfReader(papier_en_tete_path)
-            tableau_pdf = PdfReader(buffer)
+            
+            # Vérifier si le fichier papier en-tête existe
+            if os.path.exists(papier_en_tete_path):
+                try:
+                    modele_pdf = PdfReader(papier_en_tete_path)
+                    tableau_pdf = PdfReader(buffer)
 
-            writer = PdfWriter()
-            page_modele = modele_pdf.pages[0]
-            page_tableau = tableau_pdf.pages[0]
+                    writer = PdfWriter()
+                    
+                    # Vérifier que les PDF ont des pages
+                    if len(modele_pdf.pages) > 0 and len(tableau_pdf.pages) > 0:
+                        page_modele = modele_pdf.pages[0]
+                        page_tableau = tableau_pdf.pages[0]
 
-            page_modele.merge_page(page_tableau)
-            writer.add_page(page_modele)
+                        page_modele.merge_page(page_tableau)
+                        writer.add_page(page_modele)
+                    else:
+                        # Si problème avec les pages, utiliser seulement le tableau
+                        tableau_pdf = PdfReader(buffer)
+                        if len(tableau_pdf.pages) > 0:
+                            writer.add_page(tableau_pdf.pages[0])
+                        else:
+                            raise Exception("Aucune page générée dans le PDF")
+                            
+                except Exception as pdf_error:
+                    print(f"Erreur lors de la fusion PDF : {pdf_error}")
+                    # En cas d'erreur, utiliser seulement le tableau généré
+                    tableau_pdf = PdfReader(buffer)
+                    writer = PdfWriter()
+                    if len(tableau_pdf.pages) > 0:
+                        writer.add_page(tableau_pdf.pages[0])
+                    else:
+                        raise Exception("Impossible de créer le PDF")
+            else:
+                # Si le papier en-tête n'existe pas, utiliser seulement le tableau
+                print(f"Fichier papier en-tête introuvable : {papier_en_tete_path}")
+                tableau_pdf = PdfReader(buffer)
+                writer = PdfWriter()
+                if len(tableau_pdf.pages) > 0:
+                    writer.add_page(tableau_pdf.pages[0])
+                else:
+                    raise Exception("Impossible de créer le PDF")
 
             # Enregistrement dans un buffer final
             final_buffer = BytesIO()
@@ -365,9 +420,20 @@ def ajouter_vente(request):
 
         except Exception as e:
             print(f"Erreur générale : {e}")
+            print(f"Type d'erreur : {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             messages.error(request, f"Erreur : {str(e)}")
+            
+            # Nettoyer la vente si elle a été créée
+            if 'vente' in locals():
+                try:
+                    vente.delete()
+                except:
+                    pass
 
         return redirect('ventes')
+    
 
 
 def ajouter_paiement(request, vente_id):
@@ -516,10 +582,10 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     y_start = 22.5 * cm  # descend sous le logo
 
-    p.setFont("Arial-Bold", 14)
+    p.setFont("Helvetica-Bold", 14)
     p.drawString(2 * cm, y_start, "RÉCAPITULATIF DES VENTES")
 
-    p.setFont("Arial", 11)
+    p.setFont("Helvetica", 11)
     p.drawString(2 * cm, y_start - 0.8 * cm, f"École: {ecole.nom}")
     p.drawString(2 * cm, y_start - 1.4 * cm, f"Adresse: {ecole.adresse}")
     p.drawString(2 * cm, y_start - 2 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
@@ -530,12 +596,12 @@ def generer_pdf_ventes_ecole(request, ecole_id):
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Arial-Bold'),
-        ('FONTNAME', (0, 1), (-1, -2), 'Arial'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
         ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-        ('FONTNAME', (0, -1), (-1, -1), 'Arial-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
     ]))
 
     table.wrapOn(p, width, height)
@@ -543,10 +609,10 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     # Statistiques
     y_stat = 11 * cm
-    p.setFont("Arial-Bold", 11)
+    p.setFont("Helvetica-Bold", 11)
     p.drawString(2 * cm, y_stat, "STATISTIQUES:")
 
-    p.setFont("Arial", 10)
+    p.setFont("Helvetica", 10)
     p.drawString(2 * cm, y_stat - 0.6 * cm, f"• Nombre total de ventes: {ventes.count()}")
     p.drawString(2 * cm, y_stat - 1.2 * cm, f"• Montant total des ventes: {montant_total_general:.0f} F")
     p.drawString(2 * cm, y_stat - 1.8 * cm, f"• Montant total payé: {montant_paye_general:.0f} F")
@@ -556,7 +622,7 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 
     ventes_en_retard = ventes.filter(date_paiement__lt=timezone.now().date()).exclude(id__in=[v.id for v in ventes if v.est_reglee()])
     if ventes_en_retard.exists():
-        p.setFont("Arial-Bold", 10)
+        p.setFont("Helvetica-Bold", 10)
         p.setFillColor(colors.red)
         p.drawString(2 * cm, y_stat - 4 * cm, f"⚠ {ventes_en_retard.count()} vente(s) en retard de paiement")
         p.setFillColor(colors.black)
