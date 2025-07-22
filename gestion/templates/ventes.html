@@ -207,12 +207,6 @@
                   </select>
                 </div>
 
-                <div class="mb-3">
-                  <label for="date_paiement" class="form-label">Date limite de paiement</label>
-                  <input type="datetime-local" name="date_paiement" id="date_paiement" class="form-control border border-secondary" required />
-                  <div class="form-text">L'école peut payer en 3 tranches maximum avant cette date</div>
-                </div>
-
                 <!-- Section dynamique pour les lignes de vente -->
                 <div id="cahiers-container">
                   <div class="row align-items-end mb-2 cahier-row">
@@ -235,7 +229,15 @@
                   </div>
                 </div>
                 <button type="button" id="addCahierRow" class="btn btn-secondary btn-sm mt-2">+ Ajouter un cahier</button>
+                
+
+                <div class="mb-3">
+                  <label for="montant_verse" class="form-label">Montant versé (facultatif)</label>
+                  <input type="number" name="montant_verse" id="montant_verse" class="form-control border border-secondary" min="0" />
+                </div>
+        
               </div>
+
               <div class="modal-footer">
                 <button type="submit" class="btn btn-dark">Enregistrer</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>

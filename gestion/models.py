@@ -20,6 +20,7 @@ class Ecoles(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
 class Vente(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ecole = models.ForeignKey(Ecoles, on_delete=models.CASCADE, related_name='ventes')
@@ -40,7 +41,6 @@ class Vente(models.Model):
     
     @property
     def montant_paye(self):
-        """Retourne le montant total payé pour cette vente"""
         return sum(p.montant for p in self.paiements.all())
 
     def est_reglee(self):
@@ -78,6 +78,7 @@ class Paiement(models.Model):
 
     def __str__(self):
         return f"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}"
+
 
 
 class LigneVente(models.Model):
