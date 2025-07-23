@@ -391,7 +391,7 @@ def generer_facture_pdf(vente):
                     f"<b><font color='red'>PAIEMENT EN RETARD</font></b>", 
                     style_important
                 ))
-            elif hasattr(vente, 'date_paiement') and vente.date_paiement < tz.now():
+            elif hasattr(vente, 'date_paiement') and vente.date_paiement < timezone.now():
                 story.append(Paragraph(
                     f"<b><font color='red'>PAIEMENT EN RETARD</font></b>", 
                     style_important
