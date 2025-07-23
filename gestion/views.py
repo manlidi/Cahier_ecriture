@@ -388,12 +388,12 @@ def generer_facture_pdf(vente):
         try:
             if callable(getattr(vente, 'est_en_retard', None)) and vente.est_en_retard():
                 story.append(Paragraph(
-                    f"<b><font color='red'>⚠️ PAIEMENT EN RETARD ⚠️</font></b>", 
+                    f"<b><font color='red'>PAIEMENT EN RETARD</font></b>", 
                     style_important
                 ))
             elif hasattr(vente, 'date_paiement') and vente.date_paiement < tz.now():
                 story.append(Paragraph(
-                    f"<b><font color='red'>⚠️ PAIEMENT EN RETARD ⚠️</font></b>", 
+                    f"<b><font color='red'>PAIEMENT EN RETARD</font></b>", 
                     style_important
                 ))
         except:
@@ -664,9 +664,38 @@ def generer_pdf_ventes_ecole(request, ecole_id):
     montant_total_general = 0
     montant_paye_general = 0
 
+    def formater_dates_avec_retour_ligne(dates_str, max_chars_par_ligne=25):
+        """Formate les dates pour qu'elles s'affichent sur plusieurs lignes si nécessaire"""
+        if not dates_str or dates_str == "Aucun paiement":
+            return dates_str
+        
+        # Divise les dates par la virgule et l'espace
+        dates_list = dates_str.split(", ")
+        lignes = []
+        ligne_courante = ""
+        
+        for date in dates_list:
+            # Si ajouter cette date dépasse la limite, commencer une nouvelle ligne
+            if ligne_courante and len(ligne_courante + ", " + date) > max_chars_par_ligne:
+                lignes.append(ligne_courante)
+                ligne_courante = date
+            else:
+                if ligne_courante:
+                    ligne_courante += ", " + date
+                else:
+                    ligne_courante = date
+        
+        # Ajouter la dernière ligne
+        if ligne_courante:
+            lignes.append(ligne_courante)
+        
+        return "\n".join(lignes)
+
     for vente in ventes:
         paiements = vente.paiements.all()
         dates_paiements = ", ".join([p.date_paiement.strftime('%d/%m/%Y') for p in paiements]) or "Aucun paiement"
+        dates_formatees = formater_dates_avec_retour_ligne(dates_paiements)
+        
         montant_total_general += vente.montant_total
         montant_paye_general += vente.montant_paye
 
@@ -676,7 +705,7 @@ def generer_pdf_ventes_ecole(request, ecole_id):
             f"{vente.montant_paye:.0f} F",
             f"{vente.montant_restant():.0f} F",
             vente.statut_paiement(),
-            dates_paiements[:30] + "..." if len(dates_paiements) > 30 else dates_paiements
+            dates_formatees
         ])
 
     # Ligne de total
@@ -702,18 +731,22 @@ def generer_pdf_ventes_ecole(request, ecole_id):
     p.drawString(2 * cm, y_start - 1.4 * cm, f"Adresse: {ecole.adresse}")
     p.drawString(2 * cm, y_start - 2 * cm, f"Date d'édition: {timezone.now().strftime('%d/%m/%Y à %H:%M')}")
 
-    # Tableau des ventes
+    # Tableau des ventes avec hauteur de ligne adaptative
     table = Table(donnees_tableau, colWidths=[3*cm]*4 + [2.5*cm, 4*cm])
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),  
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),  
         ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('WORDWRAP', (0, 0), (-1, -1), True),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.beige, colors.white] * len(donnees_tableau)),
     ]))
 
     table.wrapOn(p, width, height)
