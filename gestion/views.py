@@ -104,7 +104,7 @@ def home(request):
         'ecole__nom'
     ).annotate(
         total_ca=Sum('paiements__montant'),
-        nb_ventes=Count('id')
+        nb_ventes=Count('id', distinct=True)
     ).order_by('-total_ca')[:5]
     
     # Ventes en retard
@@ -141,7 +141,7 @@ def home(request):
     
     # Trier les activités par date
     activites_recentes.sort(key=lambda x: x['date'], reverse=True)
-    activites_recentes = activites_recentes[:3]  # Garder seulement les 6 plus récentes
+    activites_recentes = activites_recentes[:3]  
     
     # Données sur les stocks
     stock_faible = Cahiers.objects.filter(quantite_stock__lt=10).count()
