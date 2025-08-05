@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Détail Bilan - {{ mois_nom }} {{ bilan.annee }}{% endblock %}
+{% block content %}
+{% load static %}
+
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Bilan Détaillé</h3>
+      <p class="mb-4">{{ mois_nom }} {{ bilan.annee }} - Année scolaire {{ annee_scolaire.libelle }}</p>
+    </div>
+
+    <!-- Navigation de retour -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <a href="{% url 'bilans_mensuels' annee_scolaire.id %}" class="btn btn-outline-secondary btn-sm me-2">
+          <i class="material-symbols-rounded opacity-5">arrow_back</i>
+          Retour aux bilans mensuels
+        </a>
+        <a href="{% url 'bilans_annuels' %}" class="btn btn-outline-info btn-sm">
+          <i class="material-symbols-rounded opacity-5">assessment</i>
+          Bilans annuels
+        </a>
+      </div>
+    </div>
+
+    <!-- Résumé du mois -->
+    <div class="row mb-4">
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Ventes du Mois</p>
+                <h4 class="mb-0">{{ bilan.montant_ventes|floatformat:0 }} F</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-primary shadow-primary text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">trending_up</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Paiements Reçus</p>
+                <h4 class="mb-0">{{ bilan.montant_paye|floatformat:0 }} F</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-success shadow-success text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">payments</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Nombre de Ventes</p>
+                <h4 class="mb-0">{{ bilan.nombre_ventes }}</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-info shadow-info text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">shopping_bag</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Taux Recouvrement</p>
+                <h4 class="mb-0">{{ bilan.taux_recouvrement }}%</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">analytics</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ventes par cahier -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Ventes par Cahier - {{ mois_nom }} {{ bilan.annee }}</h6>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Cahier</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Quantité Vendue</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prix Unitaire</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">CA Généré</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Stock Actuel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for data in cahiers_data %}
+                    {% if data.quantite_vendue > 0 %}
+                    <tr>
+                      <td>
+                        <div class="d-flex px-2 py-1">
+                          <div class="d-flex flex-column justify-content-center">
+                            <h6 class="mb-0 text-sm">{{ data.titre }}</h6>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <p class="text-xs font-weight-bold mb-0">{{ data.quantite_vendue }}</p>
+                      </td>
+                      <td class="align-middle text-center text-sm">
+                        <span class="text-xs font-weight-bold">{{ data.prix_unitaire }} F</span>
+                      </td>
+                      <td class="align-middle text-center">
+                        <span class="text-xs font-weight-bold text-success">{{ data.ca_genere|floatformat:0 }} F</span>
+                      </td>
+                      <td class="align-middle text-center text-sm">
+                        <span class="text-xs font-weight-bold 
+                          {% if data.stock_actuel < 10 %}text-danger{% elif data.stock_actuel < 20 %}text-warning{% else %}text-success{% endif %}">
+                          {{ data.stock_actuel }}
+                        </span>
+                      </td>
+                    </tr>
+                    {% endif %}
+                  {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center">
+                      Aucune vente de cahier ce mois-ci.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des ventes du mois -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Ventes du Mois</h6>
+            <p class="text-sm mb-0">
+              <span>Du {{ debut_mois|date:"d/m/Y" }} au {{ fin_mois|date:"d/m/Y" }}</span>
+            </p>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">École</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date Vente</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant Total</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant Payé</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Statut</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date Limite</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for vente in ventes_mois %}
+                  <tr>
+                    <td>
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm">{{ vente.ecole.nom }}</h6>
+                          <p class="text-xs text-secondary mb-0">{{ vente.ecole.adresse|truncatechars:30 }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <p class="text-xs font-weight-bold mb-0">{{ vente.created_at|date:"d/m/Y" }}</p>
+                      <p class="text-xs text-secondary mb-0">{{ vente.created_at|date:"H:i" }}</p>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="text-xs font-weight-bold">{{ vente.montant_total|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-xs font-weight-bold text-success">{{ vente.montant_paye|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="badge badge-sm 
+                        {% if vente.statut_paiement == 'Payé' %}bg-gradient-success
+                        {% elif vente.statut_paiement == 'Partiellement payé' %}bg-gradient-warning
+                        {% else %}bg-gradient-danger{% endif %}">
+                        {{ vente.statut_paiement }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="text-xs {% if vente.est_en_retard %}text-danger font-weight-bold{% endif %}">
+                        {{ vente.date_paiement|date:"d/m/Y" }}
+                        {% if vente.est_en_retard %}
+                          <i class="material-symbols-rounded opacity-5 text-danger">warning</i>
+                        {% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center">
+                      Aucune vente ce mois-ci.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paiements reçus ce mois -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Paiements Reçus ce Mois</h6>
+            <p class="text-sm mb-0">
+              <span>Tous les paiements effectués en {{ mois_nom|lower }} {{ bilan.annee }}</span>
+            </p>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">École</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date Paiement</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">N° Tranche</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Vente Originale</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for paiement in paiements_mois %}
+                  <tr>
+                    <td>
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm">{{ paiement.vente.ecole.nom }}</h6>
+                          <p class="text-xs text-secondary mb-0">{{ paiement.vente.ecole.adresse|truncatechars:30 }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <p class="text-xs font-weight-bold mb-0">{{ paiement.date_paiement|date:"d/m/Y" }}</p>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="text-xs font-weight-bold text-success">{{ paiement.montant|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="badge badge-sm bg-gradient-info">
+                        Tranche {{ paiement.numero_tranche }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="text-xs">{{ paiement.vente.created_at|date:"d/m/Y" }}</span>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center">
+                      Aucun paiement reçu ce mois-ci.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

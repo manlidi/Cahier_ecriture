@@ -72,6 +72,38 @@
         <span class="nav-link-text ms-1">Historique</span>
       </a>
     </li>
+    
+    <!-- Section Gestion et Bilans -->
+    <li class="nav-item mt-3">
+      <h6 class="ps-4 ms-2 text-uppercase text-xs text-dark font-weight-bolder opacity-5">Gestion & Bilans</h6>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if 'annees-scolaires' in request.path %}active bg-gradient-dark text-white{% else %}text-dark{% endif %}"
+        href="{% url 'annees_scolaires' %}"
+      >
+        <i class="material-symbols-rounded opacity-5">calendar_today</i>
+        <span class="nav-link-text ms-1">Années Scolaires</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if 'bilans-annuels' in request.path %}active bg-gradient-dark text-white{% else %}text-dark{% endif %}"
+        href="{% url 'bilans_annuels' %}"
+      >
+        <i class="material-symbols-rounded opacity-5">assessment</i>
+        <span class="nav-link-text ms-1">Bilans Annuels</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a
+        class="nav-link {% if 'comparaison-annees' in request.path %}active bg-gradient-dark text-white{% else %}text-dark{% endif %}"
+        href="{% url 'comparaison_annees' %}"
+      >
+        <i class="material-symbols-rounded opacity-5">trending_up</i>
+        <span class="nav-link-text ms-1">Comparaison Années</span>
+      </a>
+    </li>
     </ul>
   </div>
 </aside>

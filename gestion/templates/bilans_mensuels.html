@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Bilans Mensuels - {{ annee }}{% endblock %}
+{% block content %}
+{% load static %}
+{% load mathfilters %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Bilans Mensuels</h3>
+      <p class="mb-4">Année scolaire {{ annee.libelle }}</p>
+    </div>
+
+    <!-- Navigation de retour -->
+    <div class="row mb-3">
+      <div class="col-12">
+        <a href="{% url 'bilans_annuels' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="material-symbols-rounded opacity-5">arrow_back</i>
+          Retour aux bilans annuels
+        </a>
+      </div>
+    </div>
+
+    <!-- Résumé global -->
+    <div class="row mb-4">
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Total Ventes</p>
+                <h4 class="mb-0">{{ total_ventes|floatformat:0 }} F</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">trending_up</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Total Payé</p>
+                <h4 class="mb-0">{{ total_paiements|floatformat:0 }} F</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-success shadow-success text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">payments</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Nombre Ventes</p>
+                <h4 class="mb-0">{{ total_nombre_ventes }}</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-info shadow-info text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">shopping_bag</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-0 text-capitalize">Taux Recouvrement</p>
+                <h4 class="mb-0">{{ pourcentage_paye }}%</h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">analytics</i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique d'évolution -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Évolution Mensuelle</h6>
+          </div>
+          <div class="card-body p-3">
+            <canvas id="chartEvolutionMensuelle" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau des bilans mensuels -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Détail par Mois</h6>
+                <p class="text-sm mb-0">
+                  <span>Résultats mensuels pour l'année {{ annee.libelle }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive m-4">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mois</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Nb Ventes</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant Ventes</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant Payé</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montant Impayé</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Taux Recouvrement</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for bilan in bilans_mensuels %}
+                  <tr>
+                    <td>
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm">{{ bilan.nom_mois }} {{ bilan.annee }}</h6>
+                          <p class="text-xs text-secondary mb-0">{{ bilan.mois|stringformat:"02d" }}/{{ bilan.annee }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <p class="text-xs font-weight-bold mb-0">{{ bilan.nombre_ventes }}</p>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                      <span class="text-xs font-weight-bold">{{ bilan.montant_ventes|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-xs font-weight-bold text-success">{{ bilan.montant_paye|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-xs font-weight-bold text-danger">{{ bilan.montant_impaye|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center text-sm">
+                        {% if bilan.taux_recouvrement > 0 %}
+                            <span class="badge badge-sm {% if bilan.taux_recouvrement >= 80 %}bg-gradient-success{% elif bilan.taux_recouvrement >= 50 %}bg-gradient-warning{% else %}bg-gradient-danger{% endif %}">
+                            {{ bilan.taux_recouvrement }}%
+                            </span>
+                        {% else %}
+                            <span class="badge badge-sm bg-gradient-secondary">0%</span>
+                        {% endif %}
+                    </td>
+                    <td class="align-middle text-center">
+                      <a href="{% url 'detail_bilan_mensuel' annee.id bilan.mois bilan.annee %}" 
+                         class="btn btn-sm btn-outline-info" title="Voir détails">
+                        <i class="material-symbols-rounded opacity-5">visibility</i>
+                        Détails
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="7" class="text-center">
+                      Aucun bilan mensuel disponible pour cette année.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts pour les graphiques -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+  // Données pour le graphique d'évolution
+  const graphiqueData = {{ graphique_data_json|safe }};
+  
+  // Configuration du graphique d'évolution mensuelle
+  const ctxEvolution = document.getElementById('chartEvolutionMensuelle').getContext('2d');
+  const chartEvolution = new Chart(ctxEvolution, {
+    type: 'line',
+    data: {
+      labels: graphiqueData.map(item => item.mois_court),
+      datasets: [
+        {
+          label: 'Ventes (F CFA)',
+          data: graphiqueData.map(item => item.ventes),
+          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Paiements (F CFA)',
+          data: graphiqueData.map(item => item.paiements),
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.1)',
+          tension: 0.4,
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value.toLocaleString() + ' F';
+            }
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' F CFA';
+            }
+          }
+        }
+      }
+    }
+  });
+</script>
+
+{% load mathfilters %}
+
+{% endblock %}

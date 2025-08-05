@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Bilans Annuels{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Bilans Annuels</h3>
+      <p class="mb-4">Vue d'ensemble des performances par année scolaire</p>
+    </div>
+
+    <!-- Résumé global -->
+    <div class="row mb-4">
+      {% for bilan_data in bilans %}
+      <div class="col-xl-4 col-sm-6 mb-xl-0 mb-4">
+        <div class="card">
+          <div class="card-header p-2 ps-3">
+            <div class="d-flex justify-content-between">
+              <div>
+                <p class="text-sm mb-2 text-capitalize">{{ bilan_data.annee.libelle }}</p>
+                <h4 class="font-weight-bolder mb-0">
+                  {{ bilan_data.bilan.montant_total_ventes|floatformat:0 }} F
+                  {% if bilan_data.annee.est_active %}
+                    <span class="badge bg-success ms-2">ACTIVE</span>
+                  {% endif %}
+                </h4>
+              </div>
+              <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark text-center border-radius-lg">
+                <i class="material-symbols-rounded opacity-10">trending_up</i>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-3">
+            <div class="row">
+              <div class="col-6">
+                <div class="numbers">
+                  <p class="text-sm mb-0 text-capitalize font-weight-bold">Payé</p>
+                  <h6 class="font-weight-bolder mb-0 text-success">
+                    {{ bilan_data.bilan.montant_total_paye|floatformat:0 }} F
+                  </h6>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="numbers">
+                  <p class="text-sm mb-0 text-capitalize font-weight-bold">Restant</p>
+                  <h6 class="font-weight-bolder mb-0 text-danger">
+                    {{ bilan_data.bilan.montant_total_impaye|floatformat:0 }} F
+                  </h6>
+                </div>
+              </div>
+            </div>
+            
+            <div class="progress mt-2">
+              <div class="progress-bar bg-gradient-success" 
+                   role="progressbar" 
+                   style="width: {{ bilan_data.pourcentage_paye }}%"
+                   aria-valuenow="{{ bilan_data.pourcentage_paye }}" 
+                   aria-valuemin="0" 
+                   aria-valuemax="100">
+              </div>
+            </div>
+            <p class="text-sm mb-0 mt-1">
+              <span class="text-success font-weight-bolder">{{ bilan_data.pourcentage_paye }}%</span> 
+              des paiements collectés
+            </p>
+            
+            <div class="mt-3">
+              <div class="d-flex justify-content-between text-sm">
+                <span>{{ bilan_data.bilan.nombre_ventes_total }} ventes</span>
+                <span>{{ bilan_data.bilan.nombre_ecoles_actives }} écoles</span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-3">
+              <a href="{% url 'detail_bilan_annuel' bilan_data.annee.id %}" 
+                 class="btn btn-sm btn-outline-info">
+                <i class="material-symbols-rounded">visibility</i>
+                Détails
+              </a>
+              
+              <a href="{% url 'bilans_mensuels' bilan_data.annee.id %}" 
+                 class="btn btn-sm btn-outline-primary">
+                <i class="material-symbols-rounded">calendar_month</i>
+                Mensuels
+              </a>
+              
+              <a href="{% url 'generer_rapport_annuel_pdf' bilan_data.annee.id %}" 
+                 class="btn btn-sm btn-outline-dark" target="_blank">
+                <i class="material-symbols-rounded">picture_as_pdf</i>
+                PDF
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body text-center">
+            <i class="material-symbols-rounded text-muted" style="font-size: 48px;">assessment</i>
+            <h5 class="text-muted mt-3">Aucune année scolaire trouvée</h5>
+            <p class="text-muted">Créez d'abord une année scolaire pour voir les bilans.</p>
+            <a href="{% url 'annees_scolaires' %}" class="btn btn-dark">
+              <i class="material-symbols-rounded me-2">add</i>
+              Créer une année scolaire
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Tableau récapitulatif détaillé -->
+    {% if bilans %}
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Tableau comparatif détaillé</h6>
+                <p class="text-sm mb-0">Comparaison des performances par année</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="m-4">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th>
+                      Année Scolaire
+                    </th>
+                    <th>
+                      Ventes Totales
+                    </th>
+                    <th>
+                      Montant Payé
+                    </th>
+                    <th>
+                      Taux Recouvrement
+                    </th>
+                    <th>
+                      Nb Ventes
+                    </th>
+                    <th>
+                      Écoles Actives
+                    </th>
+                    <th class="text-secondary opacity-7"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for bilan_data in bilans %}
+                  <tr {% if bilan_data.annee.est_active %}class="table-success"{% endif %}>
+                    <td class="border">
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm">{{ bilan_data.annee.libelle }}</h6>
+                          {% if bilan_data.annee.est_active %}
+                            <span class="badge bg-success">Année active</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </td>
+                    <td class="border">
+                      <p class="text-xs font-weight-bold mb-0">{{ bilan_data.bilan.montant_total_ventes|floatformat:0 }} F</p>
+                      <p class="text-xs text-secondary mb-0">
+                        Impayé: {{ bilan_data.bilan.montant_total_impaye|floatformat:0 }} F
+                      </p>
+                    </td>
+                    <td class="align-middle text-center text-sm border">
+                      <span class="text-success font-weight-bold">
+                        {{ bilan_data.bilan.montant_total_paye|floatformat:0 }} F
+                      </span>
+                    </td>
+                    <td class="align-middle text-center border">
+                      <div class="progress-wrapper w-75 mx-auto">
+                        <div class="progress-info">
+                          <div class="progress-percentage">
+                            <span class="text-xs font-weight-bold">{{ bilan_data.pourcentage_paye }}%</span>
+                          </div>
+                        </div>
+                        <div class="progress">
+                          <div class="progress-bar bg-gradient-success w-{{ bilan_data.pourcentage_paye }}" 
+                               role="progressbar" aria-valuenow="{{ bilan_data.pourcentage_paye }}" 
+                               aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="align-middle text-center border">
+                      <span class="text-secondary text-xs font-weight-bold">
+                        {{ bilan_data.bilan.nombre_ventes_total }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-center border">
+                      <span class="text-secondary text-xs font-weight-bold">
+                        {{ bilan_data.bilan.nombre_ecoles_actives }}
+                      </span>
+                    </td>
+                    <td class="align-middle border">
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                type="button" data-bs-toggle="dropdown">
+                          Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <a class="dropdown-item" href="{% url 'detail_bilan_annuel' bilan_data.annee.id %}">
+                              <i class="material-symbols-rounded me-2">visibility</i>
+                              Voir détails
+                            </a>
+                          </li>
+                          <li>
+                            <a class="dropdown-item" href="{% url 'bilans_mensuels' bilan_data.annee.id %}">
+                              <i class="material-symbols-rounded me-2">calendar_month</i>
+                              Bilans mensuels
+                            </a>
+                          </li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <a class="dropdown-item" href="{% url 'generer_rapport_annuel_pdf' bilan_data.annee.id %}" target="_blank">
+                              <i class="material-symbols-rounded me-2">picture_as_pdf</i>
+                              Télécharger PDF
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

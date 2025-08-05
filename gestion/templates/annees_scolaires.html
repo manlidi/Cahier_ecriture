@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Années Scolaires{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Années Scolaires</h3>
+      <p class="mb-4">Gestion des années scolaires</p>
+    </div>
+
+    <!-- Section pour créer une nouvelle année -->
+    <div class="row mb-4">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <p class="text-sm mb-0">Créer une nouvelle année scolaire</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <form method="POST" action="{% url 'creer_annee_scolaire' %}">
+              {% csrf_token %}
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="annee_debut" class="form-label">Année de début</label>
+                    <input type="number" class="form-control border border-secondary" 
+                           name="annee_debut" min="2020" max="2040" 
+                           placeholder="Ex: 2024" required />
+                    <small class="form-text text-muted">
+                      L'année de fin sera automatiquement calculée (année+1)
+                    </small>
+                  </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                  <button type="submit" class="btn btn-dark">
+                    <i class="material-symbols-rounded me-2">add</i>
+                    Créer l'année scolaire
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des années existantes -->
+    <div class="row mb-4">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <p class="text-sm mb-0">
+                  <span>Liste des années scolaires</span>
+                  {% if annee_courante %}
+                    <span class="badge bg-success ms-2">Année active: {{ annee_courante.libelle }}</span>
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Année Scolaire</th>
+                    <th scope="col">Période</th>
+                    <th scope="col">Statut</th>
+                    <th scope="col">Date de création</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for annee in annees %}
+                  <tr {% if annee.est_active %}class="table-success"{% endif %}>
+                    <td class="border">
+                      <strong>{{ annee.libelle }}</strong>
+                      {% if annee.est_active %}
+                        <span class="badge bg-success ms-2">ACTIVE</span>
+                      {% endif %}
+                    </td>
+                    <td class="border">
+                      {{ annee.date_debut|date:"d/m/Y" }} - {{ annee.date_fin|date:"d/m/Y" }}
+                    </td>
+                    <td class="border">
+                      {% if annee.est_active %}
+                        <span class="text-success">
+                          <i class="material-symbols-rounded">check_circle</i>
+                          Année courante
+                        </span>
+                      {% else %}
+                        <span class="text-muted">
+                          <i class="material-symbols-rounded">schedule</i>
+                          Inactive
+                        </span>
+                      {% endif %}
+                    </td>
+                    <td class="border">{{ annee.created_at|date:"d/m/Y à H:i" }}</td>
+                    <td class="border">
+                      {% if not annee.est_active %}
+                        <a href="{% url 'activer_annee_scolaire' annee.id %}" 
+                           class="btn btn-sm btn-outline-success"
+                           onclick="return confirm('Êtes-vous sûr de vouloir activer cette année scolaire ? Cela désactivera l\'année courante.')">
+                          <i class="material-symbols-rounded">play_circle</i>
+                          Activer
+                        </a>
+                      {% endif %}
+                      
+                      <a href="{% url 'detail_bilan_annuel' annee.id %}" 
+                         class="btn btn-sm btn-outline-info">
+                        <i class="material-symbols-rounded">assessment</i>
+                        Bilan
+                      </a>
+                      
+                      <a href="{% url 'bilans_mensuels' annee.id %}" 
+                         class="btn btn-sm btn-outline-primary">
+                        <i class="material-symbols-rounded">calendar_month</i>
+                        Mensuels
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center">
+                      Aucune année scolaire créée.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Informations utiles -->
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Informations importantes</h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="alert alert-info">
+                  <i class="material-symbols-rounded me-2">info</i>
+                  <strong>Année scolaire</strong><br>
+                  Une année scolaire s'étend généralement de Juillet à Juin de l'année suivante.
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="alert alert-warning">
+                  <i class="material-symbols-rounded me-2">warning</i>
+                  <strong>Activation</strong><br>
+                  Seule une année scolaire peut être active à la fois. Toutes les nouvelles ventes seront associées à l'année active.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

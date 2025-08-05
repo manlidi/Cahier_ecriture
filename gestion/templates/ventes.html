@@ -38,7 +38,9 @@
             </div>
             <div class="card-body p-4 pb-2">
               <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control border border-secondary" placeholder="Rechercher par nom d'école...">
+                <form method="get" class="mb-3">
+                  <input type="text" id="searchInput" name="search" value="{{ search_query }}" class="form-control border border-secondary" placeholder="Rechercher par nom d'école...">
+                </form>
               </div>
               <div class="table-responsive">
                 <table class="table table-bordered">
@@ -151,7 +153,7 @@
                   <ul class="pagination justify-content-center mt-4">
                     {% if page_obj.has_previous %}
                       <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><<</a>
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"><<</a>
                       </li>
                     {% else %}
                       <li class="page-item disabled">
@@ -165,13 +167,15 @@
                           <span class="page-link">{{ num }}</span>
                         </li>
                       {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        <li class="page-item">
+                          <a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a>
+                        </li>
                       {% endif %}
                     {% endfor %}
 
                     {% if page_obj.has_next %}
                       <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">>></a>
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">>></a>
                       </li>
                     {% else %}
                       <li class="page-item disabled">

@@ -1,0 +1,337 @@
+{% extends "base.html" %} 
+{% block title %}Statistiques des Cahiers{% endblock %} 
+{% block content %} 
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">Statistiques des Cahiers</h3>
+      <p class="mb-4">Analyse des performances de vente par cahier sur toutes les années</p>
+    </div>
+
+    <!-- Graphique Top 10 -->
+    <div class="row mb-4">
+      <div class="col-lg-8 mb-4">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Top 10 des Cahiers - Chiffre d'Affaires</h6>
+                <p class="text-sm mb-0">Classement par CA généré toutes années confondues</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <canvas id="topCahiersChart" height="80"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Résumé statistiques -->
+      <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header pb-0">
+            <h6>Résumé Global</h6>
+          </div>
+          <div class="card-body">
+            <div class="timeline timeline-one-side">
+              <div class="timeline-block mb-3">
+                <span class="timeline-step">
+                  <i class="ni ni-books text-success text-gradient"></i>
+                </span>
+                <div class="timeline-content">
+                  <h6 class="text-dark text-sm font-weight-bold mb-0">Total Cahiers</h6>
+                  <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{ stats_cahiers|length }} cahiers différents</p>
+                </div>
+              </div>
+              
+              <div class="timeline-block mb-3">
+                <span class="timeline-step">
+                  <i class="ni ni-cart text-info text-gradient"></i>
+                </span>
+                <div class="timeline-content">
+                  <h6 class="text-dark text-sm font-weight-bold mb-0">Total Vendu</h6>
+                  <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                    {% for stat in stats_cahiers %}{% if forloop.first %}{{ stat.total_vendu }} exemplaires{% endif %}{% endfor %}
+                  </p>
+                </div>
+              </div>
+              
+              <div class="timeline-block mb-3">
+                <span class="timeline-step">
+                  <i class="ni ni-money-coins text-warning text-gradient"></i>
+                </span>
+                <div class="timeline-content">
+                  <h6 class="text-dark text-sm font-weight-bold mb-0">CA Total</h6>
+                  <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                    {% for stat in stats_cahiers %}{% if forloop.first %}{{ stat.total_ca|floatformat:0 }} F CFA{% endif %}{% endfor %}
+                  </p>
+                </div>
+              </div>
+              
+              <div class="timeline-block">
+                <span class="timeline-step">
+                  <i class="ni ni-trophy text-success text-gradient"></i>
+                </span>
+                <div class="timeline-content">
+                  <h6 class="text-dark text-sm font-weight-bold mb-0">Best Seller</h6>
+                  <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                    {% for stat in stats_cahiers %}{% if forloop.first %}{{ stat.cahier.titre }}{% endif %}{% endfor %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau détaillé -->
+    <div class="row mb-4">
+      <div class="col-lg-12 mb-4">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Analyse Détaillée par Cahier</h6>
+                <p class="text-sm mb-0">Performance de chaque cahier avec historique par année</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4 pb-2">
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Cahier</th>
+                    <th scope="col">Prix Actuel</th>
+                    <th scope="col">Stock Actuel</th>
+                    <th scope="col">Total Vendu</th>
+                    <th scope="col">CA Total</th>
+                    <th scope="col">CA Moyen/An</th>
+                    <th scope="col">Performance</th>
+                    <th scope="col">Détail par Année</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stat in stats_cahiers %}
+                  <tr>
+                    <td class="border">
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm">{{ stat.cahier.titre }}</h6>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="border">{{ stat.cahier.prix }} F</td>
+                    <td class="border">
+                      <span class="badge {% if stat.cahier.quantite_stock < 10 %}bg-danger{% elif stat.cahier.quantite_stock < 50 %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ stat.cahier.quantite_stock }}
+                      </span>
+                    </td>
+                    <td class="border">{{ stat.total_vendu }}</td>
+                    <td class="border">{{ stat.total_ca|floatformat:0 }} F</td>
+                    <td class="border">
+                        {{ stat.ca_moyen_annuel|floatformat:0 }} F
+                    </td>
+                    <td class="border">
+                      {% if stat.total_ca >= 500000 %}
+                        <span class="badge bg-success">Excellent</span>
+                      {% elif stat.total_ca >= 200000 %}
+                        <span class="badge bg-info">Très bon</span>
+                      {% elif stat.total_ca >= 100000 %}
+                        <span class="badge bg-warning">Bon</span>
+                      {% elif stat.total_ca >= 50000 %}
+                        <span class="badge bg-orange">Moyen</span>
+                      {% else %}
+                        <span class="badge bg-danger">Faible</span>
+                      {% endif %}
+                    </td>
+                    <td class="border">
+                      <button class="btn btn-sm btn-outline-info" 
+                              type="button" 
+                              data-bs-toggle="collapse" 
+                              data-bs-target="#detail{{ stat.cahier.id }}" 
+                              aria-expanded="false">
+                        Voir détail
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="collapse" id="detail{{ stat.cahier.id }}">
+                    <td colspan="8" class="border">
+                      <div class="p-3 bg-light">
+                        <h6 class="mb-2">Historique des ventes - {{ stat.cahier.titre }}</h6>
+                        {% if stat.annees_data %}
+                          <div class="row">
+                            {% for data in stat.annees_data %}
+                            <div class="col-md-3 mb-2">
+                              <div class="card">
+                                <div class="card-body p-2">
+                                  <h6 class="card-title text-sm mb-1">{{ data.annee.libelle }}</h6>
+                                  <p class="card-text text-xs mb-0">
+                                    <strong>Quantité:</strong> {{ data.quantite }}<br>
+                                    <strong>CA:</strong> {{ data.ca|floatformat:0 }} F
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            {% endfor %}
+                          </div>
+                        {% else %}
+                          <p class="text-muted">Aucune vente enregistrée pour ce cahier.</p>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="8" class="text-center">
+                      Aucune donnée de vente disponible.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphique évolution par année -->
+    <div class="row mb-4">
+      <div class="col-lg-12 mb-4">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Évolution des Ventes par Année</h6>
+                <p class="text-sm mb-0">Comparaison des quantités vendues pour les meilleurs cahiers</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <canvas id="evolutionChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Graphique Top 10 des cahiers
+    const ctx1 = document.getElementById('topCahiersChart').getContext('2d');
+    const topCahiers = {{ top_cahiers_json|safe }};
+    
+    new Chart(ctx1, {
+        type: 'horizontalBar',
+        data: {
+            labels: topCahiers.map(c => c.titre),
+            datasets: [{
+                label: 'Chiffre d\'Affaires (F CFA)',
+                data: topCahiers.map(c => c.ca),
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'CA: ' + context.parsed.x.toLocaleString() + ' F CFA';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' F';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Graphique d'évolution (exemple avec les 5 meilleurs cahiers)
+    const ctx2 = document.getElementById('evolutionChart').getContext('2d');
+    
+    // Préparer les données d'évolution pour les 5 meilleurs cahiers
+    const colors = [
+        'rgba(255, 99, 132, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 205, 86, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)'
+    ];
+    
+    const datasets = [];
+    const annees = {{ annees|safe }};
+    
+    {% for stat in stats_cahiers|slice:":5" %}
+    datasets.push({
+        label: '{{ stat.cahier.titre }}',
+        data: [
+            {% for annee in annees %}
+                {% for data in stat.annees_data %}
+                    {% if data.annee.id == annee.id %}{{ data.quantite }}{% endif %}
+                {% endfor %}
+                {% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        borderColor: colors[{{ forloop.counter0 }}],
+        backgroundColor: colors[{{ forloop.counter0 }}].replace('1)', '0.1)'),
+        tension: 0.4
+    });
+    {% endfor %}
+    
+    new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: [{% for annee in annees %}'{{ annee.libelle }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' exemplaires';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Quantité Vendue'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Années Scolaires'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -24,4 +24,21 @@ urlpatterns = [
     path('ventes-ajax/<uuid:ecole_id>/', views.ventes_ajax, name='ventes_ajax'),
 
     path('generer-pdf-ventes/<uuid:ecole_id>/', views.generer_pdf_ventes_ecole, name='generer_pdf_ventes_ecole'),
+
+
+
+    path('annees-scolaires/', views.gestion_annees_scolaires, name='annees_scolaires'),
+    path('annees-scolaires/creer/', views.creer_annee_scolaire, name='creer_annee_scolaire'),
+    path('annees-scolaires/activer/<uuid:annee_id>/', views.activer_annee_scolaire, name='activer_annee_scolaire'),
+    
+    path('bilans-annuels/', views.bilans_annuels, name='bilans_annuels'),
+    path('bilans-annuels/<uuid:annee_id>/', views.detail_bilan_annuel, name='detail_bilan_annuel'),
+    path('bilans-annuels/<uuid:annee_id>/pdf/', views.generer_rapport_annuel_pdf, name='generer_rapport_annuel_pdf'),
+    
+    # Nouvelles URLs pour les bilans mensuels
+    path('bilans-mensuels/<uuid:annee_id>/', views.bilans_mensuels, name='bilans_mensuels'),
+    path('bilans-mensuels/<uuid:annee_id>/<int:mois>/<int:annee>/', views.detail_bilan_mensuel, name='detail_bilan_mensuel'),
+    
+    path('comparaison-annees/', views.comparaison_annees, name='comparaison_annees'),
+    #path('statistiques-cahiers/', views.statistiques_cahiers, name='statistiques_cahiers'),
 ]
