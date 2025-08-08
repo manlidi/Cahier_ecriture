@@ -399,7 +399,6 @@ def bilans_mensuels(request, annee_id):
         else:
             bilan.taux_recouvrement = 0
 
-
     # Préparer les données pour les graphiques
     graphique_data = []
     for bilan in bilans_mensuels:
@@ -416,6 +415,55 @@ def bilans_mensuels(request, annee_id):
     total_paiements = sum(float(b.montant_paye) for b in bilans_mensuels)
     total_nombre_ventes = sum(b.nombre_ventes for b in bilans_mensuels)
 
+    # NOUVEAU : Statistiques des cahiers pour toute l'année
+    from django.db.models import Sum
+    from collections import defaultdict
+    
+    # Récupérer toutes les lignes de vente pour cette année scolaire
+    lignes_ventes = LigneVente.objects.filter(
+        vente__annee_scolaire=annee
+    ).select_related('cahier')
+    
+    # Grouper par cahier
+    cahiers_stats_dict = defaultdict(lambda: {
+        'quantite_vendue': 0,
+        'ca_genere': 0,
+        'titre': '',
+        'prix_unitaire': 0,
+        'stock_actuel': 0
+    })
+    
+    for ligne in lignes_ventes:
+        cahier_id = ligne.cahier.id
+        cahiers_stats_dict[cahier_id]['titre'] = ligne.cahier.titre
+        cahiers_stats_dict[cahier_id]['prix_unitaire'] = ligne.cahier.prix
+        cahiers_stats_dict[cahier_id]['stock_actuel'] = ligne.cahier.quantite_stock
+        cahiers_stats_dict[cahier_id]['quantite_vendue'] += ligne.quantite
+        cahiers_stats_dict[cahier_id]['ca_genere'] += float(ligne.montant)
+    
+    # Convertir en liste et trier par CA généré
+    cahiers_stats = list(cahiers_stats_dict.values())
+    cahiers_stats.sort(key=lambda x: x['ca_genere'], reverse=True)
+    
+    # Calculer les pourcentages du CA total
+    total_ca_cahiers = sum(item['ca_genere'] for item in cahiers_stats)
+    for cahier_stat in cahiers_stats:
+        if total_ca_cahiers > 0:
+            cahier_stat['pourcentage_ca'] = (cahier_stat['ca_genere'] / total_ca_cahiers) * 100
+        else:
+            cahier_stat['pourcentage_ca'] = 0
+    
+    # Total des cahiers vendus
+    total_cahiers_vendus = sum(item['quantite_vendue'] for item in cahiers_stats)
+    
+    # Top 5 pour le graphique
+    top5_cahiers = cahiers_stats[:5]
+    cahiers_top5_json = json.dumps([{
+        'titre': item['titre'],
+        'quantite': item['quantite_vendue'],
+        'ca': item['ca_genere']
+    } for item in top5_cahiers])
+
     context = {
         'annee': annee,
         'bilans_mensuels': bilans_mensuels,
@@ -423,7 +471,13 @@ def bilans_mensuels(request, annee_id):
         'total_paiements': total_paiements,
         'total_nombre_ventes': total_nombre_ventes,
         'pourcentage_paye': round((total_paiements / total_ventes * 100) if total_ventes > 0 else 0, 1),
-        'graphique_data_json': json.dumps(graphique_data)
+        'graphique_data_json': json.dumps(graphique_data),
+        
+        # Nouvelles données pour les cahiers
+        'cahiers_stats': cahiers_stats,
+        'total_cahiers_vendus': total_cahiers_vendus,
+        'total_ca_cahiers': total_ca_cahiers,
+        'cahiers_top5_json': cahiers_top5_json,
     }
     return render(request, 'bilans_mensuels.html', context)
 
@@ -485,7 +539,6 @@ def generer_rapport_annuel_pdf(request, annee_id):
     story = []
     styles = getSampleStyleSheet()
     
-    # Créer un style personnalisé pour les cellules avec retour à la ligne
     cell_style = ParagraphStyle(
         'CellStyle',
         parent=styles['Normal'],
@@ -497,7 +550,6 @@ def generer_rapport_annuel_pdf(request, annee_id):
         spaceAfter=2
     )
     
-    # Style pour les cellules centrées
     cell_style_center = ParagraphStyle(
         'CellStyleCenter',
         parent=cell_style,

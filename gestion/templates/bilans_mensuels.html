@@ -87,6 +87,106 @@
       </div>
     </div>
 
+    <!-- Nouvelle section : Statistiques des cahiers -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <h6>Statistiques des Cahiers</h6>
+                <p class="text-sm mb-0">Détail des ventes par type de cahier</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive m-4">
+              <table class="table table-bordered align-items-center mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Titre du Cahier</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Quantité Totale Vendue</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">CA Généré (F CFA)</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Prix Unitaire</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">% du CA Total</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Stock Actuel</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cahier_data in cahiers_stats %}
+                  <tr>
+                    <td>
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="mb-0 text-sm font-weight-bold">{{ cahier_data.titre }}</h6>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-sm font-weight-bold">{{ cahier_data.quantite_vendue }}</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-sm font-weight-bold text-success">{{ cahier_data.ca_genere|floatformat:0 }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-sm">{{ cahier_data.prix_unitaire }} F</span>
+                    </td>
+                    <td class="align-middle text-center">
+                      <div class="progress-wrapper w-75 mx-auto">
+                        <div class="progress-info">
+                          <div class="progress-percentage">
+                            <span class="text-xs font-weight-bold">{{ cahier_data.pourcentage_ca|floatformat:1 }}%</span>
+                          </div>
+                        </div>
+                        <div class="progress">
+                          <div class="progress-bar bg-gradient-info" 
+                               role="progressbar" 
+                               style="width: {{ cahier_data.pourcentage_ca }}%"
+                               aria-valuenow="{{ cahier_data.pourcentage_ca }}" 
+                               aria-valuemin="0" 
+                               aria-valuemax="100">
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-sm {% if cahier_data.stock_actuel < 10 %}text-danger{% else %}text-secondary{% endif %}">
+                        {{ cahier_data.stock_actuel }}
+                        {% if cahier_data.stock_actuel < 10 %}
+                          <i class="material-symbols-rounded text-danger opacity-10 ms-1" style="font-size: 14px;" title="Stock faible">warning</i>
+                        {% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted">
+                      <i class="material-symbols-rounded opacity-5" style="font-size: 48px;">inventory_2</i>
+                      <p class="mt-2">Aucun cahier vendu pendant cette période</p>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                <!-- Ligne de total -->
+                {% if cahiers_stats %}
+                <tfoot>
+                  <tr class="table-secondary">
+                    <td class="text-center font-weight-bold">TOTAL</td>
+                    <td class="text-center font-weight-bold">{{ total_cahiers_vendus }}</td>
+                    <td class="text-center font-weight-bold text-success">{{ total_ca_cahiers|floatformat:0 }} F</td>
+                    <td class="text-center">-</td>
+                    <td class="text-center font-weight-bold">100%</td>
+                    <td class="text-center">-</td>
+                  </tr>
+                </tfoot>
+                {% endif %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Graphique d'évolution -->
     <div class="row mb-4">
       <div class="col-12">
@@ -100,6 +200,22 @@
         </div>
       </div>
     </div>
+
+    <!-- Nouveau graphique : Top 5 des cahiers -->
+    {% if cahiers_stats %}
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <h6>Top 5 des Cahiers les Plus Vendus</h6>
+          </div>
+          <div class="card-body p-3">
+            <canvas id="chartTopCahiers" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Tableau des bilans mensuels -->
     <div class="row">
@@ -241,7 +357,63 @@
       }
     }
   });
-</script>
 
+  // Graphique Top 5 des cahiers (si des données existent)
+  {% if cahiers_stats %}
+  const topCahiersData = {{ cahiers_top5_json|safe }};
+  
+  if (document.getElementById('chartTopCahiers')) {
+    const ctxTopCahiers = document.getElementById('chartTopCahiers').getContext('2d');
+    const chartTopCahiers = new Chart(ctxTopCahiers, {
+      type: 'bar',
+      data: {
+        labels: topCahiersData.map(item => item.titre),
+        datasets: [{
+          label: 'Quantité Vendue',
+          data: topCahiersData.map(item => item.quantite),
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(153, 102, 255, 0.8)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              afterLabel: function(context) {
+                const dataIndex = context.dataIndex;
+                const ca = topCahiersData[dataIndex].ca;
+                return 'CA: ' + ca.toLocaleString() + ' F CFA';
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+  {% endif %}
+</script>
 
 {% endblock %}

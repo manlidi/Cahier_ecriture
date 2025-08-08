@@ -334,12 +334,15 @@ class BilanMensuel(models.Model):
             quantite_vendue = sum(ligne.quantite for ligne in lignes_mois)
             ca_genere = sum(ligne.montant for ligne in lignes_mois)
             
-            if quantite_vendue > 0:  # Ne stocker que les cahiers vendus
+            if quantite_vendue > 0:  
                 ventes_par_cahier[str(cahier.id)] = {
                     'titre': cahier.titre,
+                    'prix_unitaire': cahier.prix,            
                     'quantite_vendue': quantite_vendue,
-                    'ca_genere': float(ca_genere)
+                    'ca_genere': float(ca_genere),
+                    'stock_actuel': cahier.quantite_stock      
                 }
+
         
         bilan.ventes_par_cahier = ventes_par_cahier
         bilan.save()
