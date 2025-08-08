@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block title %}
+  Modifier Vente - {{ vente.ecole.nom }}
+{% endblock %}
+
+{% block content %}
+{% load static %}
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3">
+      <h3 class="mb-0 h4 font-weight-bolder">
+        Modifier Vente - {{ vente.ecole.nom }}
+      </h3>
+      <p class="mb-4">Facture #F-{{ vente.created_at.year }}-{{ vente.id|slice:":8" }}</p>
+      
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'ventes' %}">Ventes</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'detail_vente' vente.id %}">Détails vente</a></li>
+          <li class="breadcrumb-item active">Modifier</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+      <div class="container">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+                        <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>            </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- État actuel de la vente -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5>État actuel de la vente</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>École :</strong> {{ vente.ecole.nom }}</p>
+                <p><strong>Date limite paiement :</strong> {{ vente.date_paiement|date:'d/m/Y' }}</p>
+                <p><strong>Montant total actuel :</strong> {{ vente.montant_total }} F</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Montant payé :</strong> {{ vente.montant_paye }} F</p>
+                <p><strong>Montant restant :</strong> {{ vente.montant_restant }} F</p>
+                <p><strong>Statut :</strong> 
+                  <span class="badge 
+                    {% if vente.est_reglee %}bg-success
+                    {% elif vente.est_en_retard %}bg-danger
+                    {% else %}bg-warning{% endif %}">
+                    {{ vente.statut_paiement }}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <h6 class="mt-3">Articles actuels :</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Cahier</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                    <th>Actions rapides</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ligne in lignes_actuelles %}
+                  <tr>
+                    <td>{{ ligne.cahier.titre }}</td>
+                    <td>
+                      <form method="post" action="{% url 'modifier_quantite_ligne' vente.id ligne.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <div class="input-group input-group-sm" style="width: 120px;">
+                          <input type="number" name="nouvelle_quantite" class="form-control" 
+                                 value="{{ ligne.quantite }}" min="1" max="{{ ligne.quantite|add:ligne.cahier.quantite_stock }}">
+                          <button type="submit" class="btn btn-outline-primary btn-sm">✓</button>
+                        </div>
+                      </form>
+                    </td>
+                    <td>{{ ligne.cahier.prix }} F</td>
+                    <td>{{ ligne.montant }} F</td>
+                    <td>
+                      {% if lignes_actuelles|length > 1 %}
+                        <form method="post" action="{% url 'supprimer_ligne_vente' vente.id ligne.id %}" class="d-inline">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-outline-danger btn-sm" 
+                                  onclick="return confirm('Supprimer cet article ?')">Retirer</button>
+                        </form>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            {% if vente.paiements.exists %}
+              <div class="alert alert-warning mt-3">
+                <strong>⚠️ Attention :</strong> Cette vente a déjà des paiements enregistrés. 
+                Les modifications peuvent affecter le solde restant.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaires de modification -->
+    <div class="row">
+      <!-- Remplacer complètement -->
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h5>Remplacer tous les cahiers</h5>
+            <small>Supprime tous les cahiers actuels et les remplace par ceux sélectionnés</small>
+          </div>
+          <div class="card-body">
+            <form method="POST" id="formRemplacer">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remplacer">
+              
+              <div id="cahiers-container-remplacer">
+                <div class="row align-items-end mb-2 cahier-row">
+                  <div class="col-md-7">
+                    <label class="form-label">Cahier</label>
+                    <select name="cahiers[]" class="form-select border border-secondary" required>
+                      <option value="">Choisir un cahier</option>
+                      {% for cahier in cahiers %}
+                        <option value="{{ cahier.id }}">{{ cahier.titre }} - Stock: {{ cahier.quantite_stock }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Qté</label>
+                    <input type="number" name="quantites[]" class="form-control border border-secondary" min="1" required />
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-row">✕</button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm mb-3" onclick="ajouterLigne('remplacer')">+ Ajouter un cahier</button>
+              
+              <hr>
+              <button type="submit" class="btn btn-info btn-block" 
+                      onclick="return confirm('Êtes-vous sûr de vouloir remplacer TOUS les articles actuels ?')">
+                🔄 Remplacer tous les articles
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ajouter des articles -->
+      <div class="col-md-6 mb-4">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h5>➕ Ajouter des articles</h5>
+            <small>Ajoute de nouveaux articles à la vente existante</small>
+          </div>
+          <div class="card-body">
+            <form method="POST" id="formAjouter">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="ajouter">
+              
+              <div id="cahiers-container-ajouter">
+                <div class="row align-items-end mb-2 cahier-row">
+                  <div class="col-md-7">
+                    <label class="form-label">Cahier</label>
+                    <select name="cahiers[]" class="form-select border border-secondary" required>
+                      <option value="">Choisir un cahier</option>
+                      {% for cahier in cahiers %}
+                        <option value="{{ cahier.id }}">{{ cahier.titre }} - Stock: {{ cahier.quantite_stock }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Qté</label>
+                    <input type="number" name="quantites[]" class="form-control border border-secondary" min="1" required />
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-row">✕</button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm mb-3" onclick="ajouterLigne('ajouter')">+ Ajouter un cahier</button>
+              
+              <hr>
+              <button type="submit" class="btn btn-success btn-block">
+                ➕ Ajouter ces articles à la vente
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 text-center">
+        <a href="{% url 'detail_vente' vente.id %}" class="btn btn-secondary">
+          ← Retour aux détails de la vente
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function ajouterLigne(type) {
+  const container = document.getElementById('cahiers-container-' + type);
+  const row = container.querySelector('.cahier-row');
+  const clone = row.cloneNode(true);
+  
+  // Réinitialise les valeurs
+  clone.querySelectorAll('select, input').forEach((el) => (el.value = ''));
+  container.appendChild(clone);
+}
+
+// Supprimer une ligne
+document.addEventListener('click', function (e) {
+  if (e.target.classList.contains('remove-row')) {
+    const container = e.target.closest('[id^="cahiers-container-"]');
+    const rows = container.querySelectorAll('.cahier-row');
+    if (rows.length > 1) {
+      e.target.closest('.cahier-row').remove();
+    } else {
+      alert('Au moins un cahier est requis.');
+    }
+  }
+});
+
+// Validation avant soumission
+document.getElementById('formRemplacer').addEventListener('submit', function(e) {
+  const selects = this.querySelectorAll('select[name="cahiers[]"]');
+  const inputs = this.querySelectorAll('input[name="quantites[]"]');
+  
+  let valid = true;
+  for (let i = 0; i < selects.length; i++) {
+    if (!selects[i].value || !inputs[i].value || parseInt(inputs[i].value) <= 0) {
+      valid = false;
+      break;
+    }
+  }
+  
+  if (!valid) {
+    e.preventDefault();
+    alert('Veuillez remplir tous les champs correctement.');
+  }
+});
+
+document.getElementById('formAjouter').addEventListener('submit', function(e) {
+  const selects = this.querySelectorAll('select[name="cahiers[]"]');
+  const inputs = this.querySelectorAll('input[name="quantites[]"]');
+  
+  let valid = true;
+  for (let i = 0; i < selects.length; i++) {
+    if (!selects[i].value || !inputs[i].value || parseInt(inputs[i].value) <= 0) {
+      valid = false;
+      break;
+    }
+  }
+  
+  if (!valid) {
+    e.preventDefault();
+    alert('Veuillez remplir tous les champs correctement.');
+  }
+});
+</script>
+
+{% endblock %}

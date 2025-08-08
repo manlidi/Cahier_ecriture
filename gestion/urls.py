@@ -25,8 +25,6 @@ urlpatterns = [
 
     path('generer-pdf-ventes/<uuid:ecole_id>/', views.generer_pdf_ventes_ecole, name='generer_pdf_ventes_ecole'),
 
-
-
     path('annees-scolaires/', views.gestion_annees_scolaires, name='annees_scolaires'),
     path('annees-scolaires/creer/', views.creer_annee_scolaire, name='creer_annee_scolaire'),
     path('annees-scolaires/activer/<uuid:annee_id>/', views.activer_annee_scolaire, name='activer_annee_scolaire'),
@@ -41,4 +39,9 @@ urlpatterns = [
     
     path('comparaison-annees/', views.comparaison_annees, name='comparaison_annees'),
     #path('statistiques-cahiers/', views.statistiques_cahiers, name='statistiques_cahiers'),
+
+    path('ventes/modifier/<uuid:vente_id>/', views.modifier_vente, name='modifier_vente'),
+    path('ventes/<uuid:vente_id>/ligne/<int:ligne_id>/modifier-quantite/', views.modifier_quantite_ligne, name='modifier_quantite_ligne'),
+    path('ventes/<uuid:vente_id>/ligne/<int:ligne_id>/supprimer/', views.supprimer_ligne_vente, name='supprimer_ligne_vente'),
+
 ]

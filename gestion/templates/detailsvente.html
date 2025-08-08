@@ -131,5 +131,14 @@
     </div>
   </div>
   {% endif %}
+
+  
+  <div class="row mb-3">
+    <div class="col-12 text-end">
+      <a href="{% url 'modifier_vente' vente.id %}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> Modifier cette vente
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}

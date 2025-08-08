@@ -97,6 +97,7 @@
                           {% if not vente.est_reglee and vente.peut_ajouter_tranche %}
                             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paiementModal{{ vente.id }}">Payer</button>
                           {% endif %}
+                          <a href="{% url 'modifier_vente' vente.id %}" class="btn btn-sm btn-outline-warning">Modifier</a>
                           <a href="{% url 'detail_vente' vente.id %}" class="btn btn-sm btn-outline-secondary">Voir détails</a>
                         </td>
                       </tr>
