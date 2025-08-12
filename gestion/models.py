@@ -118,6 +118,34 @@ class Vente(models.Model):
     facture_pdf = models.FileField(upload_to='factures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    modified_at = models.DateTimeField(null=True, blank=True)
+    derniere_modification_type = models.CharField(max_length=50, null=True, blank=True) 
+    articles_ajoutes_session = models.TextField(null=True, blank=True) 
+    
+    def enregistrer_ajout_articles(self, nouveaux_articles):
+        import json
+        from django.utils import timezone
+        
+        self.modified_at = timezone.now()
+        self.derniere_modification_type = 'ajout'
+        
+        articles_data = []
+        for article in nouveaux_articles:
+            articles_data.append({
+                'cahier_titre': article['cahier'].titre,
+                'quantite': article['quantite'],
+                'prix_unitaire': article['cahier'].prix,
+                'total': article['quantite'] * article['cahier'].prix
+            })
+        
+        self.articles_ajoutes_session = json.dumps(articles_data)
+        self.save()
+    
+    def get_articles_ajoutes_derniere_session(self):
+        if self.articles_ajoutes_session:
+            import json
+            return json.loads(self.articles_ajoutes_session)
+        return []
 
     def save(self, *args, **kwargs):
         # Auto-attribution de l'année scolaire si pas définie

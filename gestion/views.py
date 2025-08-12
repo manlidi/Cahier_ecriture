@@ -370,18 +370,30 @@ def detail_bilan_annuel(request, annee_id):
         nb_ventes=Count('id', distinct=True),
         total_paye=Sum('paiements__montant')
     ).order_by('-total_ca')[:5]
-    
+
+    # Calcul du pourcentage payé et restant
+    pourcentage_paye = round(
+        (float(bilan.montant_total_paye) / float(bilan.montant_total_ventes) * 100)
+        if bilan.montant_total_ventes > 0 else 0,
+        1
+    )
+    pourcentage_restant = round(100 - pourcentage_paye, 1)
+
     context = {
         'annee': annee,
         'bilan': bilan,
         'cahiers_data': cahiers_data,
         'top_ecoles': top_ecoles,
-        'pourcentage_paye': round((float(bilan.montant_total_paye) / float(bilan.montant_total_ventes) * 100) if bilan.montant_total_ventes > 0 else 0, 1),
-        'cahiers_json': json.dumps([{
-            'titre': item['titre'],
-            'quantite': item['quantite_vendue'],
-            'ca': float(item['ca_genere'])
-        } for item in cahiers_data[:10]]) 
+        'pourcentage_paye': pourcentage_paye,
+        'pourcentage_restant': pourcentage_restant,
+        'cahiers_json': json.dumps([
+            {
+                'titre': item['titre'],
+                'quantite': item['quantite_vendue'],
+                'ca': float(item['ca_genere'])
+            }
+            for item in cahiers_data[:10]
+        ]) 
     }
     return render(request, 'detail_bilan_annuel.html', context)
 
@@ -825,24 +837,12 @@ def statistiques_cahiers(request):
     return render(request, 'statistiques_cahiers.html', context)
 
 
-# Remplacez votre fonction generer_facture_pdf existante par cette version améliorée
-
 def generer_facture_pdf(vente):
-    """
-    Version améliorée de la génération de facture PDF
-    Gère mieux les modifications de ventes
-    """
-    
-    # Préparer le style pour les cellules
     styles_paragraph = getSampleStyleSheet()
     style_cellule = styles_paragraph['BodyText']
     style_cellule.wordWrap = 'CJK'
     style_cellule.leading = 11
     style_cellule.fontSize = 9
-
-    # Préparer le tableau de la facture
-    lignes_facture = [["Cahier", "Quantité", "Prix Unitaire", "Total"]]
-    montant_total = 0
 
     # S'assurer que nous avons les dernières données
     vente.refresh_from_db()
@@ -851,16 +851,21 @@ def generer_facture_pdf(vente):
     if not lignes_vente.exists():
         raise ValueError("Impossible de générer une facture sans articles")
 
+    # Recalculer le montant total à partir des lignes actuelles
+    montant_total = sum(ligne.montant for ligne in lignes_vente)
+
+    # Tableau principal des articles (état final)
+    lignes_facture_principal = [["Cahier", "Quantité", "Prix Unitaire", "Total"]]
+
     for ligne in lignes_vente:
-        montant_total += ligne.montant
-        lignes_facture.append([
+        lignes_facture_principal.append([
             Paragraph(ligne.cahier.titre, style_cellule),
             str(ligne.quantite),
             f"{ligne.cahier.prix:.2f} F",
             f"{ligne.montant:.2f} F"
         ])
 
-    # Calculs des paiements avec gestion sécurisée
+    # Récupérer les paiements à partir de la base
     paiements_vente = vente.paiements.all().order_by('date_paiement')
     montant_paye = sum(p.montant for p in paiements_vente)
     montant_restant = montant_total - montant_paye
@@ -878,38 +883,40 @@ def generer_facture_pdf(vente):
 
     story.append(Spacer(1, 0.5 * cm))
 
-    # Style pour le nom de l'école avec retour à la ligne
+    # Style pour le nom de l'école
     style_ecole = ParagraphStyle(
         'EcoleStyle',
         parent=styles['Normal'],
         fontSize=9,
         fontName='Helvetica',
         wordWrap='CJK',
-        alignment=1,  # Centre
+        alignment=1,
         leading=10,
         spaceBefore=0,
         spaceAfter=0
     )
 
-    # Information sur les modifications (si applicable)
-    modification_info = ""
-    if hasattr(vente, 'modified_at'):
-        modification_info = f" (Modifiée le {vente.modified_at.strftime('%d/%m/%Y')})"
-    elif vente.lignes.count() > 0:
-        # Vérifier si la vente a été modifiée en comparant les dates
-        derniere_ligne = vente.lignes.order_by('-id').first()
-        if derniere_ligne and abs((derniere_ligne.id - vente.lignes.first().id)) > vente.lignes.count():
-            modification_info = " (Modifiée)"
+    est_modifiee = vente.modified_at is not None
+    articles_ajoutes = vente.get_articles_ajoutes_derniere_session()
+    a_des_ajouts = articles_ajoutes and len(articles_ajoutes) > 0
+    
+    # Déterminer le type de modification
+    type_modification = getattr(vente, 'derniere_modification_type', None)
+    
+    numero_facture = f"F-{datetime.now().year}-{str(vente.id)[:8]}"
+
+    date_modif_str = vente.modified_at.strftime('%d-%m-%Y %H:%M') if vente.modified_at else "—"
 
     info_data = [
-        ["ÉCOLE", "FACTURE", "DATE", "DATE LIMITE PAIEMENT"],
+        ["ÉCOLE", "FACTURE", "DATE ÉDITION", "DATE MODIFICATION", "LIMITE PAIEMENT"],
         [Paragraph(vente.ecole.nom, style_ecole), 
-         f"F-{datetime.now().year}-{str(vente.id)[:8]}{modification_info}", 
-         datetime.now().strftime('%d-%m-%Y'), 
-         vente.date_paiement.strftime('%d-%m-%Y')]
+        Paragraph(numero_facture), 
+        datetime.now().strftime('%d-%m-%Y %H:%M'),
+        date_modif_str,
+        vente.date_paiement.strftime('%d-%m-%Y')]
     ]
 
-    info_table = Table(info_data, colWidths=[4*cm, 3*cm, 4*cm, 5*cm])
+    info_table = Table(info_data, colWidths=[2.5*cm, 3.5*cm, 3*cm, 4*cm, 3*cm])
     info_table_style = TableStyle([
         ('GRID', (0,0), (-1,-1), 1.5, colors.black),
         ('BACKGROUND', (0,0), (-1,0), colors.white),
@@ -917,24 +924,28 @@ def generer_facture_pdf(vente):
         ('FONTSIZE', (0,0), (-1,0), 9),
         ('ALIGN', (0,0), (-1,0), 'CENTER'),
         ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
-        ('FONTNAME', (0,1), (1,1), 'Helvetica'),
-        ('FONTNAME', (2,1), (-1,1), 'Helvetica'),
-        ('FONTSIZE', (0,1), (-1,1), 9), 
+        ('FONTNAME', (0,1), (-1,1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,1), 8),
         ('ALIGN', (0,1), (-1,1), 'CENTER'),
         ('VALIGN', (0,1), (-1,1), 'MIDDLE'),
-        ('TOPPADDING', (0,0), (-1,-1), 2),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
         ('LEFTPADDING', (0,0), (-1,-1), 5),
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
     ])
+    
+    if est_modifiee:
+        info_table_style.add('BACKGROUND', (1,1), (1,1), colors.lightyellow)
 
-    info_table.setStyle(info_table_style)
+    info_table.setStyle(info_table_style)   
     story.append(info_table)
-    story.append(Spacer(1, 0.5 * cm))
+    story.append(Spacer(0.1, 0.1 * cm))
 
-    # Construction du tableau des articles
-    table = Table(lignes_facture, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
-    table_style = TableStyle([
+    story.append(Paragraph("<b>RÉCAPITULATIF COMPLET</b>", style_bold))
+    story.append(Spacer(0.1, 0.1*cm))
+    
+    table_principal = Table(lignes_facture_principal, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
+    table_style_principal = TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.blue),
         ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
@@ -949,61 +960,58 @@ def generer_facture_pdf(vente):
         ('GRID', (0,0), (-1,-1), 1, colors.black),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ])
-    for i in range(1, len(lignes_facture), 2):
-        table_style.add('BACKGROUND', (0,i), (-1,i), colors.lightgrey)
-    table.setStyle(table_style)
-    story.append(table)
+    
+    for i in range(1, len(lignes_facture_principal), 2):
+        table_style_principal.add('BACKGROUND', (0,i), (-1,i), colors.lightgrey)
+        
+    table_principal.setStyle(table_style_principal)
+    story.append(table_principal)
     story.append(Spacer(1, 0.5*cm))
 
-    # Section des totaux et paiements
-    story.append(Paragraph(f"<b>Montant total : {montant_total:.2f} F CFA</b>", style_bold))
-    story.append(Spacer(1, 0.3*cm))
+    montants_data = [[
+        f"Montant total : {montant_total:.2f} F",
+        f"Montant payé : {montant_paye:.2f} F" if montant_paye > 0 else "Aucun paiement",
+        f"Montant restant : {montant_restant:.2f} F" if montant_restant > 0 else "ENTIÈREMENT RÉGLÉE"
+    ]]
     
-    # Affichage des informations de paiement
-    if montant_paye > 0:
-        story.append(Paragraph(f"<b>Montant déjà payé : {montant_paye:.2f} F CFA</b>", style_bold))
-        
-        # Détail des paiements par tranche
-        if paiements_vente.exists():
-            story.append(Spacer(1, 0.2*cm))
-            story.append(Paragraph("<b>Détail des paiements :</b>", style_normal))
-            for paiement in paiements_vente:
-                story.append(Paragraph(
-                    f"• Tranche {paiement.numero_tranche} : {paiement.montant:.2f} F CFA "
-                    f"(le {paiement.date_paiement.strftime('%d/%m/%Y')})", 
-                    style_normal
-                ))
+    montants_table = Table(montants_data, colWidths=[5.5*cm, 5.5*cm, 5.5*cm])
+    montants_table_style = TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ])
     
-    # Montant restant et statut
-    if montant_restant > 0:
-        story.append(Spacer(1, 0.3*cm))
-        story.append(Paragraph(f"<b><font color='red'>Montant restant à payer : {montant_restant:.2f} F CFA</font></b>", style_important))
+    # Colorer selon l'état
+    if montant_restant <= 0:
+        montants_table_style.add('BACKGROUND', (2,0), (2,0), colors.lightgreen)
+        montants_table_style.add('TEXTCOLOR', (2,0), (2,0), colors.darkgreen)
+    else:
+        montants_table_style.add('BACKGROUND', (2,0), (2,0), colors.lightcoral)
+        montants_table_style.add('TEXTCOLOR', (2,0), (2,0), colors.darkred)
         
-        # Vérification du retard de paiement
+        # Vérifier si en retard
         try:
             if vente.date_paiement < timezone.now().date():
+                story.append(Spacer(0.1, 0.1*cm))
                 story.append(Paragraph(
                     f"<b><font color='red'>PAIEMENT EN RETARD</font></b>", 
                     style_important
                 ))
         except:
             pass
-    else:
-        story.append(Spacer(1, 0.3*cm))
-        story.append(Paragraph(f"<b><font color='green'>✓ FACTURE ENTIÈREMENT RÉGLÉE</font></b>", style_important))
+    
+    montants_table.setStyle(montants_table_style)
+    story.append(montants_table)
 
-    # Note sur les modifications si applicable
-    if modification_info:
-        story.append(Spacer(1, 0.3*cm))
-        story.append(Paragraph(
-            f"<i>Note : Cette facture a été mise à jour suite à des modifications.</i>", 
-            style_normal
-        ))
-
+    # Construire le PDF
     doc.build(story)
     buffer.seek(0)
 
-    # Fusion avec papier en-tête (reste identique)
+    # Fusion avec le papier en-tête (code existant inchangé)
     papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/papier1.pdf')
     final_buffer = BytesIO()
 
@@ -1034,6 +1042,8 @@ def generer_facture_pdf(vente):
         final_buffer = buffer
 
     return final_buffer
+
+
 
 def ajouter_vente(request): 
     if request.method == "POST":
@@ -1430,22 +1440,17 @@ def generer_pdf_ventes_ecole(request, ecole_id):
     response['Content-Disposition'] = f'attachment; filename="ventes_{ecole.nom.replace(" ", "_")}_{timezone.now().strftime("%Y%m%d")}.pdf"'
     return response
 
-
-# Ajoutez ces nouvelles vues à votre fichier views.py existant
-
 def modifier_vente(request, vente_id):
     vente = get_object_or_404(Vente, id=vente_id)
     
-    # Vérifier si la vente peut être modifiée
     if vente.paiements.exists():
         messages.warning(request, "Cette vente a déjà des paiements enregistrés. Soyez prudent lors de la modification.")
     
     if request.method == 'POST':
         try:
-            # Récupérer les données du formulaire
             cahier_ids = request.POST.getlist('cahiers[]')
             quantites = request.POST.getlist('quantites[]')
-            action = request.POST.get('action', 'remplacer')  # 'remplacer' ou 'ajouter'
+            action = request.POST.get('action', 'remplacer')
             
             if len(cahier_ids) != len(quantites):
                 messages.error(request, "Erreur : correspondance cahiers/quantités incorrecte.")
@@ -1472,36 +1477,33 @@ def modifier_vente(request, vente_id):
                 messages.error(request, "Aucun article valide sélectionné.")
                 return redirect('detail_vente', vente_id=vente.id)
             
-            # Sauvegarder l'état actuel pour le rollback en cas d'erreur
             anciennes_lignes = list(vente.lignes.all())
             ancien_stock = {ligne.cahier.id: ligne.cahier.quantite_stock for ligne in anciennes_lignes}
             
             if action == 'remplacer':
-                # REMPLACER : Supprimer toutes les anciennes lignes
                 for ligne in anciennes_lignes:
-                    # Remettre le stock
                     ligne.cahier.quantite_stock += ligne.quantite
                     ligne.cahier.save()
                 
-                # Supprimer les lignes
                 vente.lignes.all().delete()
                 
-                # Créer les nouvelles lignes
                 for article in nouveaux_articles:
                     cahier = article['cahier']
                     quantite = article['quantite']
                     
-                    # Vérifier le stock
                     if cahier.quantite_stock < quantite:
-                        # Rollback
                         _rollback_modification(vente, anciennes_lignes, ancien_stock)
                         messages.error(request, f"Stock insuffisant pour {cahier.titre} (disponible: {cahier.quantite_stock}, demandé: {quantite})")
-                        return redirect('ventes')
+                        return redirect('detail_vente', vente_id=vente.id)
                     
-                    # Créer la ligne et décrémenter le stock
                     LigneVente.objects.create(vente=vente, cahier=cahier, quantite=quantite)
                     cahier.quantite_stock -= quantite
                     cahier.save()
+                
+                vente.modified_at = timezone.now()
+                vente.derniere_modification_type = 'remplacement'
+                vente.articles_ajoutes_session = None
+                vente.save()
                 
                 messages.success(request, "Vente modifiée avec succès (remplacement complet).")
                 
@@ -1510,11 +1512,11 @@ def modifier_vente(request, vente_id):
                     cahier = article['cahier']
                     quantite = article['quantite']
                     
-                    # Vérifier le stock
                     if cahier.quantite_stock < quantite:
                         messages.error(request, f"Stock insuffisant pour {cahier.titre} (disponible: {cahier.quantite_stock}, demandé: {quantite})")
                         return redirect('detail_vente', vente_id=vente.id)
                 
+                # Ajouter les articles
                 for article in nouveaux_articles:
                     cahier = article['cahier']
                     quantite = article['quantite']
@@ -1529,26 +1531,52 @@ def modifier_vente(request, vente_id):
                     cahier.quantite_stock -= quantite
                     cahier.save()
                 
-                messages.success(request, "Articles ajoutés à la vente avec succès.")
+                vente.enregistrer_ajout_articles(nouveaux_articles)
+                vente.modified_at = timezone.now()
+                vente.derniere_modification_type = 'ajout'
+                vente.save()
+                
+                messages.success(request, "Cahiers ajoutés à la vente avec succès.")
             
             try:
+                vente.refresh_from_db()
+                
+                if not vente.lignes.exists():
+                    raise Exception("Aucune ligne de vente trouvée après modification")
+                
                 final_buffer = generer_facture_pdf(vente)
-                filename = f"facture_{vente.id}.pdf"
                 
-                # Supprimer l'ancienne facture
+                timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"facture_{vente.id}_{timestamp}.pdf"
+                
                 if vente.facture_pdf:
+                    old_path = vente.facture_pdf.path
                     vente.facture_pdf.delete(save=False)
+                    if os.path.exists(old_path):
+                        try:
+                            os.remove(old_path)
+                        except OSError:
+                            pass
                 
-                # Sauvegarder la nouvelle facture
                 vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
+                
+                if vente.facture_pdf and os.path.exists(vente.facture_pdf.path):
+                    messages.success(request, "Facture PDF mise à jour avec succès.")
+                else:
+                    messages.warning(request, "Vente modifiée mais problème lors de la sauvegarde de la facture PDF.")
                 
             except Exception as pdf_error:
                 print(f"Erreur lors de la génération du PDF : {pdf_error}")
-                messages.warning(request, "Vente modifiée mais erreur lors de la génération de la facture.")
+                import traceback
+                traceback.print_exc()
+                messages.warning(request, f"Vente modifiée mais erreur lors de la génération de la facture PDF: {str(pdf_error)}")
             
             return redirect('ventes')
             
         except Exception as e:
+            print(f"Erreur lors de la modification : {e}")
+            import traceback
+            traceback.print_exc()
             messages.error(request, f"Erreur lors de la modification : {str(e)}")
             return redirect('ventes')
     
@@ -1558,61 +1586,6 @@ def modifier_vente(request, vente_id):
         'lignes_actuelles': vente.lignes.select_related('cahier').all()
     }
     return render(request, 'modifier_vente.html', context)
-
-
-def _rollback_modification(vente, anciennes_lignes, ancien_stock):
-    try:
-        vente.lignes.all().delete()
-        
-        for ligne in anciennes_lignes:
-            LigneVente.objects.create(
-                vente=vente,
-                cahier=ligne.cahier,
-                quantite=ligne.quantite
-            )
-            ligne.cahier.quantite_stock = ancien_stock[ligne.cahier.id]
-            ligne.cahier.save()
-    except Exception as rollback_error:
-        print(f"Erreur lors du rollback : {rollback_error}")
-
-
-def supprimer_ligne_vente(request, vente_id, ligne_id):
-    if request.method == 'POST':
-        ligne = get_object_or_404(LigneVente, id=ligne_id, vente_id=vente_id)
-        
-        # Vérifier qu'il reste au moins une ligne
-        if ligne.vente.lignes.count() <= 1:
-            messages.error(request, "Impossible de supprimer la dernière ligne d'une vente.")
-            return redirect('detail_vente', vente_id=vente_id)
-        
-        try:
-            # Remettre le stock
-            ligne.cahier.quantite_stock += ligne.quantite
-            ligne.cahier.save()
-            
-            # Supprimer la ligne
-            titre_cahier = ligne.cahier.titre
-            ligne.delete()
-            
-            # Régénérer la facture
-            vente = ligne.vente
-            try:
-                final_buffer = generer_facture_pdf(vente)
-                filename = f"facture_{vente.id}.pdf"
-                
-                if vente.facture_pdf:
-                    vente.facture_pdf.delete(save=False)
-                
-                vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
-            except Exception as pdf_error:
-                print(f"Erreur PDF lors de la suppression : {pdf_error}")
-            
-            messages.success(request, f"Article '{titre_cahier}' supprimé de la vente.")
-            
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la suppression : {str(e)}")
-    
-    return redirect('ventes')
 
 
 def modifier_quantite_ligne(request, vente_id, ligne_id):
@@ -1633,7 +1606,7 @@ def modifier_quantite_ligne(request, vente_id, ligne_id):
             if difference > 0:
                 if ligne.cahier.quantite_stock < difference:
                     messages.error(request, f"Stock insuffisant pour {ligne.cahier.titre}. Stock disponible: {ligne.cahier.quantite_stock}")
-                    return redirect('ventes')
+                    return redirect('detail_vente', vente_id=vente_id)
                 
                 # Décrémenter le stock
                 ligne.cahier.quantite_stock -= difference
@@ -1646,23 +1619,101 @@ def modifier_quantite_ligne(request, vente_id, ligne_id):
             ligne.save()
             ligne.cahier.save()
             
-            # Régénérer la facture
+            # Marquer la vente comme modifiée
+            vente = ligne.vente
+            vente.modified_at = timezone.now()
+            vente.derniere_modification_type = 'modification_quantite'
+            vente.save()
+            
+            # RÉGÉNÉRER LA FACTURE PDF avec timestamp unique
             try:
-                final_buffer = generer_facture_pdf(ligne.vente)
-                filename = f"facture_{ligne.vente.id}.pdf"
+                vente.refresh_from_db()
                 
-                if ligne.vente.facture_pdf:
-                    ligne.vente.facture_pdf.delete(save=False)
+                final_buffer = generer_facture_pdf(vente)
+                timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"facture_{vente.id}_{timestamp}.pdf"
                 
-                ligne.vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
+                # Supprimer l'ancien fichier
+                if vente.facture_pdf:
+                    vente.facture_pdf.delete(save=False)
+                
+                # Sauvegarder le nouveau fichier
+                vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
+                
+                messages.success(request, f"Quantité modifiée pour {ligne.cahier.titre}: {ancienne_quantite} → {nouvelle_quantite}. Facture mise à jour.")
+                
             except Exception as pdf_error:
                 print(f"Erreur PDF lors de la modification : {pdf_error}")
-            
-            messages.success(request, f"Quantité modifiée pour {ligne.cahier.titre}: {ancienne_quantite} → {nouvelle_quantite}")
+                import traceback
+                traceback.print_exc()
+                messages.warning(request, f"Quantité modifiée pour {ligne.cahier.titre}: {ancienne_quantite} → {nouvelle_quantite}. Erreur lors de la mise à jour de la facture.")
             
         except (ValueError, TypeError):
             messages.error(request, "Quantité invalide.")
         except Exception as e:
+            print(f"Erreur lors de la modification de quantité : {e}")
             messages.error(request, f"Erreur lors de la modification : {str(e)}")
     
+    return redirect('detail_vente', vente_id=vente_id)
+
+
+def supprimer_ligne_vente(request, vente_id, ligne_id):
+    if request.method == 'POST':
+        ligne = get_object_or_404(LigneVente, id=ligne_id, vente_id=vente_id)
+        
+        # Vérifier qu'il reste au moins une ligne
+        if ligne.vente.lignes.count() <= 1:
+            messages.error(request, "Impossible de supprimer la dernière ligne d'une vente.")
+            return redirect('ventes')
+        
+        try:
+            # Remettre le stock
+            ligne.cahier.quantite_stock += ligne.quantite
+            ligne.cahier.save()
+            
+            titre_cahier = ligne.cahier.titre
+            vente = ligne.vente
+            
+            ligne.delete()
+            
+            vente.modified_at = timezone.now()
+            vente.derniere_modification_type = 'suppression_ligne'
+            vente.save()
+            
+            try:
+                vente.refresh_from_db()
+                
+                final_buffer = generer_facture_pdf(vente)
+                filename = f"facture_{vente.id}.pdf"
+                
+                if vente.facture_pdf:
+                    vente.facture_pdf.delete(save=False)
+                
+                vente.facture_pdf.save(filename, ContentFile(final_buffer.read()), save=True)
+                messages.success(request, f"Article '{titre_cahier}' supprimé de la vente. Facture mise à jour.")
+                
+            except Exception as pdf_error:
+                print(f"Erreur PDF lors de la suppression : {pdf_error}")
+                messages.warning(request, f"Article '{titre_cahier}' supprimé de la vente. Erreur lors de la mise à jour de la facture.")
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la suppression : {str(e)}")
+    
     return redirect('ventes')
+
+
+def _rollback_modification(vente, anciennes_lignes, ancien_stock):
+    try:
+        vente.lignes.all().delete()
+        
+        for ligne in anciennes_lignes:
+            LigneVente.objects.create(
+                vente=vente,
+                cahier=ligne.cahier,
+                quantite=ligne.quantite
+            )
+            ligne.cahier.quantite_stock = ancien_stock[ligne.cahier.id]
+            ligne.cahier.save()
+    except Exception as rollback_error:
+        print(f"Erreur lors du rollback : {rollback_error}")
+
