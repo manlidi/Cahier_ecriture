@@ -39,7 +39,7 @@ urlpatterns = [
     
     path('comparaison-annees/', views.comparaison_annees, name='comparaison_annees'),
     #path('statistiques-cahiers/', views.statistiques_cahiers, name='statistiques_cahiers'),
-
+    path('modifier-dette-vente/<uuid:vente_id>/', views.modifier_dette_vente, name='modifier_dette_vente'),
     path('ventes/modifier/<uuid:vente_id>/', views.modifier_vente, name='modifier_vente'),
     path('ventes/<uuid:vente_id>/ligne/<int:ligne_id>/modifier-quantite/', views.modifier_quantite_ligne, name='modifier_quantite_ligne'),
     path('ventes/<uuid:vente_id>/ligne/<int:ligne_id>/supprimer/', views.supprimer_ligne_vente, name='supprimer_ligne_vente'),

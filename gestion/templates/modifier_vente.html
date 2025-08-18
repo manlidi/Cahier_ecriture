@@ -12,14 +12,6 @@
         Modifier Vente - {{ vente.ecole.nom }}
       </h3>
       <p class="mb-4">Facture #F-{{ vente.created_at.year }}-{{ vente.id|slice:":8" }}</p>
-      
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="{% url 'ventes' %}">Ventes</a></li>
-          <li class="breadcrumb-item"><a href="{% url 'detail_vente' vente.id %}">Détails vente</a></li>
-          <li class="breadcrumb-item active">Modifier</li>
-        </ol>
-      </nav>
     </div>
 
     <!-- Messages -->
@@ -28,9 +20,10 @@
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
             {{ message }}
-                        <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>            </div>
+            <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>            
+          </div>
         {% endfor %}
       </div>
     {% endif %}
@@ -46,12 +39,23 @@
             <div class="row">
               <div class="col-md-6">
                 <p><strong>École :</strong> {{ vente.ecole.nom }}</p>
-                <p><strong>Date limite paiement :</strong> {{ vente.date_paiement|date:'d/m/Y' }}</p>
-                <p><strong>Montant total actuel :</strong> {{ vente.montant_total }} F</p>
+                <p><strong>Date limite paiement :</strong> 
+                  {% if vente.date_paiement %}
+                    {{ vente.date_paiement|date:'d/m/Y' }}
+                  {% else %}
+                    Non définie
+                  {% endif %}
+                </p>
+                <p><strong>Montant articles :</strong> {{ vente.montant_total_articles|floatformat:0 }} F</p>
+                {% if vente.dette_precedente > 0 %}
+                  <p><strong>Dette précédente :</strong> {{ vente.dette_precedente|floatformat:0 }} F</p>
+                  <p><em>({{ vente.description_dette|default:"Dette année précédente" }})</em></p>
+                {% endif %}
+                <p><strong>Montant total :</strong> <span class="fw-bold">{{ vente.montant_total|floatformat:0 }} F</span></p>
               </div>
               <div class="col-md-6">
-                <p><strong>Montant payé :</strong> {{ vente.montant_paye }} F</p>
-                <p><strong>Montant restant :</strong> {{ vente.montant_restant }} F</p>
+                <p><strong>Montant payé :</strong> {{ vente.montant_paye|floatformat:0 }} F</p>
+                <p><strong>Montant restant :</strong> {{ vente.montant_restant|floatformat:0 }} F</p>
                 <p><strong>Statut :</strong> 
                   <span class="badge 
                     {% if vente.est_reglee %}bg-success
@@ -89,8 +93,8 @@
                         </div>
                       </form>
                     </td>
-                    <td>{{ ligne.cahier.prix }} F</td>
-                    <td>{{ ligne.montant }} F</td>
+                    <td>{{ ligne.cahier.prix|floatformat:0 }} F</td>
+                    <td>{{ ligne.montant|floatformat:0 }} F</td>
                     <td>
                       {% if lignes_actuelles|length > 1 %}
                         <form method="post" action="{% url 'supprimer_ligne_vente' vente.id ligne.id %}" class="d-inline">
@@ -117,13 +121,48 @@
       </div>
     </div>
 
+    <!-- Section gestion dette précédente -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-warning">
+          <div class="card-header bg-warning text-dark">
+            <h5>💰 Gestion de la dette précédente</h5>
+          </div>
+          <div class="card-body">
+            <form method="POST" action="{% url 'modifier_dette_vente' vente.id %}">
+              {% csrf_token %}
+              <div class="alert alert-info">
+                <strong>Dette actuelle :</strong> {{ vente.dette_precedente|floatformat:0 }} F
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Montant articles uniquement :</strong> {{ vente.montant_total_articles|floatformat:0 }} F</p>
+                  <p><strong>Dette précédente :</strong> {{ vente.dette_precedente|floatformat:0 }} F</p>
+                  <p><strong>Montant total :</strong> <span class="fw-bold">{{ vente.montant_total|floatformat:0 }} F</span></p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Montant payé :</strong> {{ vente.montant_paye|floatformat:0 }} F</p>
+                  <p><strong>Montant restant :</strong> 
+                    <span class="{% if vente.montant_restant > 0 %}text-danger{% else %}text-success{% endif %}">
+                      {{ vente.montant_restant|floatformat:0 }} F
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-warning">🔄 Recalculer la dette</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Formulaires de modification -->
     <div class="row">
       <!-- Remplacer complètement -->
       <div class="col-md-6 mb-4">
         <div class="card">
           <div class="card-header bg-info text-white">
-            <h5>Remplacer tous les cahiers</h5>
+            <h5>🔄 Remplacer tous les cahiers</h5>
             <small>Supprime tous les cahiers actuels et les remplace par ceux sélectionnés</small>
           </div>
           <div class="card-body">
@@ -212,6 +251,9 @@
         <a href="{% url 'detail_vente' vente.id %}" class="btn btn-secondary">
           ← Retour aux détails de la vente
         </a>
+        <a href="{% url 'ventes' %}" class="btn btn-primary">
+          ← Retour à la liste des ventes
+        </a>
       </div>
     </div>
 
@@ -242,7 +284,7 @@ document.addEventListener('click', function (e) {
   }
 });
 
-// Validation avant soumission
+// Validation avant soumission pour le formulaire de remplacement
 document.getElementById('formRemplacer').addEventListener('submit', function(e) {
   const selects = this.querySelectorAll('select[name="cahiers[]"]');
   const inputs = this.querySelectorAll('input[name="quantites[]"]');
@@ -258,9 +300,11 @@ document.getElementById('formRemplacer').addEventListener('submit', function(e) 
   if (!valid) {
     e.preventDefault();
     alert('Veuillez remplir tous les champs correctement.');
+    return false;
   }
 });
 
+// Validation avant soumission pour le formulaire d'ajout
 document.getElementById('formAjouter').addEventListener('submit', function(e) {
   const selects = this.querySelectorAll('select[name="cahiers[]"]');
   const inputs = this.querySelectorAll('input[name="quantites[]"]');
@@ -276,6 +320,18 @@ document.getElementById('formAjouter').addEventListener('submit', function(e) {
   if (!valid) {
     e.preventDefault();
     alert('Veuillez remplir tous les champs correctement.');
+    return false;
+  }
+});
+
+// Amélioration de la validation des quantités en temps réel
+document.addEventListener('input', function(e) {
+  if (e.target.type === 'number' && e.target.name === 'quantites[]') {
+    if (parseInt(e.target.value) <= 0) {
+      e.target.setCustomValidity('La quantité doit être supérieure à 0');
+    } else {
+      e.target.setCustomValidity('');
+    }
   }
 });
 </script>

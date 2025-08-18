@@ -65,26 +65,28 @@
                           table-success
                         {% endif %}">
                         <td class="border">{{ vente.ecole.nom }}</td>
-                        <td class="border">{{ vente.montant_total }} F</td>
-                        <td class="border">{{ vente.montant_paye|default:0 }} F</td>
-                        <td class="border">{{ vente.montant_restant }} F</td>
+                        <td class="border">{{ vente.montant_total|floatformat:0 }} F</td>
+                        <td class="border">{{ vente.montant_paye|default:0|floatformat:0 }} F</td>
+                        <td class="border">{{ vente.montant_restant|floatformat:0 }} F</td>
                         <td class="border">
                           <span class="badge 
                             {% if vente.est_reglee %}
                               bg-success
-
                             {% elif vente.est_en_retard %}
                               bg-danger
-
                             {% else %}
                               bg-warning
-
                             {% endif %}">
                             {{ vente.statut_paiement }}
-
                           </span>
                         </td>
-                        <td class="border">{{ vente.date_paiement|date:'d/m/Y H:i' }}</td>
+                        <td class="border">
+                          {% if vente.date_paiement %}
+                            {{ vente.date_paiement|date:'d/m/Y H:i' }}
+                          {% else %}
+                            Non définie
+                          {% endif %}
+                        </td>
                         <td class="border">{{ vente.nombre_tranches_payees }}/3</td>
                         <td class="border">
                           {% if vente.facture_pdf %}
@@ -99,6 +101,9 @@
                           {% endif %}
                           <a href="{% url 'modifier_vente' vente.id %}" class="btn btn-sm btn-outline-warning">Modifier</a>
                           <a href="{% url 'detail_vente' vente.id %}" class="btn btn-sm btn-outline-secondary">Voir détails</a>
+                          
+                          <!-- Bouton pour modifier la dette -->
+                          <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#detteModal{{ vente.id }}">Dette</button>
                         </td>
                       </tr>
 
@@ -115,14 +120,19 @@
                               <div class="modal-body">
                                 <div class="mb-3">
                                   <p>
-                                    <strong>Montant total:</strong> {{ vente.montant_total }} F
+                                    <strong>Montant total:</strong> {{ vente.montant_total|floatformat:0 }} F
                                   </p>
                                   <p>
-                                    <strong>Montant restant:</strong> {{ vente.montant_restant }} F
+                                    <strong>Montant restant:</strong> {{ vente.montant_restant|floatformat:0 }} F
                                   </p>
                                   <p>
                                     <strong>Tranche:</strong> {{ vente.nombre_tranches_payees|add:1 }}/3
                                   </p>
+                                  {% if vente.dette_precedente > 0 %}
+                                    <div class="alert alert-info">
+                                      <strong>Inclus :</strong> Dette précédente de {{ vente.dette_precedente|floatformat:0 }} F
+                                    </div>
+                                  {% endif %}
                                   {% if vente.est_en_retard %}
                                     <div class="alert alert-warning">
                                       <strong>Attention:</strong> Date limite dépassée !
@@ -131,12 +141,43 @@
                                 </div>
                                 <div class="mb-3">
                                   <label for="montant{{ vente.id }}" class="form-label">Montant à payer (F)</label>
-                                  <input type="number" name="montant" id="montant{{ vente.id }}" class="form-control border border-secondary" min="1" max="{{ vente.montant_restant }}" required />
-                                  <div class="form-text">Maximum: {{ vente.montant_restant }} F</div>
+                                  <input type="number" name="montant" id="montant{{ vente.id }}" class="form-control border border-secondary" min="1" max="{{ vente.montant_restant|floatformat:0 }}" required />
+                                  <div class="form-text">Maximum: {{ vente.montant_restant|floatformat:0 }} F</div>
                                 </div>
                               </div>
                               <div class="modal-footer">
                                 <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+
+                      <!-- Modal pour gestion de la dette -->
+                      <div class="modal fade" id="detteModal{{ vente.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                          <form method="POST" action="{% url 'modifier_dette_vente' vente.id %}">
+                            {% csrf_token %}
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">Gestion de la dette - {{ vente.ecole.nom }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="mb-3">
+                                  <p><strong>Dette actuelle :</strong> {{ vente.dette_precedente|default:0|floatformat:0 }} F</p>
+                                  {% if vente.description_dette %}
+                                    <p><strong>Description :</strong> {{ vente.description_dette }}</p>
+                                  {% endif %}
+                                </div>
+                                <div class="alert alert-info">
+                                  <p><strong>Action :</strong> La dette sera recalculée automatiquement en fonction des ventes impayées de cette école.</p>
+                                  <p class="text-muted mb-0">Cette dette est la somme des montants restants des autres ventes de l'école (hors cette vente).</p>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="submit" class="btn btn-warning">Recalculer la dette</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                               </div>
                             </div>
@@ -235,10 +276,18 @@
                 </div>
                 <button type="button" id="addCahierRow" class="btn btn-secondary btn-sm mt-2">+ Ajouter un cahier</button>
                 
+                <!-- Section dette précédente - CORRECTION: Affichage informatif -->
+                <hr class="my-4">
+                <h6>Dette précédente</h6>
+                <div class="alert alert-info">
+                  <p><strong>Information :</strong> La dette précédente sera calculée automatiquement en fonction des ventes impayées de l'école sélectionnée.</p>
+                  <p class="mb-0 text-muted">Cette dette sera ajoutée au montant total de la facture.</p>
+                </div>
 
                 <div class="mb-3">
                   <label for="montant_verse" class="form-label">Montant versé (facultatif)</label>
                   <input type="number" name="montant_verse" id="montant_verse" class="form-control border border-secondary" min="0" />
+                  <div class="form-text">Le montant versé sera déduit du total (articles + dette)</div>
                 </div>
         
               </div>

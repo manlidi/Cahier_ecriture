@@ -4,6 +4,7 @@ from django.utils import timezone
 import uuid
 from datetime import datetime, date
 from django.db.models import Sum, Count, Q
+from decimal import Decimal
 
 
 class AnneeScolaire(models.Model):
@@ -28,12 +29,10 @@ class AnneeScolaire(models.Model):
 
     @classmethod
     def get_annee_courante(cls):
-        """Retourne l'année scolaire courante"""
         return cls.objects.filter(est_active=True).first()
 
     @classmethod
     def get_annee_pour_date(cls, date_donnee):
-        """Retourne l'année scolaire correspondant à une date"""
         return cls.objects.filter(
             date_debut__lte=date_donnee,
             date_fin__gte=date_donnee
@@ -41,10 +40,9 @@ class AnneeScolaire(models.Model):
 
     @classmethod
     def creer_annee_scolaire(cls, annee_debut):
-        """Crée une nouvelle année scolaire"""
         annee_fin = annee_debut + 1
-        date_debut = date(annee_debut, 7, 1)  # 1er juillet
-        date_fin = date(annee_fin, 6, 30)     # 30 juin
+        date_debut = date(annee_debut, 7, 1) 
+        date_fin = date(annee_fin, 6, 30)   
         
         return cls.objects.create(
             annee_debut=annee_debut,
@@ -54,13 +52,11 @@ class AnneeScolaire(models.Model):
         )
 
     def activer(self):
-        """Active cette année scolaire et désactive les autres"""
         AnneeScolaire.objects.all().update(est_active=False)
         self.est_active = True
         self.save()
 
     def get_mois_scolaires(self):
-        """Retourne les mois de l'année scolaire avec leurs informations"""
         mois = []
         current_date = self.date_debut
         
@@ -78,7 +74,6 @@ class AnneeScolaire(models.Model):
                 ) - timezone.timedelta(days=1)
             })
             
-            # Passer au mois suivant
             if current_date.month == 12:
                 current_date = current_date.replace(year=current_date.year + 1, month=1)
             else:
@@ -90,7 +85,7 @@ class AnneeScolaire(models.Model):
 class Cahiers(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     titre = models.TextField()
-    prix = models.IntegerField()
+    prix = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer
     quantite_stock = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -114,13 +109,15 @@ class Vente(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ecole = models.ForeignKey(Ecoles, on_delete=models.CASCADE, related_name='ventes')
     annee_scolaire = models.ForeignKey(AnneeScolaire, on_delete=models.CASCADE, related_name='ventes')
-    date_paiement = models.DateTimeField(null=True)  
+    date_paiement = models.DateTimeField(null=True, blank=True) 
     facture_pdf = models.FileField(upload_to='factures/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     modified_at = models.DateTimeField(null=True, blank=True)
     derniere_modification_type = models.CharField(max_length=50, null=True, blank=True) 
-    articles_ajoutes_session = models.TextField(null=True, blank=True) 
+    articles_ajoutes_session = models.TextField(null=True, blank=True)
+    dette_precedente = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Dette des années précédentes")
+    description_dette = models.TextField(blank=True, null=True, help_text="Description de la dette (ex: 'Reliquat année 2023-2024')")
     
     def enregistrer_ajout_articles(self, nouveaux_articles):
         import json
@@ -134,8 +131,8 @@ class Vente(models.Model):
             articles_data.append({
                 'cahier_titre': article['cahier'].titre,
                 'quantite': article['quantite'],
-                'prix_unitaire': article['cahier'].prix,
-                'total': article['quantite'] * article['cahier'].prix
+                'prix_unitaire': float(article['cahier'].prix),  # CORRECTION: conversion en float
+                'total': article['quantite'] * float(article['cahier'].prix)  # CORRECTION: conversion en float
             })
         
         self.articles_ajoutes_session = json.dumps(articles_data)
@@ -144,51 +141,115 @@ class Vente(models.Model):
     def get_articles_ajoutes_derniere_session(self):
         if self.articles_ajoutes_session:
             import json
-            return json.loads(self.articles_ajoutes_session)
+            try:
+                return json.loads(self.articles_ajoutes_session)
+            except (json.JSONDecodeError, TypeError):
+                return []
         return []
-
-    def save(self, *args, **kwargs):
-        # Auto-attribution de l'année scolaire si pas définie
-        if not self.annee_scolaire:
-            self.annee_scolaire = AnneeScolaire.get_annee_pour_date(self.created_at.date()) or AnneeScolaire.get_annee_courante()
-        super().save(*args, **kwargs)
-
+    
+    def get_lignes_originales(self):
+        """Retourne les lignes originales (exclut les ajouts récents si c'est un ajout)"""
+        if not self.modified_at or self.derniere_modification_type != 'ajout':
+            return self.lignes.all()
+        
+        articles_ajoutes = self.get_articles_ajoutes_derniere_session()
+        if not articles_ajoutes:
+            return self.lignes.all()
+        
+        articles_ajoutes_titres = [article['cahier_titre'] for article in articles_ajoutes]
+        
+        lignes_originales = []
+        lignes_ajoutees_ids = set()
+        
+        # Identifier d'abord les lignes ajoutées (les plus récentes par titre)
+        for titre in articles_ajoutes_titres:
+            ligne_recente = self.lignes.filter(cahier__titre=titre).order_by('-id').first()
+            if ligne_recente:
+                lignes_ajoutees_ids.add(ligne_recente.id)
+        
+        # Retourner toutes les autres lignes
+        for ligne in self.lignes.all().order_by('id'):
+            if ligne.id not in lignes_ajoutees_ids:
+                lignes_originales.append(ligne)
+        
+        return lignes_originales
+    
+    def get_lignes_ajoutees_recemment(self):
+        """Retourne les lignes ajoutées lors de la dernière modification"""
+        if not self.modified_at or self.derniere_modification_type != 'ajout':
+            return []
+        
+        articles_ajoutes = self.get_articles_ajoutes_derniere_session()
+        if not articles_ajoutes:
+            return []
+        
+        lignes_ajoutees = []
+        articles_ajoutes_titres = [article['cahier_titre'] for article in articles_ajoutes]
+        
+        # Pour chaque titre d'article ajouté, récupérer la ligne la plus récente
+        for titre in articles_ajoutes_titres:
+            ligne_recente = self.lignes.filter(cahier__titre=titre).order_by('-id').first()
+            if ligne_recente:
+                lignes_ajoutees.append(ligne_recente)
+        
+        return lignes_ajoutees
+    
+    @property
+    def montant_total_articles(self):
+        """Montant total des articles uniquement (sans dette précédente)"""
+        return sum(Decimal(str(ligne.montant)) for ligne in self.lignes.all())
+    
     @property
     def montant_total(self):
-        return sum(ligne.montant for ligne in self.lignes.all())
-
-    def __str__(self):
-        return f"Vente à {self.ecole.nom} le {self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'} ({self.annee_scolaire})"
+        """Montant total = articles + dette précédente"""
+        return self.montant_total_articles + (self.dette_precedente or Decimal('0'))
     
-    def montant_restant(self):
-        return self.montant_total - self.montant_paye
-
     @property
     def montant_paye(self):
+        """Montant total payé"""
         return sum(p.montant for p in self.paiements.all())
-
-    def est_reglee(self):
-        return self.montant_restant() <= 0
     
+    def montant_restant(self):
+        """Montant restant à payer"""
+        return max(self.montant_total - self.montant_paye, Decimal('0'))
+    
+    def est_reglee(self):
+        """Vérifier si la vente est entièrement réglée"""
+        return self.montant_restant() <= Decimal('0')
+
+    def save(self, *args, **kwargs):
+        if not self.annee_scolaire:
+            # Utiliser la date de création si disponible, sinon maintenant
+            date_ref = self.created_at.date() if self.created_at else timezone.now().date()
+            self.annee_scolaire = AnneeScolaire.get_annee_pour_date(date_ref) or AnneeScolaire.get_annee_courante()
+        super().save(*args, **kwargs)
+
     def nombre_tranches_payees(self):
+        """Nombre de tranches déjà payées"""
         return self.paiements.count()
     
     def peut_ajouter_tranche(self):
+        """Vérifier si on peut ajouter une tranche de paiement"""
         return self.nombre_tranches_payees() < 3 and not self.est_reglee()
     
     def est_en_retard(self): 
-        """Vérifie si la date limite de paiement est dépassée"""
+        """Vérifier si la vente est en retard de paiement"""
         if self.date_paiement and not self.est_reglee():
             return timezone.now() > self.date_paiement
         return False
     
     def statut_paiement(self):
+        """Retourne le statut de paiement"""
         if self.est_reglee():
             return "Réglée"
         elif self.est_en_retard():
             return "En retard"
         else:
             return "En cours"
+
+    def __str__(self):
+        date_str = self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'
+        return f"Vente à {self.ecole.nom} le {date_str} ({self.annee_scolaire})"
 
 
 class Paiement(models.Model):
@@ -208,10 +269,11 @@ class LigneVente(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')
     cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE)
     quantite = models.IntegerField()
-    montant = models.IntegerField()
+    montant = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer
 
     def save(self, *args, **kwargs):
-        self.montant = self.quantite * self.cahier.prix
+        # CORRECTION: Calcul correct avec Decimal
+        self.montant = Decimal(str(self.quantite)) * self.cahier.prix
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -272,7 +334,7 @@ class BilanAnneeScolaire(models.Model):
             
             ventes_par_cahier[str(cahier.id)] = {
                 'titre': cahier.titre,
-                'prix_unitaire': cahier.prix,
+                'prix_unitaire': float(cahier.prix),
                 'quantite_vendue': quantite_vendue,
                 'ca_genere': float(ca_genere),
                 'stock_actuel': cahier.quantite_stock
@@ -365,12 +427,11 @@ class BilanMensuel(models.Model):
             if quantite_vendue > 0:  
                 ventes_par_cahier[str(cahier.id)] = {
                     'titre': cahier.titre,
-                    'prix_unitaire': cahier.prix,            
+                    'prix_unitaire': float(cahier.prix),            
                     'quantite_vendue': quantite_vendue,
                     'ca_genere': float(ca_genere),
                     'stock_actuel': cahier.quantite_stock      
                 }
-
         
         bilan.ventes_par_cahier = ventes_par_cahier
         bilan.save()
