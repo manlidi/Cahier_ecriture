@@ -1,9 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import uuid
-from datetime import datetime, date
-from django.db.models import Sum, Count, Q
+from datetime import date
 from decimal import Decimal
 
 
@@ -81,7 +79,6 @@ class AnneeScolaire(models.Model):
                 
         return mois
 
-
 class Cahiers(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     titre = models.TextField()
@@ -93,7 +90,6 @@ class Cahiers(models.Model):
     def __str__(self):
         return self.titre
 
-
 class Ecoles(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     nom = models.TextField()
@@ -103,7 +99,6 @@ class Ecoles(models.Model):
 
     def __str__(self):
         return self.nom
-
 
 class Vente(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -251,7 +246,6 @@ class Vente(models.Model):
         date_str = self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'
         return f"Vente à {self.ecole.nom} le {date_str} ({self.annee_scolaire})"
 
-
 class Paiement(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='paiements')
     montant = models.DecimalField(max_digits=10, decimal_places=2)
@@ -263,7 +257,6 @@ class Paiement(models.Model):
 
     def __str__(self):
         return f"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}"
-
 
 class LigneVente(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')
@@ -278,7 +271,6 @@ class LigneVente(models.Model):
 
     def __str__(self):
         return f"{self.quantite} x {self.cahier.titre} pour {self.vente.ecole.nom}"
-
 
 class BilanAnneeScolaire(models.Model):
     """Bilan annuel d'une année scolaire"""
@@ -344,7 +336,6 @@ class BilanAnneeScolaire(models.Model):
         bilan.save()
         
         return bilan
-
 
 class BilanMensuel(models.Model):
     """Bilan mensuel d'une année scolaire"""

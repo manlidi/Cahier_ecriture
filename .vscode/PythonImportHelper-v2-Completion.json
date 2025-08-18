@@ -1,0 +1,1168 @@
+[
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "get_asgi_application",
+        "importPath": "django.core.asgi",
+        "description": "django.core.asgi",
+        "isExtraImport": true,
+        "detail": "django.core.asgi",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "admin",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
+        "label": "admin",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
+        "label": "messages",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
+        "label": "path",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "include",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "path",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "static",
+        "importPath": "django.conf.urls.static",
+        "description": "django.conf.urls.static",
+        "isExtraImport": true,
+        "detail": "django.conf.urls.static",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "django.conf",
+        "description": "django.conf",
+        "isExtraImport": true,
+        "detail": "django.conf",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "django.conf",
+        "description": "django.conf",
+        "isExtraImport": true,
+        "detail": "django.conf",
+        "documentation": {}
+    },
+    {
+        "label": "get_wsgi_application",
+        "importPath": "django.core.wsgi",
+        "description": "django.core.wsgi",
+        "isExtraImport": true,
+        "detail": "django.core.wsgi",
+        "documentation": {}
+    },
+    {
+        "label": "django.db.models.deletion",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "django.db.models.deletion",
+        "description": "django.db.models.deletion",
+        "detail": "django.db.models.deletion",
+        "documentation": {}
+    },
+    {
+        "label": "uuid",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "uuid",
+        "description": "uuid",
+        "detail": "uuid",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "AppConfig",
+        "importPath": "django.apps",
+        "description": "django.apps",
+        "isExtraImport": true,
+        "detail": "django.apps",
+        "documentation": {}
+    },
+    {
+        "label": "AbstractUser",
+        "importPath": "django.contrib.auth.models",
+        "description": "django.contrib.auth.models",
+        "isExtraImport": true,
+        "detail": "django.contrib.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "django.utils",
+        "description": "django.utils",
+        "isExtraImport": true,
+        "detail": "django.utils",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "django.utils",
+        "description": "django.utils",
+        "isExtraImport": true,
+        "detail": "django.utils",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "date",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "Sum",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Count",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Q",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Sum",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Count",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Q",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "F",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "Decimal",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "InvalidOperation",
+        "importPath": "decimal",
+        "description": "decimal",
+        "isExtraImport": true,
+        "detail": "decimal",
+        "documentation": {}
+    },
+    {
+        "label": "TestCase",
+        "importPath": "django.test",
+        "description": "django.test",
+        "isExtraImport": true,
+        "detail": "django.test",
+        "documentation": {}
+    },
+    {
+        "label": "*",
+        "importPath": "django.shortcuts",
+        "description": "django.shortcuts",
+        "isExtraImport": true,
+        "detail": "django.shortcuts",
+        "documentation": {}
+    },
+    {
+        "label": "ContentFile",
+        "importPath": "django.core.files.base",
+        "description": "django.core.files.base",
+        "isExtraImport": true,
+        "detail": "django.core.files.base",
+        "documentation": {}
+    },
+    {
+        "label": "A4",
+        "importPath": "reportlab.lib.pagesizes",
+        "description": "reportlab.lib.pagesizes",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.pagesizes",
+        "documentation": {}
+    },
+    {
+        "label": "canvas",
+        "importPath": "reportlab.pdfgen",
+        "description": "reportlab.pdfgen",
+        "isExtraImport": true,
+        "detail": "reportlab.pdfgen",
+        "documentation": {}
+    },
+    {
+        "label": "SimpleDocTemplate",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Paragraph",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Table",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "TableStyle",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "Spacer",
+        "importPath": "reportlab.platypus",
+        "description": "reportlab.platypus",
+        "isExtraImport": true,
+        "detail": "reportlab.platypus",
+        "documentation": {}
+    },
+    {
+        "label": "colors",
+        "importPath": "reportlab.lib",
+        "description": "reportlab.lib",
+        "isExtraImport": true,
+        "detail": "reportlab.lib",
+        "documentation": {}
+    },
+    {
+        "label": "cm",
+        "importPath": "reportlab.lib.units",
+        "description": "reportlab.lib.units",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.units",
+        "documentation": {}
+    },
+    {
+        "label": "BytesIO",
+        "importPath": "io",
+        "description": "io",
+        "isExtraImport": true,
+        "detail": "io",
+        "documentation": {}
+    },
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "JsonResponse",
+        "importPath": "django.http",
+        "description": "django.http",
+        "isExtraImport": true,
+        "detail": "django.http",
+        "documentation": {}
+    },
+    {
+        "label": "PdfReader",
+        "importPath": "PyPDF2",
+        "description": "PyPDF2",
+        "isExtraImport": true,
+        "detail": "PyPDF2",
+        "documentation": {}
+    },
+    {
+        "label": "PdfWriter",
+        "importPath": "PyPDF2",
+        "description": "PyPDF2",
+        "isExtraImport": true,
+        "detail": "PyPDF2",
+        "documentation": {}
+    },
+    {
+        "label": "PageObject",
+        "importPath": "PyPDF2",
+        "description": "PyPDF2",
+        "isExtraImport": true,
+        "detail": "PyPDF2",
+        "documentation": {}
+    },
+    {
+        "label": "Paginator",
+        "importPath": "django.core.paginator",
+        "description": "django.core.paginator",
+        "isExtraImport": true,
+        "detail": "django.core.paginator",
+        "documentation": {}
+    },
+    {
+        "label": "getSampleStyleSheet",
+        "importPath": "reportlab.lib.styles",
+        "description": "reportlab.lib.styles",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.styles",
+        "documentation": {}
+    },
+    {
+        "label": "ParagraphStyle",
+        "importPath": "reportlab.lib.styles",
+        "description": "reportlab.lib.styles",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.styles",
+        "documentation": {}
+    },
+    {
+        "label": "TA_CENTER",
+        "importPath": "reportlab.lib.enums",
+        "description": "reportlab.lib.enums",
+        "isExtraImport": true,
+        "detail": "reportlab.lib.enums",
+        "documentation": {}
+    },
+    {
+        "label": "calendar",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "calendar",
+        "description": "calendar",
+        "detail": "calendar",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "application",
+        "kind": 5,
+        "importPath": "GC.asgi",
+        "description": "GC.asgi",
+        "peekOfCode": "application = get_asgi_application()",
+        "detail": "GC.asgi",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_DIR",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "BASE_DIR = Path(__file__).resolve().parent.parent\n# Quick-start development settings - unsuitable for production\n# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/\n# SECURITY WARNING: keep the secret key used in production secret!\nSECRET_KEY = 'django-insecure-6ofh@$h(g(29($kwx)9ixvd2l+a#p#a2)93xpol&u#1$o#cuh7'\n# SECURITY WARNING: don't run with debug turned on in production!\nDEBUG = True\nALLOWED_HOSTS = ['visibledifference.onrender.com', '127.0.0.1']\n# Application definition\nINSTALLED_APPS = [  ",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "SECRET_KEY",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "SECRET_KEY = 'django-insecure-6ofh@$h(g(29($kwx)9ixvd2l+a#p#a2)93xpol&u#1$o#cuh7'\n# SECURITY WARNING: don't run with debug turned on in production!\nDEBUG = True\nALLOWED_HOSTS = ['visibledifference.onrender.com', '127.0.0.1']\n# Application definition\nINSTALLED_APPS = [  \n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DEBUG",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "DEBUG = True\nALLOWED_HOSTS = ['visibledifference.onrender.com', '127.0.0.1']\n# Application definition\nINSTALLED_APPS = [  \n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "ALLOWED_HOSTS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "ALLOWED_HOSTS = ['visibledifference.onrender.com', '127.0.0.1']\n# Application definition\nINSTALLED_APPS = [  \n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    'django.contrib.humanize',",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "INSTALLED_APPS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "INSTALLED_APPS = [  \n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    'django.contrib.humanize',\n    'gestion',\n    \"mathfilters\",",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "MIDDLEWARE",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "MIDDLEWARE = [\n    'django.middleware.security.SecurityMiddleware',\n    'django.contrib.sessions.middleware.SessionMiddleware',\n    'django.middleware.common.CommonMiddleware',\n    'django.middleware.csrf.CsrfViewMiddleware',\n    'django.contrib.auth.middleware.AuthenticationMiddleware',\n    'django.contrib.messages.middleware.MessageMiddleware',\n    'django.middleware.clickjacking.XFrameOptionsMiddleware',\n]\nROOT_URLCONF = 'GC.urls'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "ROOT_URLCONF",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "ROOT_URLCONF = 'GC.urls'\nTEMPLATES = [\n    {\n        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n        'DIRS': [BASE_DIR / 'gestion' / 'templates'],\n        'APP_DIRS': True,\n        'OPTIONS': {\n            'context_processors': [\n                'django.template.context_processors.request',\n                'django.contrib.auth.context_processors.auth',",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "TEMPLATES",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "TEMPLATES = [\n    {\n        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n        'DIRS': [BASE_DIR / 'gestion' / 'templates'],\n        'APP_DIRS': True,\n        'OPTIONS': {\n            'context_processors': [\n                'django.template.context_processors.request',\n                'django.contrib.auth.context_processors.auth',\n                'django.contrib.messages.context_processors.messages',",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "WSGI_APPLICATION",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "WSGI_APPLICATION = 'GC.wsgi.application'\n# Database\n# https://docs.djangoproject.com/en/5.2/ref/settings/#databases\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',\n    }\n}\n# Password validation",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DATABASES",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "DATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',\n    }\n}\n# Password validation\n# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators\nAUTH_PASSWORD_VALIDATORS = [\n    {",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "AUTH_PASSWORD_VALIDATORS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "AUTH_PASSWORD_VALIDATORS = [\n    {\n        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',\n    },\n    {\n        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',\n    },\n    {\n        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',\n    },",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "LANGUAGE_CODE",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "LANGUAGE_CODE = 'en-us'\nTIME_ZONE = 'UTC'\nUSE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/5.2/howto/static-files/\nSTATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "TIME_ZONE",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "TIME_ZONE = 'UTC'\nUSE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/5.2/howto/static-files/\nSTATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "USE_I18N",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "USE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/5.2/howto/static-files/\nSTATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "USE_TZ",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "USE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/5.2/howto/static-files/\nSTATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "STATIC_URL",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "STATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "STATIC_ROOT",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "STATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "STATICFILES_DIRS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "STATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "MEDIA_URL",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "MEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "MEDIA_ROOT",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "MEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_AUTO_FIELD",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "urlpatterns",
+        "kind": 5,
+        "importPath": "GC.urls",
+        "description": "GC.urls",
+        "peekOfCode": "urlpatterns = [\n    path('admin/', admin.site.urls),\n    path('', include('gestion.urls')),\n]\nurlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)\nurlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)",
+        "detail": "GC.urls",
+        "documentation": {}
+    },
+    {
+        "label": "application",
+        "kind": 5,
+        "importPath": "GC.wsgi",
+        "description": "GC.wsgi",
+        "peekOfCode": "application = get_wsgi_application()",
+        "detail": "GC.wsgi",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0001_initial",
+        "description": "gestion.migrations.0001_initial",
+        "peekOfCode": "class Migration(migrations.Migration):\n    initial = True\n    dependencies = [\n    ]\n    operations = [\n        migrations.CreateModel(\n            name='Cahiers',\n            fields=[\n                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),\n                ('titre', models.TextField()),",
+        "detail": "gestion.migrations.0001_initial",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0002_vente_articles_ajoutes_session_and_more",
+        "description": "gestion.migrations.0002_vente_articles_ajoutes_session_and_more",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0001_initial'),\n    ]\n    operations = [\n        migrations.AddField(\n            model_name='vente',\n            name='articles_ajoutes_session',\n            field=models.TextField(blank=True, null=True),\n        ),",
+        "detail": "gestion.migrations.0002_vente_articles_ajoutes_session_and_more",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0003_vente_description_dette_vente_dette_precedente",
+        "description": "gestion.migrations.0003_vente_description_dette_vente_dette_precedente",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0002_vente_articles_ajoutes_session_and_more'),\n    ]\n    operations = [\n        migrations.AddField(\n            model_name='vente',\n            name='description_dette',\n            field=models.TextField(blank=True, help_text=\"Description de la dette (ex: 'Reliquat année 2023-2024')\", null=True),\n        ),",
+        "detail": "gestion.migrations.0003_vente_description_dette_vente_dette_precedente",
+        "documentation": {}
+    },
+    {
+        "label": "GestionConfig",
+        "kind": 6,
+        "importPath": "gestion.apps",
+        "description": "gestion.apps",
+        "peekOfCode": "class GestionConfig(AppConfig):\n    default_auto_field = 'django.db.models.BigAutoField'\n    name = 'gestion'",
+        "detail": "gestion.apps",
+        "documentation": {}
+    },
+    {
+        "label": "AnneeScolaire",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class AnneeScolaire(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    annee_debut = models.IntegerField()  \n    annee_fin = models.IntegerField()   \n    date_debut = models.DateField()      \n    date_fin = models.DateField()        \n    est_active = models.BooleanField(default=False)  \n    created_at = models.DateTimeField(auto_now_add=True)\n    class Meta:\n        ordering = ['-annee_debut']",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "Cahiers",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class Cahiers(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    titre = models.TextField()\n    prix = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer\n    quantite_stock = models.IntegerField()\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n    def __str__(self):\n        return self.titre\nclass Ecoles(models.Model):",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "Ecoles",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class Ecoles(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    nom = models.TextField()\n    adresse = models.TextField()\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n    def __str__(self):\n        return self.nom\nclass Vente(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "Vente",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class Vente(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    ecole = models.ForeignKey(Ecoles, on_delete=models.CASCADE, related_name='ventes')\n    annee_scolaire = models.ForeignKey(AnneeScolaire, on_delete=models.CASCADE, related_name='ventes')\n    date_paiement = models.DateTimeField(null=True, blank=True) \n    facture_pdf = models.FileField(upload_to='factures/', blank=True, null=True)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n    modified_at = models.DateTimeField(null=True, blank=True)\n    derniere_modification_type = models.CharField(max_length=50, null=True, blank=True) ",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "Paiement",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class Paiement(models.Model):\n    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='paiements')\n    montant = models.DecimalField(max_digits=10, decimal_places=2)\n    date_paiement = models.DateField(auto_now_add=True)\n    numero_tranche = models.IntegerField(default=1)\n    class Meta:\n        ordering = ['numero_tranche']\n    def __str__(self):\n        return f\"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}\"\nclass LigneVente(models.Model):",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "LigneVente",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class LigneVente(models.Model):\n    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')\n    cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE)\n    quantite = models.IntegerField()\n    montant = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer\n    def save(self, *args, **kwargs):\n        # CORRECTION: Calcul correct avec Decimal\n        self.montant = Decimal(str(self.quantite)) * self.cahier.prix\n        super().save(*args, **kwargs)\n    def __str__(self):",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "BilanAnneeScolaire",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class BilanAnneeScolaire(models.Model):\n    \"\"\"Bilan annuel d'une année scolaire\"\"\"\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    annee_scolaire = models.OneToOneField(AnneeScolaire, on_delete=models.CASCADE, related_name='bilan')\n    # Métriques globales\n    nombre_ventes_total = models.IntegerField(default=0)\n    montant_total_ventes = models.DecimalField(max_digits=15, decimal_places=2, default=0)\n    montant_total_paye = models.DecimalField(max_digits=15, decimal_places=2, default=0)\n    montant_total_impaye = models.DecimalField(max_digits=15, decimal_places=2, default=0)\n    # Métriques par cahier (JSON)",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "BilanMensuel",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class BilanMensuel(models.Model):\n    \"\"\"Bilan mensuel d'une année scolaire\"\"\"\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    annee_scolaire = models.ForeignKey(AnneeScolaire, on_delete=models.CASCADE, related_name='bilans_mensuels')\n    mois = models.IntegerField()  # 1-12\n    annee = models.IntegerField()  # 2024, 2025, etc.\n    # Métriques du mois\n    nombre_ventes = models.IntegerField(default=0)\n    montant_ventes = models.DecimalField(max_digits=15, decimal_places=2, default=0)\n    montant_paye = models.DecimalField(max_digits=15, decimal_places=2, default=0)",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "urlpatterns",
+        "kind": 5,
+        "importPath": "gestion.urls",
+        "description": "gestion.urls",
+        "peekOfCode": "urlpatterns = [\n    path('', views.home, name='home'),\n    path('cahiers', views.allcahiers, name='cahiers'),\n    path('cahiers/ajouter/', views.ajouter_cahier, name='ajouter_cahier'),\n    path('cahiers/modifier/<uuid:cahier_id>/', views.modifier_cahier, name='modifier_cahier'),\n    path('cahiers/supprimer/<uuid:cahier_id>/', views.supprimer_cahier, name='supprimer_cahier'),\n    path('cahiers/ajouter-stock/', views.ajouter_stock, name='ajouter_stock'),\n    path('ecoles', views.allecoles, name='ecoles'),\n    path('ecoles/ajouter/', views.ajouter_ecole, name='ajouter_ecole'),\n    path('ecoles/modifier/<uuid:ecole_id>/', views.modifier_ecole, name='modifier_ecole'),",
+        "detail": "gestion.urls",
+        "documentation": {}
+    },
+    {
+        "label": "home",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def home(request):\n    today = timezone.now().date()\n    yesterday = today - timedelta(days=1)\n    last_week = today - timedelta(days=7)\n    last_month = today - timedelta(days=30)\n    # Année scolaire courante\n    annee_courante = AnneeScolaire.get_annee_courante()\n    if not annee_courante:\n        # Créer automatiquement l'année scolaire courante si elle n'existe pas\n        annee_courante_num = today.year if today.month >= 7 else today.year - 1",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "allcahiers",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def allcahiers(request):\n    cahiers = Cahiers.objects.all()\n    return render(request, 'cahiers.html', {'cahiers': cahiers})\ndef ajouter_cahier(request):\n    if request.method == \"POST\":\n        titre = request.POST.get(\"titre\")\n        prix = int(request.POST.get(\"prix\"))\n        quantite_stock = int(request.POST.get(\"quantite_stock\"))\n        Cahiers.objects.create(titre=titre, prix=prix, quantite_stock=quantite_stock)\n    return redirect('cahiers')",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ajouter_cahier",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ajouter_cahier(request):\n    if request.method == \"POST\":\n        titre = request.POST.get(\"titre\")\n        prix = int(request.POST.get(\"prix\"))\n        quantite_stock = int(request.POST.get(\"quantite_stock\"))\n        Cahiers.objects.create(titre=titre, prix=prix, quantite_stock=quantite_stock)\n    return redirect('cahiers')\ndef modifier_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)\n    if request.method == \"POST\":",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "modifier_cahier",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def modifier_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)\n    if request.method == \"POST\":\n        cahier.titre = request.POST.get(\"titre\")\n        cahier.prix = int(request.POST.get(\"prix\"))\n        cahier.quantite_stock = int(request.POST.get(\"quantite_stock\"))\n        cahier.save()\n    return redirect('cahiers')\ndef supprimer_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_cahier",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def supprimer_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)\n    cahier.delete()\n    return redirect('cahiers')\ndef allecoles(request):\n    ecoles = Ecoles.objects.all()\n    return render(request, 'ecoles.html', {'ecoles': ecoles})\ndef ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "allecoles",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def allecoles(request):\n    ecoles = Ecoles.objects.all()\n    return render(request, 'ecoles.html', {'ecoles': ecoles})\ndef ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        Ecoles.objects.create(nom=nom, adresse=adresse)\n    return redirect('ecoles')\ndef modifier_ecole(request, ecole_id):",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ajouter_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        Ecoles.objects.create(nom=nom, adresse=adresse)\n    return redirect('ecoles')\ndef modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":\n        ecole.nom = request.POST.get(\"nom\")",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "modifier_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":\n        ecole.nom = request.POST.get(\"nom\")\n        ecole.adresse = request.POST.get(\"adresse\")\n        ecole.save()\n    return redirect('ecoles')\ndef supprimer_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    ecole.delete()",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def supprimer_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    ecole.delete()\n    return redirect('ecoles')\ndef ventes(request):\n    # Recherche des ventes en retard\n    ventes_en_retard = Vente.objects.filter(\n        date_paiement__lt=timezone.now()\n    ).exclude(id__in=Vente.objects.filter(paiements__isnull=False).annotate(\n        total_paye=models.Sum('paiements__montant')",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ventes",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ventes(request):\n    # Recherche des ventes en retard\n    ventes_en_retard = Vente.objects.filter(\n        date_paiement__lt=timezone.now()\n    ).exclude(id__in=Vente.objects.filter(paiements__isnull=False).annotate(\n        total_paye=models.Sum('paiements__montant')\n    ).filter(total_paye__gte=models.F('lignes__montant')))\n    if ventes_en_retard.exists():\n        messages.warning(request, f\"Attention : {ventes_en_retard.count()} vente(s) en retard de paiement !\")\n    # Filtrage par nom d'école (recherche)",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "gestion_annees_scolaires",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def gestion_annees_scolaires(request):\n    annees = AnneeScolaire.objects.all()\n    annee_courante = AnneeScolaire.get_annee_courante()\n    context = {\n        'annees': annees,\n        'annee_courante': annee_courante,\n    }\n    return render(request, 'annees_scolaires.html', context)\ndef creer_annee_scolaire(request):\n    if request.method == 'POST':",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "creer_annee_scolaire",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def creer_annee_scolaire(request):\n    if request.method == 'POST':\n        try:\n            annee_debut = int(request.POST.get('annee_debut'))\n            # Vérifier si l'année existe déjà\n            if AnneeScolaire.objects.filter(annee_debut=annee_debut).exists():\n                messages.error(request, f\"L'année scolaire {annee_debut}-{annee_debut+1} existe déjà.\")\n            else:\n                annee = AnneeScolaire.creer_annee_scolaire(annee_debut)\n                messages.success(request, f\"Année scolaire {annee} créée avec succès.\")",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "activer_annee_scolaire",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def activer_annee_scolaire(request, annee_id):\n    try:\n        annee = get_object_or_404(AnneeScolaire, id=annee_id)\n        annee.activer()\n        messages.success(request, f\"Année scolaire {annee} activée avec succès.\")\n    except Exception as e:\n        messages.error(request, f\"Erreur : {str(e)}\")\n    return redirect('annees_scolaires')\ndef bilans_annuels(request):\n    annees = AnneeScolaire.objects.all()",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "bilans_annuels",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def bilans_annuels(request):\n    annees = AnneeScolaire.objects.all()\n    bilans = []\n    for annee in annees:\n        # Générer ou récupérer le bilan\n        bilan = BilanAnneeScolaire.generer_bilan(annee)\n        bilans.append({\n            'annee': annee,\n            'bilan': bilan,\n            'pourcentage_paye': round((float(bilan.montant_total_paye) / float(bilan.montant_total_ventes) * 100) if bilan.montant_total_ventes > 0 else 0, 1)",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "detail_bilan_annuel",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def detail_bilan_annuel(request, annee_id):\n    annee = get_object_or_404(AnneeScolaire, id=annee_id)\n    bilan = BilanAnneeScolaire.generer_bilan(annee)\n    # Préparer les données pour les graphiques\n    cahiers_data = []\n    for cahier_id, data in bilan.ventes_par_cahier.items():\n        if data['quantite_vendue'] > 0:\n            cahiers_data.append({\n                'titre': data['titre'],\n                'quantite_vendue': data['quantite_vendue'],",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "bilans_mensuels",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def bilans_mensuels(request, annee_id):\n    annee = get_object_or_404(AnneeScolaire, id=annee_id)\n    # Générer tous les bilans mensuels\n    bilans_mensuels = BilanMensuel.generer_tous_bilans_mensuels(annee)\n    for bilan in bilans_mensuels:\n        bilan.montant_impaye = float(bilan.montant_ventes) - float(bilan.montant_paye)\n        if bilan.montant_ventes > 0:\n            bilan.taux_recouvrement = round((bilan.montant_paye / bilan.montant_ventes) * 100, 1)\n        else:\n            bilan.taux_recouvrement = 0",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "detail_bilan_mensuel",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def detail_bilan_mensuel(request, annee_id, mois, annee):\n    annee_scolaire = get_object_or_404(AnneeScolaire, id=annee_id)\n    bilan = BilanMensuel.generer_bilan_mois(annee_scolaire, mois, annee)\n    # Calcul du taux de recouvrement\n    if bilan.montant_ventes > 0:\n        bilan.taux_recouvrement = round((bilan.montant_paye / bilan.montant_ventes) * 100, 1)\n    else:\n        bilan.taux_recouvrement = 0\n    # Déterminer début et fin de mois\n    debut_mois = date(annee, mois, 1)",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "generer_rapport_annuel_pdf",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def generer_rapport_annuel_pdf(request, annee_id):\n    annee = get_object_or_404(AnneeScolaire, id=annee_id)\n    bilan = BilanAnneeScolaire.generer_bilan(annee)\n    # Créer le PDF\n    buffer = BytesIO()\n    doc = SimpleDocTemplate(buffer, pagesize=A4,\n                            leftMargin=2*cm, rightMargin=2*cm,\n                            topMargin=2*cm, bottomMargin=2*cm)\n    story = []\n    styles = getSampleStyleSheet()",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "comparaison_annees",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def comparaison_annees(request):\n    annees = AnneeScolaire.objects.all().order_by('-annee_debut')[:5]  \n    comparaison_data = []\n    for annee in annees:\n        bilan = BilanAnneeScolaire.generer_bilan(annee)\n        comparaison_data.append({\n            'annee': annee,\n            'bilan': bilan,\n            'taux_recouvrement': round((float(bilan.montant_total_paye) / float(bilan.montant_total_ventes) * 100) if bilan.montant_total_ventes > 0 else 0, 1)\n        })",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "statistiques_cahiers",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def statistiques_cahiers(request):\n    annees = AnneeScolaire.objects.all()\n    cahiers = Cahiers.objects.all()\n    # Analyse globale par cahier\n    stats_cahiers = []\n    for cahier in cahiers:\n        stats = {\n            'cahier': cahier,\n            'total_vendu': 0,\n            'total_ca': 0,",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "modifier_dette_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def modifier_dette_vente(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    # Calculer la dette en excluant cette vente\n    ventes_impayees = Vente.objects.filter(\n        ecole=vente.ecole\n    ).exclude(id=vente.id)\n    dette_totale = Decimal('0')\n    for v in ventes_impayees:\n        montant_restant_v = v.montant_restant()\n        if montant_restant_v > 0:",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "generer_facture_pdf",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def generer_facture_pdf(vente):\n    styles_paragraph = getSampleStyleSheet()\n    style_cellule = styles_paragraph['BodyText']\n    style_cellule.wordWrap = 'CJK'\n    style_cellule.leading = 11\n    style_cellule.fontSize = 9\n    # S'assurer que nous avons les dernières données\n    vente.refresh_from_db()\n    # Séparer les lignes originales et les ajouts récents\n    lignes_originales = vente.get_lignes_originales()",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ajouter_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ajouter_vente(request): \n    if request.method == \"POST\":\n        try:\n            ecole = Ecoles.objects.get(id=request.POST['ecole'])\n            cahier_ids = request.POST.getlist('cahiers[]')\n            quantites = request.POST.getlist('quantites[]')\n            montant_verse_str = request.POST.get('montant_verse', '0')\n            # Gestion de la dette précédente - CALCUL AUTOMATIQUE\n            dette_precedente = calculer_dette_ecole(ecole, vente_exclue=None)\n            if len(cahier_ids) != len(quantites):",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ajouter_paiement",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ajouter_paiement(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    # Vérifications\n    if vente.est_reglee():\n        messages.error(request, \"Cette vente est déjà entièrement réglée.\")\n        return redirect('ventes')\n    if not vente.peut_ajouter_tranche():\n        messages.error(request, \"Le nombre maximum de tranches (3) est atteint.\")\n        return redirect('ventes')\n    if vente.est_en_retard():",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "calculer_dette_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def calculer_dette_ecole(ecole, vente_exclue=None):\n    \"\"\"Calcule la dette totale d'une école en excluant optionnellement une vente\"\"\"\n    ventes_query = Vente.objects.filter(ecole=ecole)\n    if vente_exclue:\n        ventes_query = ventes_query.exclude(id=vente_exclue.id)\n    dette_totale = Decimal('0')\n    for vente in ventes_query:\n        montant_restant = vente.montant_restant()\n        if montant_restant > 0:\n            dette_totale += montant_restant",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def supprimer_vente(request, id):\n    Vente.objects.filter(id=id).delete()\n    return redirect('ventes')\ndef detail_vente(request, vente_id):\n    vente = get_object_or_404(Vente, pk=vente_id)\n    paiements = vente.paiements.all()\n    lignes = vente.lignes.all()\n    montant_restant = vente.montant_restant()\n    montant_paye = vente.montant_total - montant_restant\n    if vente.montant_total > 0:",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "detail_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def detail_vente(request, vente_id):\n    vente = get_object_or_404(Vente, pk=vente_id)\n    paiements = vente.paiements.all()\n    lignes = vente.lignes.all()\n    montant_restant = vente.montant_restant()\n    montant_paye = vente.montant_total - montant_restant\n    if vente.montant_total > 0:\n        pourcentage_paye = round((montant_paye / vente.montant_total) * 100)\n    else:\n        pourcentage_paye = 0",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ventes_par_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ventes_par_ecole(request):\n    ecoles = Ecoles.objects.all()\n    return render(request, 'historique.html', {'ecoles': ecoles})\ndef ventes_ajax(request, ecole_id):\n    ventes = Vente.objects.filter(ecole_id=ecole_id).prefetch_related('paiements', 'lignes')\n    data = []\n    for vente in ventes:\n        paiements = vente.paiements.all()\n        data.append({\n            'id': str(vente.id),",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ventes_ajax",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ventes_ajax(request, ecole_id):\n    ventes = Vente.objects.filter(ecole_id=ecole_id).prefetch_related('paiements', 'lignes')\n    data = []\n    for vente in ventes:\n        paiements = vente.paiements.all()\n        data.append({\n            'id': str(vente.id),\n            'date': vente.date_paiement.strftime('%d/%m/%Y') if vente.date_paiement else 'N/A',\n            'montant_total': float(vente.montant_total),\n            'montant_paye': float(vente.montant_paye),",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "ajouter_stock",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def ajouter_stock(request):\n    if request.method == 'POST':\n        cahier_id = request.POST.get('cahier_id')\n        quantite = int(request.POST.get('quantite', 0))\n        cahier = get_object_or_404(Cahiers, id=cahier_id)\n        cahier.quantite_stock += quantite\n        cahier.save()\n        messages.success(request, f'Stock ajouté pour le cahier \"{cahier.titre}\".')\n    return redirect('cahiers')\ndef generer_pdf_ventes_ecole(request, ecole_id):",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "generer_pdf_ventes_ecole",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def generer_pdf_ventes_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    ventes = Vente.objects.filter(ecole=ecole).prefetch_related('paiements', 'lignes')\n    if not ventes.exists():\n        return HttpResponse(\"Aucune vente trouvée pour cette école.\", status=404)\n    donnees_tableau = [[\"Limite paiement\", \"Montant Total\", \"Montant Payé\", \"Montant Restant\", \"Statut\", \"Dates Paiements\"]]\n    montant_total_general = 0\n    montant_paye_general = 0\n    def formater_dates_avec_retour_ligne(dates_str, max_chars_par_ligne=25):\n        \"\"\"Formate les dates pour qu'elles s'affichent sur plusieurs lignes si nécessaire\"\"\"",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "modifier_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def modifier_vente(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    if vente.paiements.exists():\n        messages.warning(request, \"Cette vente a déjà des paiements enregistrés. Soyez prudent lors de la modification.\")\n    if request.method == 'POST':\n        try:\n            cahier_ids = request.POST.getlist('cahiers[]')\n            quantites = request.POST.getlist('quantites[]')\n            action = request.POST.get('action', 'remplacer')\n            if len(cahier_ids) != len(quantites):",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "modifier_quantite_ligne",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def modifier_quantite_ligne(request, vente_id, ligne_id):\n    if request.method == 'POST':\n        ligne = get_object_or_404(LigneVente, id=ligne_id, vente_id=vente_id)\n        try:\n            nouvelle_quantite = int(request.POST.get('nouvelle_quantite', 0))\n            if nouvelle_quantite <= 0:\n                messages.error(request, \"La quantité doit être supérieure à 0.\")\n                return redirect('detail_vente', vente_id=vente_id)\n            ancienne_quantite = ligne.quantite\n            difference = nouvelle_quantite - ancienne_quantite",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_ligne_vente",
+        "kind": 2,
+        "importPath": "gestion.views",
+        "description": "gestion.views",
+        "peekOfCode": "def supprimer_ligne_vente(request, vente_id, ligne_id):\n    if request.method == 'POST':\n        ligne = get_object_or_404(LigneVente, id=ligne_id, vente_id=vente_id)\n        # Vérifier qu'il reste au moins une ligne\n        if ligne.vente.lignes.count() <= 1:\n            messages.error(request, \"Impossible de supprimer la dernière ligne d'une vente.\")\n            return redirect('ventes')\n        try:\n            # Remettre le stock\n            ligne.cahier.quantite_stock += ligne.quantite",
+        "detail": "gestion.views",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "manage",
+        "description": "manage",
+        "peekOfCode": "def main():\n    \"\"\"Run administrative tasks.\"\"\"\n    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GC.settings')\n    try:\n        from django.core.management import execute_from_command_line\n    except ImportError as exc:\n        raise ImportError(\n            \"Couldn't import Django. Are you sure it's installed and \"\n            \"available on your PYTHONPATH environment variable? Did you \"\n            \"forget to activate a virtual environment?\"",
+        "detail": "manage",
+        "documentation": {}
+    }
+]
