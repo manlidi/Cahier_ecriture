@@ -137,30 +137,70 @@
     <div class="col-xl-3 col-sm-6">
       <div class="card shadow-lg border-0">
         <div class="card-header p-3 pt-2">
-          <div class="icon icon-lg icon-shape bg-gradient-info shadow-info text-center border-radius-xl mt-n4 position-absolute">
-            <i class="material-symbols-rounded opacity-10">schedule</i>
+          <div class="icon icon-lg icon-shape {% if total_dettes_autres > 0 %}bg-gradient-warning{% else %}bg-gradient-info{% endif %} shadow-info text-center border-radius-xl mt-n4 position-absolute">
+            <i class="material-symbols-rounded opacity-10">{% if total_dettes_autres > 0 %}warning{% else %}schedule{% endif %}</i>
           </div>
           <div class="text-end pt-1">
-            <p class="text-sm mb-0 text-capitalize">Date Création</p>
-            <h4 class="mb-0 font-weight-bold">{{ vente.created_at|date:"d/m" }}</h4>
+            <p class="text-sm mb-0 text-capitalize">{% if total_dettes_autres > 0 %}Dette École{% else %}Date Création{% endif %}</p>
+            <h4 class="mb-0 font-weight-bold {% if total_dettes_autres > 0 %}text-warning{% endif %}">
+              {% if total_dettes_autres > 0 %}
+                {{ total_dettes_autres|floatformat:0 }} F
+              {% else %}
+                {{ vente.created_at|date:"d/m" }}
+              {% endif %}
+            </h4>
           </div>
         </div>
         <hr class="dark horizontal my-0">
         <div class="card-footer p-3">
           <p class="mb-0 text-sm">
-            <span class="text-secondary">{{ vente.created_at|date:"Y à H:i" }}</span>
+            {% if total_dettes_autres > 0 %}
+              <span class="text-warning">{{ dettes_autres_ventes|length }} vente{{ dettes_autres_ventes|length|pluralize }} impayée{{ dettes_autres_ventes|length|pluralize }}</span>
+            {% else %}
+              <span class="text-secondary">{{ vente.created_at|date:"Y à H:i" }}</span>
+            {% endif %}
           </p>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Section Dette Totale de l'École (bouton modal) -->
+  {% if total_dettes_autres > 0 %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="alert alert-light shadow border-0" role="alert">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center">
+            <div class="icon-shape icon-lg bg-gradient-secondary shadow border-radius-xl me-3">
+              <i class="material-symbols-rounded text-white text-lg">warning</i>
+            </div>
+            <div>
+              <h6 class="mb-1 text-warning font-weight-bold">
+                <i class="material-symbols-rounded me-1">account_balance</i>
+                Dette totale de l'école : {{ total_dettes_autres|floatformat:0 }} F
+              </h6>
+              <p class="mb-0 text-sm text-muted">
+                Cette école a {{ dettes_autres_ventes|length }} vente{{ dettes_autres_ventes|length|pluralize }} avec des montants impayés
+              </p>
+            </div>
+          </div>
+          <button class="btn bg-gradient-warning shadow" data-bs-toggle="modal" data-bs-target="#dettesModal">
+            <i class="material-symbols-rounded me-1">visibility</i>
+            Voir les dettes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
     <!-- Articles vendus -->
   <!-- Articles par session d'ajout -->
   <div class="row mb-4">
     <div class="col-12">
       <div class="card shadow-lg border-0">
-        <div class="card-header bg-gradient-primary p-3">
+        <div class="card-header bg-gradient-secondary p-3">
           <div class="row align-items-center">
             <div class="col">
               <h6 class="mb-0 text-white font-weight-bolder">
@@ -253,11 +293,12 @@
     </div>
   </div>
 
-  <!-- Articles par type (vue classique) -->
+  <!-- Articles par type (vue classique) et Historique des paiements -->
   <div class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-lg border-0">
-        <div class="card-header bg-gradient-info p-3">
+    <!-- Articles par type -->
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0 h-100">
+        <div class="card-header bg-gradient-dark p-3">
           <div class="row align-items-center">
             <div class="col">
               <h6 class="mb-0 text-white font-weight-bolder">
@@ -275,9 +316,8 @@
                 <thead class="bg-gray-100">
                   <tr>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Type de cahier</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Quantité totale</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Prix unitaire</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Montant total</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Quantité</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Montant</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -293,9 +333,6 @@
                     </td>
                     <td class="text-center">
                       <span class="badge badge-lg bg-gradient-primary">{{ ligne.quantite_totale }}</span>
-                    </td>
-                    <td class="text-end">
-                      <span class="text-sm font-weight-bold">{{ ligne.cahier.prix|floatformat:0 }} F</span>
                     </td>
                     <td class="text-end pe-4">
                       <span class="text-lg font-weight-bold text-success">{{ ligne.montant_total|floatformat:0 }} F</span>
@@ -317,11 +354,11 @@
         </div>
       </div>
     </div>
-  </div>  <!-- Paiements -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card shadow-lg border-0">
-        <div class="card-header bg-gradient-success p-3">
+
+    <!-- Historique des paiements -->
+    <div class="col-md-6">
+      <div class="card shadow-lg border-0 h-100">
+        <div class="card-header bg-gradient-dark p-3">
           <div class="row align-items-center">
             <div class="col">
               <h6 class="mb-0 text-white font-weight-bolder">
@@ -337,10 +374,10 @@
                       data-montant-restant="{{ montant_restant }}"
                       data-ecole-nom="{{ vente.ecole.nom }}"
                       data-annee="{{ vente.annee_scolaire }}"
-                      data-dettes-autres="[]"
-                      data-total-dettes-autres="0">
+                      data-dettes-autres="{{ dettes_autres_ventes|length }}"
+                      data-total-dettes-autres="{{ total_dettes_autres }}">
                 <i class="material-symbols-rounded me-1">add</i>
-                Ajouter un paiement
+                Ajouter
               </button>
             </div>
           </div>
@@ -392,8 +429,8 @@
                       data-montant-restant="{{ montant_restant }}"
                       data-ecole-nom="{{ vente.ecole.nom }}"
                       data-annee="{{ vente.annee_scolaire }}"
-                      data-dettes-autres="[]"
-                      data-total-dettes-autres="0">
+                      data-dettes-autres="{{ dettes_autres_ventes|length }}"
+                      data-total-dettes-autres="{{ total_dettes_autres }}">
                 <i class="material-symbols-rounded me-1">add</i>
                 Premier paiement
               </button>
@@ -460,6 +497,137 @@
   {% endif %}
 </div>
 
+<!-- Modal Dettes École -->
+<div class="modal fade" id="dettesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient-warning">
+        <h5 class="modal-title text-white font-weight-bolder">
+          <i class="material-symbols-rounded me-2">account_balance</i>
+          Dettes de l'école : {{ vente.ecole.nom }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card border-0 shadow">
+              <div class="card-body text-center">
+                <div class="icon-shape icon-lg bg-gradient-warning shadow border-radius-xl mx-auto mb-3">
+                  <i class="material-symbols-rounded text-white text-lg">account_balance</i>
+                </div>
+                <h3 class="font-weight-bold text-warning mb-1">{{ total_dettes_autres|floatformat:0 }} F</h3>
+                <p class="text-sm text-muted mb-0">Dette totale cumulée</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-0 shadow">
+              <div class="card-body text-center">
+                <div class="icon-shape icon-lg bg-gradient-info shadow border-radius-xl mx-auto mb-3">
+                  <i class="material-symbols-rounded text-white text-lg">receipt_long</i>
+                </div>
+                <h3 class="font-weight-bold text-info mb-1">{{ dettes_autres_ventes|length }}</h3>
+                <p class="text-sm text-muted mb-0">Vente{{ dettes_autres_ventes|length|pluralize }} impayée{{ dettes_autres_ventes|length|pluralize }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if dettes_autres_ventes %}
+        <div class="card shadow-lg border-0">
+          <div class="card-header bg-gradient-light p-3">
+            <h6 class="text-dark font-weight-bolder mb-0">
+              <i class="material-symbols-rounded me-2">list</i>
+              Détail des ventes impayées
+            </h6>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table align-items-center mb-0">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Vente</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Année scolaire</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Montant total</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Payé</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Restant dû</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center pe-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for dette in dettes_autres_ventes %}
+                  <tr>
+                    <td class="ps-4">
+                      <div class="d-flex align-items-center">
+                        <div class="icon-shape icon-sm bg-gradient-secondary shadow border-radius-md me-3">
+                          <i class="material-symbols-rounded text-white text-sm">receipt</i>
+                        </div>
+                        <div>
+                          <span class="text-sm font-weight-bold">{{ dette.vente.id|slice:":8" }}...</span>
+                          <br>
+                          <small class="text-muted">ID: {{ dette.vente.id }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge badge-sm bg-gradient-info">{{ dette.vente.annee_scolaire }}</span>
+                    </td>
+                    <td>
+                      <span class="text-sm">{{ dette.vente.created_at|date:"d/m/Y" }}</span>
+                      <br>
+                      <small class="text-muted">{{ dette.vente.created_at|date:"H:i" }}</small>
+                    </td>
+                    <td class="text-end">
+                      <span class="text-sm font-weight-bold">{{ dette.montant_total|floatformat:0 }} F</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="text-sm text-success">{{ dette.montant_paye|floatformat:0 }} F</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="text-lg font-weight-bold text-warning">{{ dette.montant_restant|floatformat:0 }} F</span>
+                    </td>
+                    <td class="text-center pe-4">
+                      <a href="{% url 'vente_detail' dette.vente.id %}" class="btn btn-sm btn-outline-info">
+                        <i class="material-symbols-rounded text-xs">visibility</i>
+                        Voir
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer bg-gradient-light p-3">
+            <div class="row align-items-center">
+              <div class="col">
+                <p class="text-sm text-muted mb-0">
+                  <i class="material-symbols-rounded me-1" style="font-size: 16px;">info</i>
+                  Ces montants peuvent être réglés lors du prochain paiement
+                </p>
+              </div>
+              <div class="col-auto">
+                <span class="text-lg font-weight-bold text-warning">
+                  Total: {{ total_dettes_autres|floatformat:0 }} F
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="material-symbols-rounded me-1">close</i>
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal de paiement modernisé -->
 <div class="modal fade" id="paiementModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -512,6 +680,29 @@
           </div>
         </div>
 
+        <!-- Section Dette École (si elle existe) -->
+        <div id="dettesEcoleSection" class="card border-0 shadow mt-3" style="display: none;">
+          <div class="card-header bg-gradient-warning">
+            <h6 class="text-white font-weight-bolder mb-0">
+              <i class="material-symbols-rounded me-2">warning</i>
+              Autres dettes de l'école
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-warning border-0" role="alert">
+              <div class="d-flex align-items-center">
+                <div class="icon-shape icon-sm bg-gradient-warning shadow border-radius-md me-3">
+                  <i class="material-symbols-rounded text-white text-sm">info</i>
+                </div>
+                <div>
+                  <p class="mb-1 text-sm font-weight-bold">Dette totale de l'école : <span id="modalTotalDettesAutres"></span> F</p>
+                  <p class="mb-0 text-xs text-muted">Le paiement peut être appliqué aux autres ventes impayées si le montant dépasse cette facture.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <form id="paiementModalForm" method="post" class="mt-4">
           {% csrf_token %}
           <div class="input-group input-group-outline mb-3">
@@ -555,6 +746,8 @@
     var montantRestant = parseFloat(button.getAttribute('data-montant-restant')) || 0
     var ecoleNom = button.getAttribute('data-ecole-nom') || ''
     var annee = button.getAttribute('data-annee') || ''
+    var dettesAutres = parseInt(button.getAttribute('data-dettes-autres')) || 0
+    var totalDettesAutres = parseFloat(button.getAttribute('data-total-dettes-autres')) || 0
     
     var form = document.getElementById('paiementModalForm')
     form.action = '/ventes/' + venteId + '/paiement/'
@@ -565,7 +758,18 @@
     document.getElementById('venteMontantPaye').textContent = montantPaye.toFixed(0)
     document.getElementById('venteMontantRestant').textContent = montantRestant.toFixed(0)
     
-    document.getElementById('paiementMontant').value = montantRestant.toFixed(0)
+    // Afficher ou masquer la section dette école
+    var dettesSection = document.getElementById('dettesEcoleSection')
+    if (totalDettesAutres > 0) {
+      dettesSection.style.display = 'block'
+      document.getElementById('modalTotalDettesAutres').textContent = totalDettesAutres.toFixed(0)
+    } else {
+      dettesSection.style.display = 'none'
+    }
+    
+    // Suggérer le montant recommandé (vente courante + dettes autres)
+    var montantRecommande = montantRestant + totalDettesAutres
+    document.getElementById('paiementMontant').value = montantRecommande.toFixed(0)
   })
 
   function supprimerLigne(ligneId) {

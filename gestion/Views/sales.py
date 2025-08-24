@@ -130,6 +130,32 @@ def vente_detail(request, vente_id):
     montant_total = montant_lignes
     montant_restant = montant_total - montant_paye
 
+    # Calculer la dette totale de l'école (toutes les ventes impayées)
+    dettes_par_annee = vente.get_dettes_par_annee_ecole()
+    dette_totale_ecole = vente.get_total_dettes_ecole()
+    
+    # Calculer les dettes des autres ventes (exclure la vente courante)
+    autres_ventes = Vente.objects.filter(ecole=vente.ecole)\
+        .exclude(id=vente.id)\
+        .select_related('annee_scolaire')
+    
+    dettes_autres_ventes = []
+    total_dettes_autres = Decimal('0')
+    
+    for autre_vente in autres_ventes:
+        total_lignes_autre = autre_vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        paye_autre = autre_vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        restant_autre = total_lignes_autre - paye_autre
+        
+        if restant_autre > 0:
+            total_dettes_autres += restant_autre
+            dettes_autres_ventes.append({
+                'vente': autre_vente,
+                'montant_restant': restant_autre,
+                'montant_total': total_lignes_autre,
+                'montant_paye': paye_autre
+            })
+
     # Obtenir les sessions d'ajout d'articles
     sessions = vente.get_articles_par_session()
 
@@ -162,6 +188,10 @@ def vente_detail(request, vente_id):
         'montant_paye': montant_paye,
         'montant_restant': montant_restant,
         'related_groups': groups,
+        'dettes_par_annee': dettes_par_annee,
+        'dette_totale_ecole': dette_totale_ecole,
+        'dettes_autres_ventes': dettes_autres_ventes,
+        'total_dettes_autres': total_dettes_autres,
     }
     return render(request, 'vente_detail.html', context)
 
