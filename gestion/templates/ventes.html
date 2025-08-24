@@ -1,103 +1,172 @@
 {% extends 'base.html' %}
 {% block content %}
 {% load static %}
-<div class="container-fluid py-2">
-  <div class="row">
-    <div class="ms-3 col-auto">
-      <h3 class="mb-0 h4 font-weight-bolder">Ventes</h3>
-      <p class="mb-4">Gestion et suivi de toutes les ventes</p>
+<div class="container-fluid py-3">
+  <!-- Header Section -->
+  <div class="row align-items-center mb-4">
+    <div class="col-md-8">
+      <div class="d-flex align-items-center">
+        <div class="icon-shape icon-lg bg-gradient-primary shadow border-radius-xl me-3">
+          <i class="material-symbols-rounded text-white" style="font-size: 2rem;">point_of_sale</i>
+        </div>
+        <div>
+          <h3 class="mb-0 font-weight-bolder text-dark">Gestion des Ventes</h3>
+          <p class="mb-0 text-muted">Suivi et administration de toutes les transactions</p>
+        </div>
+      </div>
     </div>
-    <div class="col d-flex justify-content-end align-items-start">
-      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNouvelleVente">
-        <i class="material-symbols-rounded me-1">add</i>
-        Nouvelle vente
+    <div class="col-md-4 text-end">
+      <button type="button" class="btn bg-gradient-primary btn-lg shadow-primary" data-bs-toggle="modal" data-bs-target="#modalNouvelleVente">
+        <i class="material-symbols-rounded me-2">add_circle</i>
+        Nouvelle Vente
       </button>
     </div>
   </div>
 
-    <div class="row mb-4">
-      <div class="col-lg-12">
-        <div class="card">
-          <div class="card-header pb-0">
-            <div class="row">
-              <div class="col-lg-6 col-7">
-                <p class="text-sm mb-0"><span>Liste des ventes</span></p>
-              </div>
+  <!-- Filters Card -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-light p-3">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="mb-0 text-dark font-weight-bolder">
+                <i class="material-symbols-rounded me-2">filter_list</i>
+                Filtres de recherche
+              </h6>
             </div>
           </div>
-          <div class="card-body p-4">
-            <form method="get" class="row g-3 mb-4">
-              <div class="col-md-4">
-                <label for="ecole" class="form-label">École:</label>
-                <select name="ecole" id="ecole" class="form-select">
-                  <option value="">-- Toutes --</option>
+        </div>
+        <div class="card-body p-4">
+          <form method="get" class="row g-3">
+            <div class="col-lg-8 col-md-8">
+              <div class="input-group input-group-outline">
+                <label class="form-label">École</label>
+                <select name="ecole" id="ecole" class="form-control">
+                  <option value="">-- Toutes les écoles --</option>
                   {% for e in ecoles %}
                     <option value="{{ e.id }}" {% if selected_ecole == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nom }}</option>
                   {% endfor %}
                 </select>
               </div>
-              <div class="col-md-4">
-                <label for="annee" class="form-label">Année scolaire:</label>
-                <select name="annee" id="annee" class="form-select">
-                  <option value="">-- Toutes --</option>
-                  {% for a in annees %}
-                    <option value="{{ a.id }}" {% if selected_annee == a.id|stringformat:'s' %}selected{% endif %}>{{ a }}</option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">Filtrer</button>
-              </div>
-            </form>
+            </div>
+            <div class="col-lg-4 col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn bg-gradient-info w-100 shadow">
+                <i class="material-symbols-rounded me-2">search</i>
+                Appliquer le filtre
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Sales List Card -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient-primary p-3">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="mb-0 text-white font-weight-bolder">
+                <i class="material-symbols-rounded me-2">receipt_long</i>
+                Liste des ventes
+                {% if ventes %}
+                  <span class="badge bg-light text-dark ms-2">{{ ventes.paginator.count }} vente{{ ventes.paginator.count|pluralize }}</span>
+                {% endif %}
+              </h6>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          {% if ventes %}
             <div class="table-responsive">
-              <table class="table table-bordered">
-                <thead>
+              <table class="table align-items-center mb-0">
+                <thead class="bg-gray-100">
                   <tr>
-                    <th>Date</th>
-                    <th>Vente</th>
-                    <th>École</th>
-                    <th>Année</th>
-                    <th>Montant total</th>
-                    <th>Montant payé</th>
-                    <th>Montant restant</th>
-                    <th>Statut</th>
-                    <th>Lignes</th>
-                    <th>Actions</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Vente</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">École</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Montants</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Statut</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Articles</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for v in ventes %}
-                    <tr>
-                      <td class="border">{{ v.created_at.date }}</td>
-                      <td class="border">{{ v.short_id }}</td>
-                      <td class="border">{{ v.ecole.nom }}</td>
-                      <td class="border">{{ v.annee_scolaire }}</td>
-                      <td class="border">{{ v.montant_total|floatformat:0 }} F</td>
-                      <td class="border">{{ v.montant_paye|floatformat:0 }} F</td>
-                      <td class="border">{{ v.montant_restant|floatformat:0 }} F</td>
-                      <td class="border">
+                    <tr class="border-bottom">
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                          <div class="icon-shape icon-sm bg-gradient-secondary shadow border-radius-md me-3">
+                            <i class="material-symbols-rounded text-white">receipt</i>
+                          </div>
+                          <div>
+                            <h6 class="mb-0 text-sm font-weight-bold">{{ v.short_id }}</h6>
+                            <p class="text-xs text-muted mb-0">{{ v.created_at.date|date:"d/m/Y" }}</p>
+                            <small class="text-xs text-info">{{ v.annee_scolaire }}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <h6 class="mb-0 text-sm font-weight-bold">{{ v.ecole.nom }}</h6>
+                          <p class="text-xs text-muted mb-0">{{ v.created_at|date:"H:i" }}</p>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex flex-column">
+                          <span class="text-sm font-weight-bold text-dark">Total: {{ v.montant_total|floatformat:0 }} F</span>
+                          <span class="text-xs text-success">Payé: {{ v.montant_paye|floatformat:0 }} F</span>
+                          <span class="text-xs {% if v.montant_restant > 0 %}text-warning{% else %}text-muted{% endif %}">
+                            Restant: {{ v.montant_restant|floatformat:0 }} F
+                          </span>
+                        </div>
+                      </td>
+                      <td>
                         {% if v.montant_restant <= 0 %}
-                          <span class="badge bg-gradient-success">Payé</span>
+                          <span class="badge badge-sm bg-gradient-success">
+                            <i class="material-symbols-rounded text-xs me-1">check_circle</i>
+                            Payé
+                          </span>
                         {% elif v.montant_paye > 0 %}
-                          <span class="badge bg-gradient-warning">Partiel</span>
+                          <span class="badge badge-sm bg-gradient-warning">
+                            <i class="material-symbols-rounded text-xs me-1">schedule</i>
+                            Partiel
+                          </span>
                         {% else %}
-                          <span class="badge bg-gradient-danger">Impayé</span>
+                          <span class="badge badge-sm bg-gradient-danger">
+                            <i class="material-symbols-rounded text-xs me-1">error</i>
+                            Impayé
+                          </span>
                         {% endif %}
                       </td>
-                      <td class="border">{{ v.lignes_count }}</td>
-                      <td class="border">
-                        <div class="d-flex gap-1">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="icon-shape icon-xs bg-gradient-info shadow border-radius-sm me-2">
+                            <i class="material-symbols-rounded text-white text-xs">inventory</i>
+                          </div>
+                          <span class="text-sm font-weight-bold">{{ v.lignes_count }}</span>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
                           <!-- Bouton Détails -->
-                          <a class="btn btn-sm btn-outline-primary" href="{% url 'vente_detail' v.id %}" 
-                             title="Voir les détails de la vente" data-bs-toggle="tooltip">
-                            <i class="material-symbols-rounded">visibility</i>
+                          <a class="btn btn-link text-info p-2 mb-0" href="{% url 'vente_detail' v.id %}" 
+                             title="Voir les détails" data-bs-toggle="tooltip">
+                            <i class="material-symbols-rounded text-sm">visibility</i>
                           </a>
                           
-                          <!-- Bouton Paiement (seulement si pas complètement payé) -->
+                          <!-- Bouton Facture PDF -->
+                          <a class="btn btn-link text-secondary p-2 mb-0" href="{% url 'generer_facture_pdf' v.id %}" 
+                             title="Générer la facture PDF" data-bs-toggle="tooltip" target="_blank">
+                            <i class="material-symbols-rounded text-sm">description</i>
+                          </a>
+                          
+                          <!-- Bouton Paiement -->
                           {% if v.montant_restant > 0 %}
-                          <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paiementModal" 
-                                  title="Ajouter un paiement"
+                          <button class="btn btn-link text-success p-2 mb-0" data-bs-toggle="modal" data-bs-target="#paiementModal" 
+                                  title="Ajouter un paiement" data-bs-toggle="tooltip"
                                   data-vente-id="{{ v.id }}" 
                                   data-montant-total="{{ v.montant_total }}"
                                   data-montant-paye="{{ v.montant_paye }}"
@@ -106,85 +175,83 @@
                                   data-annee="{{ v.annee_scolaire }}"
                                   data-dettes-autres='{{ v.dettes_autres_json }}'
                                   data-total-dettes-autres="{{ v.total_dettes_autres }}">
-                            <i class="material-symbols-rounded">payments</i>
+                            <i class="material-symbols-rounded text-sm">payments</i>
                           </button>
                           {% endif %}
                           
-                          <!-- Bouton Ajouter article (seulement pour l'année courante) -->
+                          <!-- Bouton Ajouter article -->
                           {% if v.annee_scolaire.est_active %}
-                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modifierModal" 
-                                  title="Ajouter un article à la vente"
+                          <button class="btn btn-link text-warning p-2 mb-0" data-bs-toggle="modal" data-bs-target="#modifierModal" 
+                                  title="Ajouter un article" data-bs-toggle="tooltip"
                                   data-vente-id="{{ v.id }}">
-                            <i class="material-symbols-rounded">add_shopping_cart</i>
+                            <i class="material-symbols-rounded text-sm">add_shopping_cart</i>
                           </button>
                           {% endif %}
                         </div>
                       </td>
                     </tr>
-                  {% empty %}
-                    <tr><td colspan="10" class="text-center border">Aucune vente trouvée.</td></tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
-            
-            <!-- Pagination -->
-            {% if ventes.has_other_pages %}
-            <div class="d-flex justify-content-center mt-4">
-              <nav aria-label="Navigation des pages">
-                <ul class="pagination">
-                  {% if ventes.has_previous %}
-                    <li class="page-item">
-                      <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ ventes.previous_page_number }}">
-                        <i class="material-symbols-rounded">chevron_left</i>
-                      </a>
-                    </li>
-                  {% else %}
-                    <li class="page-item disabled">
-                      <span class="page-link">
-                        <i class="material-symbols-rounded">chevron_left</i>
-                      </span>
-                    </li>
-                  {% endif %}
-                  
-                  {% for page_num in ventes.paginator.page_range %}
-                    {% if page_num == ventes.number %}
-                      <li class="page-item active">
-                        <span class="page-link">{{ page_num }}</span>
-                      </li>
-                    {% elif page_num == 1 or page_num == ventes.paginator.num_pages or page_num >= ventes.number|add:'-2' and page_num <= ventes.number|add:'2' %}
-                      <li class="page-item">
-                        <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ page_num }}">{{ page_num }}</a>
-                      </li>
-                    {% elif page_num == 2 and ventes.number > 4 %}
-                      <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                      </li>
-                    {% elif page_num == ventes.paginator.num_pages|add:'-1' and ventes.number < ventes.paginator.num_pages|add:'-3' %}
-                      <li class="page-item disabled">
-                        <span class="page-link">...</span>
-                      </li>
-                    {% endif %}
-                  {% endfor %}
-                  
-                  {% if ventes.has_next %}
-                    <li class="page-item">
-                      <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ ventes.next_page_number }}">
-                        <i class="material-symbols-rounded">chevron_right</i>
-                      </a>
-                    </li>
-                  {% else %}
-                    <li class="page-item disabled">
-                      <span class="page-link">
-                        <i class="material-symbols-rounded">chevron_right</i>
-                      </span>
-                    </li>
-                  {% endif %}
-                </ul>
-              </nav>
+          {% else %}
+            <div class="text-center p-5">
+              <div class="icon-shape icon-xxl bg-gradient-light shadow border-radius-xl mx-auto mb-3">
+                <i class="material-symbols-rounded text-muted" style="font-size: 3rem;">receipt_long</i>
+              </div>
+              <h5 class="text-muted mb-2">Aucune vente trouvée</h5>
+              <p class="text-sm text-muted mb-4">Il n'y a pas de ventes correspondant à vos critères de recherche.</p>
+              <button type="button" class="btn bg-gradient-primary" data-bs-toggle="modal" data-bs-target="#modalNouvelleVente">
+                <i class="material-symbols-rounded me-2">add_circle</i>
+                Créer la première vente
+              </button>
             </div>
-            {% endif %}
+          {% endif %}
+          
+          <!-- Pagination -->
+          {% if ventes.has_other_pages %}
+          <div class="d-flex justify-content-center p-4 border-top">
+            <nav aria-label="Navigation des pages">
+              <ul class="pagination pagination-primary">
+                {% if ventes.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}page={{ ventes.previous_page_number }}">
+                      <i class="material-symbols-rounded">chevron_left</i>
+                    </a>
+                  </li>
+                {% endif %}
+                
+                {% for page_num in ventes.paginator.page_range %}
+                  {% if page_num == ventes.number %}
+                    <li class="page-item active">
+                      <span class="page-link">{{ page_num }}</span>
+                    </li>
+                  {% elif page_num == 1 or page_num == ventes.paginator.num_pages or page_num >= ventes.number|add:'-2' and page_num <= ventes.number|add:'2' %}
+                    <li class="page-item">
+                      <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}page={{ page_num }}">{{ page_num }}</a>
+                    </li>
+                  {% elif page_num == 2 and ventes.number > 4 %}
+                    <li class="page-item disabled">
+                      <span class="page-link">...</span>
+                    </li>
+                  {% elif page_num == ventes.paginator.num_pages|add:'-1' and ventes.number < ventes.paginator.num_pages|add:'-3' %}
+                    <li class="page-item disabled">
+                      <span class="page-link">...</span>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+                
+                {% if ventes.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}page={{ ventes.next_page_number }}">
+                      <i class="material-symbols-rounded">chevron_right</i>
+                    </a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
           </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -554,40 +621,25 @@
       <form id="formNouvelleVente" method="post" action="{% url 'creer_vente' %}">
         {% csrf_token %}
         <div class="modal-body">
-          <!-- Sélection école et année -->
+          <!-- Sélection école -->
           <div class="row mb-4">
             <div class="col-md-6">
               <label for="nouvelle_vente_ecole" class="form-label">École <span class="text-danger">*</span></label>
               <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select" required>
-                <option value="">-- Sélectionner une école --</option>
                 {% for ecole in ecoles %}
                   <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-6">
-              <label for="nouvelle_vente_annee" class="form-label">Année scolaire <span class="text-danger">*</span></label>
-              <select name="annee_id" id="nouvelle_vente_annee" class="form-select" required>
-                {% for annee in annees %}
-                  <option value="{{ annee.id }}" {% if annee.est_active %}selected{% endif %}>{{ annee }}</option>
-                {% endfor %}
-              </select>
-            </div>
           </div>
 
-          <!-- Dette précédente (optionnel) -->
+          <!-- Description (optionnel) -->
           <div class="row mb-4">
-            <div class="col-md-6">
-              <label for="nouvelle_vente_dette" class="form-label">Dette précédente (optionnel)</label>
-              <input type="number" step="0.01" min="0" name="dette_precedente" id="nouvelle_vente_dette" class="form-control" placeholder="0.00">
+            <div class="col-md-12">
+              <label for="nouvelle_vente_description" class="form-label">Description (optionnel)</label>
+              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control" rows="2" placeholder="Description de la vente..."></textarea>
             </div>
-            <div class="col-md-6">
-              <label for="nouvelle_vente_description_dette" class="form-label">Description de la dette</label>
-              <input type="text" name="description_dette" id="nouvelle_vente_description_dette" class="form-control" placeholder="Ex: Reliquat année 2023-2024">
-            </div>
-          </div>
-
-          <!-- Sélection des articles -->
+          </div>          <!-- Sélection des articles -->
           <div class="row">
             <div class="col-12">
               <h6 class="text-dark font-weight-bolder mb-3">

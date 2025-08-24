@@ -13,293 +13,341 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from datetime import datetime
+from PyPDF2 import PdfReader, PdfWriter, PageObject
+from io import BytesIO
 import os
 from decimal import Decimal
 
 
 def generer_facture_pdf(request, vente_id):
-    """Génère une facture PDF pour une vente avec les différentes sessions d'articles"""
+    """Génère une facture PDF pour une vente avec le design de l'exemple"""
     
     # Récupérer la vente
     vente = get_object_or_404(Vente, id=vente_id)
     
-    # Créer la réponse HTTP
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="facture_{vente.ecole.nom.replace(" ", "_")}_{vente.id}.pdf"'
+    # S'assurer que nous avons les dernières données
+    vente.refresh_from_db()
+    
+    # Créer le buffer pour le PDF
+    buffer = BytesIO()
+    
+    # Styles
+    styles_paragraph = getSampleStyleSheet()
+    style_cellule = styles_paragraph['BodyText']
+    style_cellule.wordWrap = 'CJK'
+    style_cellule.leading = 11
+    style_cellule.fontSize = 9
     
     # Créer le document PDF
-    doc = SimpleDocTemplate(response, pagesize=A4, 
-                          rightMargin=2*cm, leftMargin=2*cm,
-                          topMargin=2*cm, bottomMargin=2*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=6*cm, bottomMargin=4*cm)
     
-    # Créer les styles
-    styles = getSampleStyleSheet()
-    
-    # Style personnalisé pour le titre
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=18,
-        spaceAfter=30,
-        alignment=TA_CENTER,
-        textColor=colors.darkblue
-    )
-    
-    # Style pour les sous-titres
-    subtitle_style = ParagraphStyle(
-        'CustomSubtitle',
-        parent=styles['Heading2'],
-        fontSize=14,
-        spaceAfter=12,
-        spaceBefore=12,
-        textColor=colors.darkblue
-    )
-    
-    # Style pour le contenu
-    content_style = ParagraphStyle(
-        'CustomContent',
-        parent=styles['Normal'],
-        fontSize=10,
-        spaceAfter=6
-    )
-    
-    # Style pour les totaux
-    total_style = ParagraphStyle(
-        'CustomTotal',
-        parent=styles['Normal'],
-        fontSize=12,
-        spaceAfter=6,
-        alignment=TA_RIGHT,
-        textColor=colors.darkgreen
-    )
-    
-    # Contenu du PDF
     story = []
+    styles = getSampleStyleSheet()
+    style_normal = styles["Normal"]
+    style_bold = styles["Heading4"]
+    style_important = styles["Heading3"]
     
-    # Titre principal
-    story.append(Paragraph("FACTURE", title_style))
-    story.append(Spacer(1, 20))
+    story.append(Spacer(1, 0.5 * cm))
     
-    # Informations de l'entreprise (à personnaliser selon vos besoins)
-    story.append(Paragraph("ENTREPRISE DE CAHIERS D'ÉCRITURE", subtitle_style))
-    story.append(Paragraph("Adresse de l'entreprise", content_style))
-    story.append(Paragraph("Téléphone: +XXX XX XX XX XX", content_style))
-    story.append(Paragraph("Email: contact@entreprise.com", content_style))
-    story.append(Spacer(1, 20))
+    # Style pour le nom de l'école
+    style_ecole = ParagraphStyle(
+        'EcoleStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica',
+        wordWrap='CJK',
+        alignment=1,
+        leading=10,
+        spaceBefore=0,
+        spaceAfter=0
+    )
     
-    # Informations de facturation
-    data_facture = [
-        ['FACTURE N°:', str(vente.id)[:8].upper()],
-        ['DATE:', vente.created_at.strftime('%d/%m/%Y')],
-        ['ÉCOLE:', vente.ecole.nom],
-        ['ANNÉE SCOLAIRE:', str(vente.annee_scolaire)],
-        ['ADRESSE:', vente.ecole.adresse if vente.ecole.adresse else 'Non renseignée']
+    # Informations de la facture
+    numero_facture = f"F-{datetime.now().year}-{str(vente.id)[:8]}"
+    date_modif_str = vente.modified_at.strftime('%d-%m-%Y %H:%M') if vente.modified_at else "—"
+    
+    # Tableau d'en-tête avec informations
+    info_data = [
+        ["ÉCOLE", "FACTURE", "DATE ÉDITION", "DATE MODIFICATION", "ANNÉE SCOLAIRE"],
+        [Paragraph(vente.ecole.nom, style_ecole), 
+         Paragraph(numero_facture), 
+         datetime.now().strftime('%d-%m-%Y %H:%M'),
+         date_modif_str,
+         str(vente.annee_scolaire)]
     ]
     
-    table_facture = Table(data_facture, colWidths=[4*cm, 8*cm])
-    table_facture.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
+    info_table = Table(info_data, colWidths=[2.5*cm, 3.5*cm, 3*cm, 4*cm, 3*cm])
+    info_table_style = TableStyle([
+        ('GRID', (0,0), (-1,-1), 1.5, colors.black),
+        ('BACKGROUND', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 9),
+        ('ALIGN', (0,0), (-1,0), 'CENTER'),
+        ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
+        ('FONTNAME', (0,1), (-1,1), 'Helvetica'),
+        ('FONTSIZE', (0,1), (-1,1), 8),
+        ('ALIGN', (0,1), (-1,1), 'CENTER'),
+        ('VALIGN', (0,1), (-1,1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 5),
+        ('RIGHTPADDING', (0,0), (-1,-1), 5),
+    ])
     
-    story.append(table_facture)
-    story.append(Spacer(1, 30))
+    info_table.setStyle(info_table_style)   
+    story.append(info_table)
+    story.append(Spacer(0.1, 0.1 * cm))
     
     # Récupérer toutes les dettes de l'école par année
     dettes_par_annee = vente.get_dettes_par_annee_ecole()
     total_dettes_ecole = vente.get_total_dettes_ecole()
     
-    # Affichage des dettes par année (si il y en a)
-    if dettes_par_annee:
-        story.append(Paragraph("HISTORIQUE DES DETTES PAR ANNÉE SCOLAIRE", subtitle_style))
+    # Affichage des dettes par année (s'il y en a)
+    if len(dettes_par_annee) > 0:
+        # Exclure la vente courante du calcul des autres dettes à afficher
+        dettes_autres = {k: v for k, v in dettes_par_annee.items() 
+                        if any(vte.id != vente.id for vte in v['ventes'])}
         
-        # Tableau des dettes par année
-        data_dettes = [['Année scolaire', 'Montant articles', 'Dette précédente', 'Sous-total', 'Payé', 'Restant dû']]
-        
-        for annee_str, dette_info in dettes_par_annee.items():
-            data_dettes.append([
-                str(dette_info['annee_scolaire']),
-                f"{dette_info['montant_articles']:,.0f} F",
-                f"{dette_info['dette_precedente']:,.0f} F",
-                f"{dette_info['montant_total']:,.0f} F",
-                f"{dette_info['montant_paye']:,.0f} F",
-                f"{dette_info['montant_restant']:,.0f} F"
+        if dettes_autres:
+            story.append(Paragraph("<b>HISTORIQUE DES DETTES PAR ANNÉE SCOLAIRE</b>", style_bold))
+            story.append(Spacer(0.1, 0.1*cm))
+            
+            # Tableau des dettes par année
+            dettes_data = [["Année scolaire", "Montant articles", "Total", "Payé", "Restant dû"]]
+            
+            for annee_str, dette_info in dettes_autres.items():
+                dettes_data.append([
+                    str(dette_info['annee_scolaire']),
+                    f"{dette_info['montant_articles']:.2f} F",
+                    f"{dette_info['montant_total']:.2f} F",
+                    f"{dette_info['montant_paye']:.2f} F",
+                    f"{dette_info['montant_restant']:.2f} F"
+                ])
+            
+            table_dettes = Table(dettes_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
+            table_style_dettes = TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.darkred),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 8),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 3),
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,1), (-1,-1), 8),
+                ('TOPPADDING', (0,1), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,1), (-1,-1), 3),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('GRID', (0,0), (-1,-1), 1, colors.black),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ])
-        
-        # Ligne de total des dettes
-        data_dettes.append([
-            'TOTAL DETTES ÉCOLE',
-            '', '', '', '',
-            f"{total_dettes_ecole:,.0f} F"
-        ])
-        
-        table_dettes = Table(data_dettes, colWidths=[3*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
-        table_dettes.setStyle(TableStyle([
-            # En-tête
-            ('BACKGROUND', (0, 0), (-1, 0), colors.darkred),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),  # Montants à droite
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            # Ligne de total
-            ('BACKGROUND', (0, -1), (-1, -1), colors.lightcoral),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, -1), (-1, -1), 10),
-        ]))
-        
-        story.append(table_dettes)
-        story.append(Spacer(1, 20))
+            
+            # Alterner les couleurs des lignes
+            for i in range(1, len(dettes_data), 2):
+                if i < len(dettes_data):
+                    table_style_dettes.add('BACKGROUND', (0,i), (-1,i), colors.lightgrey)
+            
+            table_dettes.setStyle(table_style_dettes)
+            story.append(table_dettes)
+            story.append(Spacer(0.2, 0.3*cm))
     
-    # Dette précédente de la facture courante (si applicable)
-    if vente.dette_precedente and vente.dette_precedente > 0:
-        story.append(Paragraph("DETTE PRÉCÉDENTE INCLUSE DANS CETTE FACTURE", subtitle_style))
-        if vente.description_dette:
-            story.append(Paragraph(f"Description: {vente.description_dette}", content_style))
-        story.append(Paragraph(f"Montant: {vente.dette_precedente:,.0f} F", content_style))
-        story.append(Spacer(1, 20))
-    
-    # Sessions d'articles
+    # Sessions d'articles de cette facture
     sessions = vente.get_articles_par_session()
     
     if sessions:
-        story.append(Paragraph("DÉTAIL DES ARTICLES PAR SESSION D'AJOUT", subtitle_style))
-        story.append(Spacer(1, 10))
+        story.append(Paragraph("<b>ARTICLES DE CETTE FACTURE PAR SESSION</b>", style_bold))
+        story.append(Spacer(0.1, 0.1*cm))
         
         for i, session in enumerate(sessions, 1):
             # Titre de la session
-            story.append(Paragraph(f"Session #{i} - {session['date_session'].strftime('%d/%m/%Y à %H:%M')}", 
-                                 ParagraphStyle('SessionTitle', parent=styles['Heading3'], fontSize=12, 
-                                              textColor=colors.darkred, spaceAfter=8)))
+            session_title = f"SESSION #{i} - {session['date_session'].strftime('%d-%m-%Y %H:%M')}"
+            story.append(Paragraph(f"<b>{session_title}</b>", style_normal))
+            story.append(Spacer(0.1, 0.1*cm))
             
             # Tableau des articles de cette session
-            data_session = [['Article', 'Quantité', 'Prix unitaire', 'Montant']]
+            session_data = [["Cahier", "Quantité", "Prix Unitaire", "Total"]]
             
             for ligne in session['lignes']:
-                data_session.append([
-                    ligne.cahier.titre,
+                session_data.append([
+                    Paragraph(ligne.cahier.titre, style_cellule),
                     str(ligne.quantite),
-                    f"{ligne.cahier.prix:,.0f} F",
-                    f"{ligne.montant:,.0f} F"
+                    f"{ligne.cahier.prix:.2f} F",
+                    f"{ligne.montant:.2f} F"
                 ])
             
-            # Ligne de total pour cette session
-            data_session.append([
-                'TOTAL SESSION', 
-                f"{session['nombre_articles']} articles", 
-                '', 
-                f"{session['montant_total']:,.0f} F"
+            table_session = Table(session_data, colWidths=[8*cm, 2.5*cm, 3*cm, 3*cm])
+            table_style_session = TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.blue),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 10),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 3),
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,1), (-1,-1), 10),
+                ('TOPPADDING', (0,1), (-1,-1), 3),
+                ('BOTTOMPADDING', (0,1), (-1,-1), 3),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('GRID', (0,0), (-1,-1), 1, colors.black),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ])
             
-            table_session = Table(data_session, colWidths=[8*cm, 2*cm, 3*cm, 3*cm])
-            table_session.setStyle(TableStyle([
-                # En-tête
-                ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('ALIGN', (1, 1), (-1, -1), 'CENTER'),  # Quantité centrée
-                ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),   # Prix et montant à droite
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                # Ligne de total de session
-                ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-                ('TEXTCOLOR', (0, -1), (-1, -1), colors.darkred),
-            ]))
+            # Alterner les couleurs des lignes
+            for j in range(1, len(session_data), 2):
+                if j < len(session_data):
+                    table_style_session.add('BACKGROUND', (0,j), (-1,j), colors.lightgrey)
             
+            table_session.setStyle(table_style_session)
             story.append(table_session)
-            story.append(Spacer(1, 15))
+            
+            # Sous-total de la session
+            story.append(Spacer(0.1, 0.2*cm))
+            story.append(Paragraph(f"<b>Sous-total session #{i} : {session['montant_total']:.2f} F</b>", style_normal))
+            story.append(Spacer(0.2, 0.3*cm))
     
-    # Résumé financier
-    story.append(Paragraph("RÉSUMÉ FINANCIER", subtitle_style))
+    # Récapitulatif financier
+    montant_total_articles = sum(Decimal(str(ligne.montant)) for ligne in vente.lignes.all())
+    montant_total_facture = montant_total_articles
     
-    # Calculs
-    montant_articles = sum(session['montant_total'] for session in sessions)
-    dette_precedente = vente.dette_precedente or Decimal('0')
-    montant_total_facture = montant_articles + dette_precedente
-    montant_paye = vente.montant_paye
-    montant_restant_facture = vente.montant_restant
+    # Calculs des paiements
+    paiements_vente = vente.paiements.all().order_by('date_paiement')
+    montant_paye = sum(Decimal(str(p.montant)) for p in paiements_vente)
+    montant_restant_facture = montant_total_facture - montant_paye
     
-    # Tableau du résumé financier de cette facture
-    data_resume = [
-        ['CETTE FACTURE:', ''],
-        ['Montant des articles:', f"{montant_articles:,.0f} F"],
-        ['Dette précédente incluse:', f"{dette_precedente:,.0f} F"],
-        ['Total de cette facture:', f"{montant_total_facture:,.0f} F"],
-        ['Montant payé:', f"{montant_paye:,.0f} F"],
-        ['Restant sur cette facture:', f"{montant_restant_facture:,.0f} F"],
-        ['', ''],
-    ]
+    story.append(Spacer(1, 0.3*cm))
     
-    # Ajouter le récapitulatif global de l'école si il y a d'autres dettes
-    if dettes_par_annee and len(dettes_par_annee) > 1:
-        data_resume.extend([
-            ['RÉCAPITULATIF GLOBAL ÉCOLE:', ''],
-            ['Total dettes toutes années:', f"{total_dettes_ecole:,.0f} F"],
+    # Préparation des données du récapitulatif
+    recap_data = []
+    
+    # Ligne articles
+    recap_data.append([
+        "Montant articles :",
+        f"{montant_total_articles:.2f} F"
+    ])
+    
+    # Ligne total de cette facture
+    recap_data.append([
+        "TOTAL CETTE FACTURE :",
+        f"{montant_total_facture:.2f} F"
+    ])
+    
+    # Ligne montant payé
+    recap_data.append([
+        "Montant payé :",
+        f"{montant_paye:.2f} F" if montant_paye > 0 else "Aucun paiement"
+    ])
+    
+    # Ligne montant restant sur cette facture
+    recap_data.append([
+        "RESTANT CETTE FACTURE :",
+        f"{montant_restant_facture:.2f} F" if montant_restant_facture > 0 else "ENTIÈREMENT RÉGLÉE"
+    ])
+    
+    # Si il y a d'autres dettes, ajouter le total global
+    if len(dettes_par_annee) > 1:
+        recap_data.append([
+            "",
+            ""
+        ])
+        recap_data.append([
+            "TOTAL DETTES ÉCOLE :",
+            f"{total_dettes_ecole:.2f} F"
         ])
     
-    table_resume = Table(data_resume, colWidths=[8*cm, 4*cm])
+    recap_table = Table(recap_data, colWidths=[10*cm, 6.5*cm])
+    recap_table_style = TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (0,0), (0,-1), 'LEFT'),     
+        ('ALIGN', (1,0), (1,-1), 'RIGHT'),    
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ])
     
-    # Styles de base
-    base_styles = [
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        # En-têtes de section en gras
-        ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),  # CETTE FACTURE
-        ('BACKGROUND', (0, 0), (1, 0), colors.lightblue),
-        # Total de cette facture en gras
-        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),  
-        ('BACKGROUND', (0, 3), (-1, 3), colors.lightblue),
-        # Restant de cette facture
-        ('FONTNAME', (0, 5), (-1, 5), 'Helvetica-Bold'),  
-        ('BACKGROUND', (0, 5), (-1, 5), colors.lightcoral if montant_restant_facture > 0 else colors.lightgreen),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]
+    # Mise en forme spéciale pour certaines lignes
+    ligne_total_facture = 1  # Plus de dette précédente, donc total est toujours ligne 1
+    ligne_restant_facture = 3  # Ligne restant dû est maintenant ligne 3
     
-    table_resume.setStyle(TableStyle(base_styles))
+    # Ligne total facture en gris
+    recap_table_style.add('BACKGROUND', (0,ligne_total_facture), (-1,ligne_total_facture), colors.lightgrey)
+    recap_table_style.add('FONTNAME', (0,ligne_total_facture), (-1,ligne_total_facture), 'Helvetica-Bold')
     
-    # Ajouter des styles conditionnels pour le récapitulatif global si présent
-    if dettes_par_annee and len(dettes_par_annee) > 1:
-        # Position de la ligne "RÉCAPITULATIF GLOBAL ÉCOLE"
-        recap_row = len(data_resume) - 2
-        additional_styles = [
-            ('FONTNAME', (0, recap_row), (1, recap_row), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, recap_row), (1, recap_row), colors.lightyellow),
-            ('FONTNAME', (0, recap_row + 1), (-1, recap_row + 1), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, recap_row + 1), (-1, recap_row + 1), colors.lightyellow),
-        ]
-        table_resume.setStyle(TableStyle(base_styles + additional_styles))
-    story.append(table_resume)
-    story.append(Spacer(1, 30))
+    # Colorer la ligne "montant restant facture" selon l'état
+    if montant_restant_facture <= 0:
+        recap_table_style.add('BACKGROUND', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.lightgreen)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.darkgreen)
+        recap_table_style.add('FONTNAME', (0,ligne_restant_facture), (-1,ligne_restant_facture), 'Helvetica-Bold')
+    else:
+        recap_table_style.add('BACKGROUND', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.lightcoral)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.darkred)
+        recap_table_style.add('FONTNAME', (0,ligne_restant_facture), (-1,ligne_restant_facture), 'Helvetica-Bold')
     
-    # Pied de page avec informations légales
-    story.append(Spacer(1, 30))
+    # Si il y a un total des dettes école, le mettre en évidence
+    if len(dettes_par_annee) > 1:
+        ligne_total_ecole = len(recap_data) - 1
+        recap_table_style.add('BACKGROUND', (0,ligne_total_ecole), (-1,ligne_total_ecole), colors.lightyellow)
+        recap_table_style.add('FONTNAME', (0,ligne_total_ecole), (-1,ligne_total_ecole), 'Helvetica-Bold')
+        recap_table_style.add('FONTSIZE', (0,ligne_total_ecole), (-1,ligne_total_ecole), 11)
+    
+    recap_table.setStyle(recap_table_style)
+    story.append(recap_table)
+    
+    # Pied de page
+    story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("Merci pour votre confiance !", 
                           ParagraphStyle('Thanks', parent=styles['Normal'], 
                                        alignment=TA_CENTER, fontSize=12, 
                                        textColor=colors.darkblue)))
     
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 0.2*cm))
     story.append(Paragraph(f"Facture générée le {timezone.now().strftime('%d/%m/%Y à %H:%M')}", 
                           ParagraphStyle('Generated', parent=styles['Normal'], 
                                        alignment=TA_CENTER, fontSize=8, 
                                        textColor=colors.grey)))
     
-    # Construire le PDF
+    # Construire le PDF principal
     doc.build(story)
+    buffer.seek(0)
+    
+    # Tentative de fusion avec le papier en-tête
+    papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/papier1.pdf')
+    final_buffer = BytesIO()
+    
+    if os.path.exists(papier_en_tete_path):
+        try:
+            modele_pdf = PdfReader(papier_en_tete_path)
+            tableau_pdf = PdfReader(buffer)
+            writer = PdfWriter()
+            
+            for page_tableau in tableau_pdf.pages:
+                fond = modele_pdf.pages[0]
+                page_fusionnee = PageObject.create_blank_page(
+                    width=fond.mediabox.width,
+                    height=fond.mediabox.height
+                )
+                page_fusionnee.merge_page(fond)
+                page_fusionnee.merge_page(page_tableau)
+                writer.add_page(page_fusionnee)
+            
+            writer.write(final_buffer)
+            final_buffer.seek(0)
+            
+        except Exception as pdf_error:
+            print(f"Erreur lors de la fusion PDF : {pdf_error}")
+            final_buffer = buffer
+    else:
+        print(f"Fichier papier en-tête introuvable : {papier_en_tete_path}")
+        final_buffer = buffer
+    
+    # Créer la réponse HTTP
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="facture_{vente.ecole.nom.replace(" ", "_")}_{vente.id}.pdf"'
+    response.write(final_buffer.getvalue())
     
     return response

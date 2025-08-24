@@ -13,25 +13,16 @@ import json
 
 
 def liste_ventes(request):
-    """Liste des ventes avec filtres par école et année scolaire"""
-    # Récupérer les filtres GET
+    """Liste des ventes avec filtre par école"""
+    # Récupérer le filtre GET
     ecole_id = request.GET.get('ecole')
-    annee_id = request.GET.get('annee')
-    
-    # Si aucun filtre d'année n'est spécifié, utiliser l'année active par défaut
-    if not annee_id:
-        annee_active = AnneeScolaire.get_annee_courante()
-        if annee_active:
-            annee_id = str(annee_active.id)
 
-    # Préparer les queryset de base
+    # Préparer les queryset de base - toutes les ventes de toutes les années
     ventes_qs = Vente.objects.select_related('ecole', 'annee_scolaire')\
         .order_by('-created_at')
 
     if ecole_id:
         ventes_qs = ventes_qs.filter(ecole__id=ecole_id)
-    if annee_id:
-        ventes_qs = ventes_qs.filter(annee_scolaire__id=annee_id)
 
     # Calculs et sérialisation légère pour le template
     ventes = []
@@ -39,29 +30,22 @@ def liste_ventes(request):
         # Calculs manuels pour éviter les doublons des annotations SQL
         total_lignes = v.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_paye = v.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        dette = v.dette_precedente if getattr(v, 'dette_precedente', None) is not None else Decimal('0')
-        montant_total = total_lignes + dette
+        montant_total = total_lignes
         montant_restant = max(Decimal('0'), montant_total - montant_paye)  # Ne peut pas être négatif
 
-        # Calculer les dettes des autres ventes de la même école (différentes années scolaires)
+        # Calculer les dettes des autres ventes de la même école (toutes les autres ventes, pas seulement autres années)
         autres_ventes = Vente.objects.filter(ecole=v.ecole)\
-            .exclude(annee_scolaire=v.annee_scolaire)\
-            .select_related('annee_scolaire')\
-            .annotate(
-                total_lignes_autre=Sum('lignes__montant'),
-                total_paye_autre=Sum('paiements__montant')
-            )
+            .exclude(id=v.id)\
+            .select_related('annee_scolaire')
         
         dettes_autres_annees = []
         total_dettes_autres = Decimal('0')
         annees_dettes = {}  # Pour grouper par année
         
         for autre in autres_ventes:
-            total_lignes_autre = autre.total_lignes_autre or Decimal('0')
-            dette_precedente_autre = autre.dette_precedente or Decimal('0')
-            total_autre = total_lignes_autre + dette_precedente_autre
-            paye_autre = autre.total_paye_autre or Decimal('0')
-            restant_autre = total_autre - paye_autre
+            total_lignes_autre = autre.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            paye_autre = autre.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            restant_autre = total_lignes_autre - paye_autre
             
             if restant_autre > 0:
                 annee_str = str(autre.annee_scolaire)
@@ -99,17 +83,14 @@ def liste_ventes(request):
     ventes_page = paginator.get_page(page_number)
 
     # Choix pour les filtres
-    annees = AnneeScolaire.objects.all()
     ecoles = Ecoles.objects.all()
     cahiers = Cahiers.objects.all()
 
     context = {
         'ventes': ventes_page,
-        'annees': annees,
         'ecoles': ecoles,
         'cahiers': cahiers,
         'selected_ecole': ecole_id,
-        'selected_annee': annee_id,
     }
     return render(request, 'ventes.html', context)
 
@@ -131,9 +112,9 @@ def ventes_ajax(request, ecole_id):
         data.append({
             'id': str(vente.id),
             'date': vente.created_at.isoformat(),
-            'montant_total': float(montant_lignes + (vente.dette_precedente or Decimal('0'))),
+            'montant_total': float(montant_lignes),
             'montant_paye': float(montant_paye),
-            'montant_restant': float((montant_lignes + (vente.dette_precedente or Decimal('0'))) - montant_paye),
+            'montant_restant': float(montant_lignes - montant_paye),
         })
     return JsonResponse({'ventes': data})
 
@@ -146,7 +127,7 @@ def vente_detail(request, vente_id):
     # Calculs
     montant_lignes = lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
     montant_paye = paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-    montant_total = montant_lignes + (vente.dette_precedente or Decimal('0'))
+    montant_total = montant_lignes
     montant_restant = montant_total - montant_paye
 
     # Obtenir les sessions d'ajout d'articles
@@ -234,30 +215,22 @@ def gerer_paiement(request, vente_id):
         
         # Calculer le montant restant de la vente courante
         montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        dette_precedente = vente.dette_precedente or Decimal('0')
-        montant_total_vente = montant_lignes + dette_precedente
         montant_paye_actuel = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        montant_restant_vente = max(Decimal('0'), montant_total_vente - montant_paye_actuel)
+        montant_restant_vente = max(Decimal('0'), montant_lignes - montant_paye_actuel)
         
-        # Calculer le total des dettes des autres années
+        # Calculer le total des dettes des autres ventes (toutes années confondues)
         autres_ventes = Vente.objects.filter(ecole=vente.ecole)\
-            .exclude(annee_scolaire=vente.annee_scolaire)\
+            .exclude(id=vente.id)\
             .select_related('annee_scolaire')\
-            .annotate(
-                total_lignes_autre=Sum('lignes__montant'),
-                total_paye_autre=Sum('paiements__montant')
-            )\
             .order_by('-annee_scolaire__annee_debut')
         
         total_dettes_autres = Decimal('0')
         autres_ventes_avec_dettes = []
         
         for autre_vente in autres_ventes:
-            total_lignes_autre = autre_vente.total_lignes_autre or Decimal('0')
-            dette_precedente_autre = autre_vente.dette_precedente or Decimal('0')
-            total_autre = total_lignes_autre + dette_precedente_autre
-            paye_autre = autre_vente.total_paye_autre or Decimal('0')
-            restant_autre = max(Decimal('0'), total_autre - paye_autre)
+            total_lignes_autre = autre_vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            paye_autre = autre_vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            restant_autre = max(Decimal('0'), total_lignes_autre - paye_autre)
             
             if restant_autre > 0:
                 total_dettes_autres += restant_autre
@@ -324,19 +297,24 @@ def creer_vente(request):
         try:
             # Récupérer les données du formulaire
             ecole_id = request.POST.get('ecole_id')
-            annee_id = request.POST.get('annee_id')
-            dette_precedente = request.POST.get('dette_precedente', '0')
             
             # Validation des champs obligatoires
-            if not ecole_id or not annee_id:
+            if not ecole_id:
                 return JsonResponse({
                     'success': False, 
-                    'error': 'École et année scolaire sont obligatoires'
+                    'error': 'École est obligatoire'
                 })
             
             # Récupérer les objets
             ecole = get_object_or_404(Ecoles, id=ecole_id)
-            annee = get_object_or_404(AnneeScolaire, id=annee_id)
+            # Utiliser l'année scolaire active par défaut
+            annee = AnneeScolaire.get_annee_courante()
+            
+            if not annee:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'Aucune année scolaire active trouvée'
+                })
             
             # Vérifier si une vente existe déjà pour cette école et année
             vente_existante = Vente.objects.filter(ecole=ecole, annee_scolaire=annee).first()
@@ -349,8 +327,7 @@ def creer_vente(request):
                 # Créer une nouvelle vente
                 vente = Vente.objects.create(
                     ecole=ecole,
-                    annee_scolaire=annee,
-                    dette_precedente=Decimal(dette_precedente) if dette_precedente else Decimal('0')
+                    annee_scolaire=annee
                 )
                 action_message = 'Nouvelle vente créée avec succès'
             

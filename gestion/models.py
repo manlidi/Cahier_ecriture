@@ -112,15 +112,12 @@ class Vente(models.Model):
     modified_at = models.DateTimeField(null=True, blank=True)
     derniere_modification_type = models.CharField(max_length=50, null=True, blank=True) 
     articles_ajoutes_session = models.TextField(null=True, blank=True)
-    dette_precedente = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Dette des années précédentes")
     description_dette = models.TextField(blank=True, null=True, help_text="Description de la dette (ex: 'Reliquat année 2023-2024')")
     
     @property
     def montant_total(self):
-        """Montant total de la vente (lignes + dette précédente)"""
-        montant_lignes = self.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        dette_precedente = self.dette_precedente or Decimal('0')
-        return montant_lignes + dette_precedente
+        """Montant total de la vente (uniquement les lignes)"""
+        return self.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
     
     @property
     def montant_paye(self):
@@ -140,35 +137,31 @@ class Vente(models.Model):
         # Récupérer toutes les ventes de cette école
         ventes_ecole = Vente.objects.filter(ecole=self.ecole)\
             .select_related('annee_scolaire')\
-            .annotate(
-                total_lignes=Sum('lignes__montant'),
-                total_paye=Sum('paiements__montant')
-            )\
             .order_by('-annee_scolaire__annee_debut')
         
         dettes_par_annee = {}
         
         for vente in ventes_ecole:
             annee_str = str(vente.annee_scolaire)
-            total_lignes = vente.total_lignes or Decimal('0')
-            dette_precedente = vente.dette_precedente or Decimal('0')
-            total_vente = total_lignes + dette_precedente
-            paye = vente.total_paye or Decimal('0')
-            restant = total_vente - paye
+            total_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            total_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            restant = total_lignes - total_paye
             
             if restant > 0:
                 if annee_str in dettes_par_annee:
                     dettes_par_annee[annee_str]['montant_restant'] += restant
                     dettes_par_annee[annee_str]['ventes'].append(vente)
+                    dettes_par_annee[annee_str]['montant_articles'] += total_lignes
+                    dettes_par_annee[annee_str]['montant_total'] += total_lignes
+                    dettes_par_annee[annee_str]['montant_paye'] += total_paye
                 else:
                     dettes_par_annee[annee_str] = {
                         'annee_scolaire': vente.annee_scolaire,
                         'montant_restant': restant,
                         'ventes': [vente],
                         'montant_articles': total_lignes,
-                        'dette_precedente': dette_precedente,
-                        'montant_total': total_vente,
-                        'montant_paye': paye
+                        'montant_total': total_lignes,
+                        'montant_paye': total_paye
                     }
         
         return dettes_par_annee
