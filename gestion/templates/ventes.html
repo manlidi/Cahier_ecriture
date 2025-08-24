@@ -623,9 +623,9 @@
         <div class="modal-body">
           <!-- Sélection école -->
           <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
               <label for="nouvelle_vente_ecole" class="form-label">École <span class="text-danger">*</span></label>
-              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select" required>
+              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select p-2" required>
                 {% for ecole in ecoles %}
                   <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
                 {% endfor %}
@@ -637,7 +637,7 @@
           <div class="row mb-4">
             <div class="col-md-12">
               <label for="nouvelle_vente_description" class="form-label">Description (optionnel)</label>
-              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control" rows="2" placeholder="Description de la vente..."></textarea>
+              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control p-2" rows="2" style="border: 1px solid #ced4da;" placeholder="Description de la vente..."></textarea>
             </div>
           </div>          <!-- Sélection des articles -->
           <div class="row">
