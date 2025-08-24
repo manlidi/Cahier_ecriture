@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 import uuid
 from datetime import date
@@ -114,133 +115,196 @@ class Vente(models.Model):
     dette_precedente = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Dette des années précédentes")
     description_dette = models.TextField(blank=True, null=True, help_text="Description de la dette (ex: 'Reliquat année 2023-2024')")
     
-    def enregistrer_ajout_articles(self, nouveaux_articles):
-        import json
-        from django.utils import timezone
-        
-        self.modified_at = timezone.now()
-        self.derniere_modification_type = 'ajout'
-        
-        articles_data = []
-        for article in nouveaux_articles:
-            articles_data.append({
-                'cahier_titre': article['cahier'].titre,
-                'quantite': article['quantite'],
-                'prix_unitaire': float(article['cahier'].prix),  # CORRECTION: conversion en float
-                'total': article['quantite'] * float(article['cahier'].prix)  # CORRECTION: conversion en float
-            })
-        
-        self.articles_ajoutes_session = json.dumps(articles_data)
-        self.save()
-    
-    def get_articles_ajoutes_derniere_session(self):
-        if self.articles_ajoutes_session:
-            import json
-            try:
-                return json.loads(self.articles_ajoutes_session)
-            except (json.JSONDecodeError, TypeError):
-                return []
-        return []
-    
-    def get_lignes_originales(self):
-        """Retourne les lignes originales (exclut les ajouts récents si c'est un ajout)"""
-        if not self.modified_at or self.derniere_modification_type != 'ajout':
-            return self.lignes.all()
-        
-        articles_ajoutes = self.get_articles_ajoutes_derniere_session()
-        if not articles_ajoutes:
-            return self.lignes.all()
-        
-        articles_ajoutes_titres = [article['cahier_titre'] for article in articles_ajoutes]
-        
-        lignes_originales = []
-        lignes_ajoutees_ids = set()
-        
-        # Identifier d'abord les lignes ajoutées (les plus récentes par titre)
-        for titre in articles_ajoutes_titres:
-            ligne_recente = self.lignes.filter(cahier__titre=titre).order_by('-id').first()
-            if ligne_recente:
-                lignes_ajoutees_ids.add(ligne_recente.id)
-        
-        # Retourner toutes les autres lignes
-        for ligne in self.lignes.all().order_by('id'):
-            if ligne.id not in lignes_ajoutees_ids:
-                lignes_originales.append(ligne)
-        
-        return lignes_originales
-    
-    def get_lignes_ajoutees_recemment(self):
-        """Retourne les lignes ajoutées lors de la dernière modification"""
-        if not self.modified_at or self.derniere_modification_type != 'ajout':
-            return []
-        
-        articles_ajoutes = self.get_articles_ajoutes_derniere_session()
-        if not articles_ajoutes:
-            return []
-        
-        lignes_ajoutees = []
-        articles_ajoutes_titres = [article['cahier_titre'] for article in articles_ajoutes]
-        
-        # Pour chaque titre d'article ajouté, récupérer la ligne la plus récente
-        for titre in articles_ajoutes_titres:
-            ligne_recente = self.lignes.filter(cahier__titre=titre).order_by('-id').first()
-            if ligne_recente:
-                lignes_ajoutees.append(ligne_recente)
-        
-        return lignes_ajoutees
-    
-    @property
-    def montant_total_articles(self):
-        """Montant total des articles uniquement (sans dette précédente)"""
-        return sum(Decimal(str(ligne.montant)) for ligne in self.lignes.all())
-    
     @property
     def montant_total(self):
-        """Montant total = articles + dette précédente"""
-        return self.montant_total_articles + (self.dette_precedente or Decimal('0'))
+        """Montant total de la vente (lignes + dette précédente)"""
+        montant_lignes = self.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        dette_precedente = self.dette_precedente or Decimal('0')
+        return montant_lignes + dette_precedente
     
     @property
     def montant_paye(self):
         """Montant total payé"""
-        return sum(p.montant for p in self.paiements.all())
+        return self.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
     
+    @property
     def montant_restant(self):
         """Montant restant à payer"""
-        return max(self.montant_total - self.montant_paye, Decimal('0'))
-    
-    def est_reglee(self):
-        """Vérifier si la vente est entièrement réglée"""
-        return self.montant_restant() <= Decimal('0')
+        return max(Decimal('0'), self.montant_total - self.montant_paye)
 
-    def save(self, *args, **kwargs):
-        if not self.annee_scolaire:
-            # Utiliser la date de création si disponible, sinon maintenant
-            date_ref = self.created_at.date() if self.created_at else timezone.now().date()
-            self.annee_scolaire = AnneeScolaire.get_annee_pour_date(date_ref) or AnneeScolaire.get_annee_courante()
-        super().save(*args, **kwargs)
+    def get_dettes_par_annee_ecole(self):
+        """
+        Récupère toutes les dettes de l'école par année scolaire
+        Retourne un dictionnaire avec les dettes par année
+        """
+        # Récupérer toutes les ventes de cette école
+        ventes_ecole = Vente.objects.filter(ecole=self.ecole)\
+            .select_related('annee_scolaire')\
+            .annotate(
+                total_lignes=Sum('lignes__montant'),
+                total_paye=Sum('paiements__montant')
+            )\
+            .order_by('-annee_scolaire__annee_debut')
+        
+        dettes_par_annee = {}
+        
+        for vente in ventes_ecole:
+            annee_str = str(vente.annee_scolaire)
+            total_lignes = vente.total_lignes or Decimal('0')
+            dette_precedente = vente.dette_precedente or Decimal('0')
+            total_vente = total_lignes + dette_precedente
+            paye = vente.total_paye or Decimal('0')
+            restant = total_vente - paye
+            
+            if restant > 0:
+                if annee_str in dettes_par_annee:
+                    dettes_par_annee[annee_str]['montant_restant'] += restant
+                    dettes_par_annee[annee_str]['ventes'].append(vente)
+                else:
+                    dettes_par_annee[annee_str] = {
+                        'annee_scolaire': vente.annee_scolaire,
+                        'montant_restant': restant,
+                        'ventes': [vente],
+                        'montant_articles': total_lignes,
+                        'dette_precedente': dette_precedente,
+                        'montant_total': total_vente,
+                        'montant_paye': paye
+                    }
+        
+        return dettes_par_annee
+    
+    def get_total_dettes_ecole(self):
+        """Retourne le montant total des dettes de l'école"""
+        dettes = self.get_dettes_par_annee_ecole()
+        return sum(dette['montant_restant'] for dette in dettes.values())
 
-    def nombre_tranches_payees(self):
-        """Nombre de tranches déjà payées"""
-        return self.paiements.count()
-    
-    def peut_ajouter_tranche(self):
-        """Vérifier si on peut ajouter une tranche de paiement"""
-        return self.nombre_tranches_payees() < 3 and not self.est_reglee()
-    
     def est_en_retard(self): 
         """Vérifier si la vente est en retard de paiement"""
-        if self.date_paiement and not self.est_reglee():
-            return timezone.now() > self.date_paiement
-        return False
+        return
     
     def statut_paiement(self):
         """Retourne le statut de paiement"""
-        if self.est_reglee():
-            return "Réglée"
-        elif self.est_en_retard():
-            return "En retard"
+        return
+    
+    def get_articles_par_session(self, tolerance_minutes=5):
+        """
+        Groupe les articles par session d'ajout basé sur la date/heure
+        tolerance_minutes: écart maximum en minutes pour considérer les articles comme ajoutés dans la même session
+        """
+        from datetime import timedelta
+        
+        lignes = self.lignes.all().order_by('date_ajout')
+        if not lignes:
+            return []
+        
+        # Si tolérance n'est pas spécifiée, détecter automatiquement les pauses naturelles
+        if tolerance_minutes == 5:
+            tolerance_minutes = self._detecter_tolerance_automatique()
+        
+        sessions = []
+        session_courante = []
+        derniere_date = None
+        
+        for ligne in lignes:
+            if not session_courante:
+                # Première ligne : commencer une nouvelle session
+                session_courante = [ligne]
+                derniere_date = ligne.date_ajout
+            else:
+                # Calculer l'écart avec le dernier article ajouté
+                ecart_minutes = (ligne.date_ajout - derniere_date).total_seconds() / 60
+                
+                if ecart_minutes <= tolerance_minutes:
+                    # Écart acceptable : ajouter à la session courante
+                    session_courante.append(ligne)
+                    derniere_date = ligne.date_ajout
+                else:
+                    # Écart trop important : fermer la session courante et en créer une nouvelle
+                    sessions.append({
+                        'date_session': session_courante[0].date_ajout,
+                        'lignes': session_courante.copy(),
+                        'montant_total': sum(l.montant for l in session_courante),
+                        'nombre_articles': sum(l.quantite for l in session_courante)
+                    })
+                    
+                    # Commencer une nouvelle session
+                    session_courante = [ligne]
+                    derniere_date = ligne.date_ajout
+        
+        # Ajouter la dernière session
+        if session_courante:
+            sessions.append({
+                'date_session': session_courante[0].date_ajout,
+                'lignes': session_courante.copy(),
+                'montant_total': sum(l.montant for l in session_courante),
+                'nombre_articles': sum(l.quantite for l in session_courante)
+            })
+        
+        return sessions
+    
+    def _detecter_tolerance_automatique(self):
+        """
+        Détecte automatiquement une tolérance appropriée basée sur les écarts entre les ajouts
+        """
+        lignes = self.lignes.all().order_by('date_ajout')
+        if len(lignes) <= 1:
+            return 30  # Valeur par défaut
+        
+        ecarts = []
+        for i in range(1, len(lignes)):
+            ecart = (lignes[i].date_ajout - lignes[i-1].date_ajout).total_seconds() / 60
+            ecarts.append(ecart)
+        
+        # Trier les écarts pour identifier les "sauts" significatifs
+        ecarts_tries = sorted(ecarts)
+        
+        # Si il y a des écarts > 60 minutes, utiliser 20 minutes comme seuil
+        if any(e > 60 for e in ecarts_tries):
+            return 20
+        # Si il y a des écarts > 15 minutes, utiliser 10 minutes
+        elif any(e > 15 for e in ecarts_tries):
+            return 10
+        # Sinon, utiliser 5 minutes
         else:
-            return "En cours"
+            return 5
+    
+    def ajouter_articles(self, articles_data, description_session=None):
+        """
+        Ajouter des articles à la vente avec traçabilité temporelle
+        articles_data: liste de dict {'cahier': cahier_obj, 'quantite': int}
+        description_session: description optionnelle de cette session d'ajout
+        """
+        lignes_creees = []
+        maintenant = timezone.now()
+        
+        for article in articles_data:
+            cahier = article['cahier']
+            quantite = article['quantite']
+            montant = Decimal(str(cahier.prix)) * Decimal(str(quantite))
+            
+            ligne = LigneVente.objects.create(
+                vente=self,
+                cahier=cahier,
+                quantite=quantite,
+                montant=montant
+            )
+            
+            # La date_ajout sera automatiquement définie par auto_now_add
+            lignes_creees.append(ligne)
+            
+            # Mettre à jour le stock si nécessaire
+            if cahier.quantite_stock is not None:
+                cahier.quantite_stock = max(0, cahier.quantite_stock - quantite)
+                cahier.save()
+        
+        # Mettre à jour les informations de modification de la vente
+        self.modified_at = maintenant
+        self.derniere_modification_type = 'ajout_articles'
+        if description_session:
+            self.articles_ajoutes_session = description_session
+        self.save()
+        
+        return lignes_creees
 
     def __str__(self):
         date_str = self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'
@@ -262,15 +326,21 @@ class LigneVente(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')
     cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE)
     quantite = models.IntegerField()
-    montant = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer
+    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    date_ajout = models.DateTimeField(auto_now_add=True, help_text="Date et heure d'ajout de cette ligne à la vente")
+    
+    class Meta:
+        ordering = ['date_ajout']
 
     def save(self, *args, **kwargs):
-        # CORRECTION: Calcul correct avec Decimal
-        self.montant = Decimal(str(self.quantite)) * self.cahier.prix
+        # Si pas de date_ajout définie, utiliser maintenant
+        if not self.date_ajout:
+            self.date_ajout = timezone.now()
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.quantite} x {self.cahier.titre} pour {self.vente.ecole.nom}"
+        date_str = self.date_ajout.strftime('%d/%m/%Y %H:%M') if self.date_ajout else 'Date inconnue'
+        return f"{self.quantite} x {self.cahier.titre} pour {self.vente.ecole.nom} le {date_str}"
 
 class BilanAnneeScolaire(models.Model):
     """Bilan annuel d'une année scolaire"""

@@ -1,343 +1,950 @@
 {% extends 'base.html' %}
-{% block title %}
-  Ventes
-{% endblock %}
 {% block content %}
 {% load static %}
-  <div class="container-fluid py-2">
-    <div class="row">
-      <div class="ms-3">
-        <h3 class="mb-0 h4 font-weight-bolder">Ventes</h3>
-        <p class="mb-4">Gestion des ventes enregistrées</p>
-      </div>
+<div class="container-fluid py-2">
+  <div class="row">
+    <div class="ms-3 col-auto">
+      <h3 class="mb-0 h4 font-weight-bolder">Ventes</h3>
+      <p class="mb-4">Gestion et suivi de toutes les ventes</p>
+    </div>
+    <div class="col d-flex justify-content-end align-items-start">
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNouvelleVente">
+        <i class="material-symbols-rounded me-1">add</i>
+        Nouvelle vente
+      </button>
+    </div>
+  </div>
 
-      <div class="row mb-4">
-        <div class="col-lg-12 col-md-6 mb-md-0 mb-4">
-          <div class="card">
-            <div class="card-header pb-0">
-              <div class="row">
-                <div class="col-lg-6 col-7">
-                  <p class="text-sm mb-0">Liste des ventes</p>
-                </div>
-                <div class="col-lg-6 col-5 text-end">
-                  <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#ajouterVenteModal">Ajouter une vente</button>
-                </div>
-                {% if messages %}
-                  <div class="container">
-                    {% for message in messages %}
-                      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close text-lg py-3 opacity-10" data-bs-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>                      
-                      </div>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="card-body p-4 pb-2">
-              <div class="mb-3">
-                <form method="get" class="mb-3">
-                  <input type="text" id="searchInput" name="search" value="{{ search_query }}" class="form-control border border-secondary" placeholder="Rechercher par nom d'école...">
-                </form>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-bordered">
-                  <thead>
-                    <tr>
-                      <th>École</th>
-                      <th>Montant Total</th>
-                      <th>Montant Payé</th>
-                      <th>Montant Restant</th>
-                      <th>Statut</th>
-                      <th>Date Limite</th>
-                      <th>Tranches</th>
-                      <th>Facture</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for vente in page_obj %}
-                      <tr class="{% if vente.est_en_retard %}
-                          table-danger
-                        {% elif vente.est_reglee %}
-                          table-success
-                        {% endif %}">
-                        <td class="border">{{ vente.ecole.nom }}</td>
-                        <td class="border">{{ vente.montant_total|floatformat:0 }} F</td>
-                        <td class="border">{{ vente.montant_paye|default:0|floatformat:0 }} F</td>
-                        <td class="border">{{ vente.montant_restant|floatformat:0 }} F</td>
-                        <td class="border">
-                          <span class="badge 
-                            {% if vente.est_reglee %}
-                              bg-success
-                            {% elif vente.est_en_retard %}
-                              bg-danger
-                            {% else %}
-                              bg-warning
-                            {% endif %}">
-                            {{ vente.statut_paiement }}
-                          </span>
-                        </td>
-                        <td class="border">
-                          {% if vente.date_paiement %}
-                            {{ vente.date_paiement|date:'d/m/Y H:i' }}
-                          {% else %}
-                            Non définie
-                          {% endif %}
-                        </td>
-                        <td class="border">{{ vente.nombre_tranches_payees }}/3</td>
-                        <td class="border">
-                          {% if vente.facture_pdf %}
-                            <a href="{{ vente.facture_pdf.url }}" target="_blank" class="btn btn-sm btn-outline-info">Voir</a>
-                          {% else %}
-                            N/A
-                          {% endif %}
-                        </td>
-                        <td class="border">
-                          {% if not vente.est_reglee and vente.peut_ajouter_tranche %}
-                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paiementModal{{ vente.id }}">Payer</button>
-                          {% endif %}
-                          <a href="{% url 'modifier_vente' vente.id %}" class="btn btn-sm btn-outline-warning">Modifier</a>
-                          <a href="{% url 'detail_vente' vente.id %}" class="btn btn-sm btn-outline-secondary">Voir détails</a>
-                          
-                          <!-- Bouton pour modifier la dette -->
-                          <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#detteModal{{ vente.id }}">Dette</button>
-                        </td>
-                      </tr>
-
-                      <!-- Modal pour paiement -->
-                      <div class="modal fade" id="paiementModal{{ vente.id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                          <form method="POST" action="{% url 'ajouter_paiement' vente.id %}">
-                            {% csrf_token %}
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title">Ajouter un paiement - {{ vente.ecole.nom }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <div class="modal-body">
-                                <div class="mb-3">
-                                  <p>
-                                    <strong>Montant total:</strong> {{ vente.montant_total|floatformat:0 }} F
-                                  </p>
-                                  <p>
-                                    <strong>Montant restant:</strong> {{ vente.montant_restant|floatformat:0 }} F
-                                  </p>
-                                  <p>
-                                    <strong>Tranche:</strong> {{ vente.nombre_tranches_payees|add:1 }}/3
-                                  </p>
-                                  {% if vente.dette_precedente > 0 %}
-                                    <div class="alert alert-info">
-                                      <strong>Inclus :</strong> Dette précédente de {{ vente.dette_precedente|floatformat:0 }} F
-                                    </div>
-                                  {% endif %}
-                                  {% if vente.est_en_retard %}
-                                    <div class="alert alert-warning">
-                                      <strong>Attention:</strong> Date limite dépassée !
-                                    </div>
-                                  {% endif %}
-                                </div>
-                                <div class="mb-3">
-                                  <label for="montant{{ vente.id }}" class="form-label">Montant à payer (F)</label>
-                                  <input type="number" name="montant" id="montant{{ vente.id }}" class="form-control border border-secondary" min="1" max="{{ vente.montant_restant|floatformat:0 }}" required />
-                                  <div class="form-text">Maximum: {{ vente.montant_restant|floatformat:0 }} F</div>
-                                </div>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                              </div>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-
-                      <!-- Modal pour gestion de la dette -->
-                      <div class="modal fade" id="detteModal{{ vente.id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                          <form method="POST" action="{% url 'modifier_dette_vente' vente.id %}">
-                            {% csrf_token %}
-                            <div class="modal-content">
-                              <div class="modal-header">
-                                <h5 class="modal-title">Gestion de la dette - {{ vente.ecole.nom }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                              </div>
-                              <div class="modal-body">
-                                <div class="mb-3">
-                                  <p><strong>Dette actuelle :</strong> {{ vente.dette_precedente|default:0|floatformat:0 }} F</p>
-                                  {% if vente.description_dette %}
-                                    <p><strong>Description :</strong> {{ vente.description_dette }}</p>
-                                  {% endif %}
-                                </div>
-                                <div class="alert alert-info">
-                                  <p><strong>Action :</strong> La dette sera recalculée automatiquement en fonction des ventes impayées de cette école.</p>
-                                  <p class="text-muted mb-0">Cette dette est la somme des montants restants des autres ventes de l'école (hors cette vente).</p>
-                                </div>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="submit" class="btn btn-warning">Recalculer la dette</button>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                              </div>
-                            </div>
-                          </form>
-                        </div>
-                      </div>
-                    {% empty %}
-                      <tr>
-                        <td colspan="9" class="text-center">Aucune vente.</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-                <nav aria-label="Pagination">
-                  <ul class="pagination justify-content-center mt-4">
-                    {% if page_obj.has_previous %}
-                      <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}"><<</a>
-                      </li>
-                    {% else %}
-                      <li class="page-item disabled">
-                        <span class="page-link"><<</span>
-                      </li>
-                    {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                      {% if page_obj.number == num %}
-                        <li class="page-item active">
-                          <span class="page-link">{{ num }}</span>
-                        </li>
-                      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                          <a class="page-link" href="?page={{ num }}&search={{ search_query }}">{{ num }}</a>
-                        </li>
-                      {% endif %}
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                      <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">>></a>
-                      </li>
-                    {% else %}
-                      <li class="page-item disabled">
-                        <span class="page-link">>></span>
-                      </li>
-                    {% endif %}
-                  </ul>
-                </nav>
+    <div class="row mb-4">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="row">
+              <div class="col-lg-6 col-7">
+                <p class="text-sm mb-0"><span>Liste des ventes</span></p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Modal pour ajouter une vente -->
-      <div class="modal fade" id="ajouterVenteModal" tabindex="-1" aria-labelledby="ajouterVenteLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <form method="POST" action="{% url 'ajouter_vente' %}">
-            {% csrf_token %}
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="ajouterVenteLabel">Ajouter une vente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <div class="card-body p-4">
+            <form method="get" class="row g-3 mb-4">
+              <div class="col-md-4">
+                <label for="ecole" class="form-label">École:</label>
+                <select name="ecole" id="ecole" class="form-select">
+                  <option value="">-- Toutes --</option>
+                  {% for e in ecoles %}
+                    <option value="{{ e.id }}" {% if selected_ecole == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nom }}</option>
+                  {% endfor %}
+                </select>
               </div>
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label for="ecole" class="form-label">École</label>
-                  <select name="ecole" id="ecole" class="form-select border border-secondary" required>
-                    <option value="">Sélectionner une école</option>
-                    {% for ecole in ecoles %}
-                      <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
-
-                <!-- Section dynamique pour les lignes de vente -->
-                <div id="cahiers-container">
-                  <div class="row align-items-end mb-2 cahier-row">
-                    <div class="col-md-6">
-                      <label class="form-label">Cahier</label>
-                      <select name="cahiers[]" class="form-select border border-secondary" required>
-                        <option value="">Choisir un cahier</option>
-                        {% for cahier in cahiers %}
-                          <option value="{{ cahier.id }}">{{ cahier.titre }} - Stock: {{ cahier.quantite_stock }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Quantité</label>
-                      <input type="number" name="quantites[]" class="form-control border border-secondary" min="1" required />
-                    </div>
-                    <div class="col-md-2">
-                      <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
-                    </div>
-                  </div>
-                </div>
-                <button type="button" id="addCahierRow" class="btn btn-secondary btn-sm mt-2">+ Ajouter un cahier</button>
-                
-                <!-- Section dette précédente - CORRECTION: Affichage informatif -->
-                <hr class="my-4">
-                <h6>Dette précédente</h6>
-                <div class="alert alert-info">
-                  <p><strong>Information :</strong> La dette précédente sera calculée automatiquement en fonction des ventes impayées de l'école sélectionnée.</p>
-                  <p class="mb-0 text-muted">Cette dette sera ajoutée au montant total de la facture.</p>
-                </div>
-
-                <div class="mb-3">
-                  <label for="montant_verse" class="form-label">Montant versé (facultatif)</label>
-                  <input type="number" name="montant_verse" id="montant_verse" class="form-control border border-secondary" min="0" />
-                  <div class="form-text">Le montant versé sera déduit du total (articles + dette)</div>
-                </div>
-        
+              <div class="col-md-4">
+                <label for="annee" class="form-label">Année scolaire:</label>
+                <select name="annee" id="annee" class="form-select">
+                  <option value="">-- Toutes --</option>
+                  {% for a in annees %}
+                    <option value="{{ a.id }}" {% if selected_annee == a.id|stringformat:'s' %}selected{% endif %}>{{ a }}</option>
+                  {% endfor %}
+                </select>
               </div>
-
-              <div class="modal-footer">
-                <button type="submit" class="btn btn-dark">Enregistrer</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
               </div>
+            </form>
+
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vente</th>
+                    <th>École</th>
+                    <th>Année</th>
+                    <th>Montant total</th>
+                    <th>Montant payé</th>
+                    <th>Montant restant</th>
+                    <th>Statut</th>
+                    <th>Lignes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for v in ventes %}
+                    <tr>
+                      <td class="border">{{ v.created_at.date }}</td>
+                      <td class="border">{{ v.short_id }}</td>
+                      <td class="border">{{ v.ecole.nom }}</td>
+                      <td class="border">{{ v.annee_scolaire }}</td>
+                      <td class="border">{{ v.montant_total|floatformat:0 }} F</td>
+                      <td class="border">{{ v.montant_paye|floatformat:0 }} F</td>
+                      <td class="border">{{ v.montant_restant|floatformat:0 }} F</td>
+                      <td class="border">
+                        {% if v.montant_restant <= 0 %}
+                          <span class="badge bg-gradient-success">Payé</span>
+                        {% elif v.montant_paye > 0 %}
+                          <span class="badge bg-gradient-warning">Partiel</span>
+                        {% else %}
+                          <span class="badge bg-gradient-danger">Impayé</span>
+                        {% endif %}
+                      </td>
+                      <td class="border">{{ v.lignes_count }}</td>
+                      <td class="border">
+                        <div class="d-flex gap-1">
+                          <!-- Bouton Détails -->
+                          <a class="btn btn-sm btn-outline-primary" href="{% url 'vente_detail' v.id %}" 
+                             title="Voir les détails de la vente" data-bs-toggle="tooltip">
+                            <i class="material-symbols-rounded">visibility</i>
+                          </a>
+                          
+                          <!-- Bouton Paiement (seulement si pas complètement payé) -->
+                          {% if v.montant_restant > 0 %}
+                          <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#paiementModal" 
+                                  title="Ajouter un paiement"
+                                  data-vente-id="{{ v.id }}" 
+                                  data-montant-total="{{ v.montant_total }}"
+                                  data-montant-paye="{{ v.montant_paye }}"
+                                  data-montant-restant="{{ v.montant_restant }}"
+                                  data-ecole-nom="{{ v.ecole.nom }}"
+                                  data-annee="{{ v.annee_scolaire }}"
+                                  data-dettes-autres='{{ v.dettes_autres_json }}'
+                                  data-total-dettes-autres="{{ v.total_dettes_autres }}">
+                            <i class="material-symbols-rounded">payments</i>
+                          </button>
+                          {% endif %}
+                          
+                          <!-- Bouton Ajouter article (seulement pour l'année courante) -->
+                          {% if v.annee_scolaire.est_active %}
+                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modifierModal" 
+                                  title="Ajouter un article à la vente"
+                                  data-vente-id="{{ v.id }}">
+                            <i class="material-symbols-rounded">add_shopping_cart</i>
+                          </button>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="10" class="text-center border">Aucune vente trouvée.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
-          </form>
+            
+            <!-- Pagination -->
+            {% if ventes.has_other_pages %}
+            <div class="d-flex justify-content-center mt-4">
+              <nav aria-label="Navigation des pages">
+                <ul class="pagination">
+                  {% if ventes.has_previous %}
+                    <li class="page-item">
+                      <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ ventes.previous_page_number }}">
+                        <i class="material-symbols-rounded">chevron_left</i>
+                      </a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled">
+                      <span class="page-link">
+                        <i class="material-symbols-rounded">chevron_left</i>
+                      </span>
+                    </li>
+                  {% endif %}
+                  
+                  {% for page_num in ventes.paginator.page_range %}
+                    {% if page_num == ventes.number %}
+                      <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                      </li>
+                    {% elif page_num == 1 or page_num == ventes.paginator.num_pages or page_num >= ventes.number|add:'-2' and page_num <= ventes.number|add:'2' %}
+                      <li class="page-item">
+                        <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ page_num }}">{{ page_num }}</a>
+                      </li>
+                    {% elif page_num == 2 and ventes.number > 4 %}
+                      <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                      </li>
+                    {% elif page_num == ventes.paginator.num_pages|add:'-1' and ventes.number < ventes.paginator.num_pages|add:'-3' %}
+                      <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                      </li>
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {% if ventes.has_next %}
+                    <li class="page-item">
+                      <a class="page-link" href="?{% if selected_ecole %}ecole={{ selected_ecole }}&{% endif %}{% if selected_annee %}annee={{ selected_annee }}&{% endif %}page={{ ventes.next_page_number }}">
+                        <i class="material-symbols-rounded">chevron_right</i>
+                      </a>
+                    </li>
+                  {% else %}
+                    <li class="page-item disabled">
+                      <span class="page-link">
+                        <i class="material-symbols-rounded">chevron_right</i>
+                      </span>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <script>
-    document.getElementById('addCahierRow').addEventListener('click', function () {
-      const container = document.getElementById('cahiers-container')
-      const row = container.querySelector('.cahier-row')
-      const clone = row.cloneNode(true)
+</div>
+
+<!-- Paiement Modal -->
+<div class="modal fade" id="paiementModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ajouter un paiement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Informations de la vente courante -->
+        <div class="card mb-3">
+          <div class="card-header pb-0">
+            <h6 class="text-dark font-weight-bolder">Facture courante - <span id="venteEcoleNom"></span> (<span id="venteAnnee"></span>)</h6>
+          </div>
+          <div class="card-body pt-2">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Montant total de la facture</p>
+                  <h6 class="font-weight-bolder text-dark mb-0"><span id="venteMontantTotal"></span> F</h6>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Montant déjà payé</p>
+                  <h6 class="font-weight-bolder text-success mb-0"><span id="venteMontantPaye"></span> F</h6>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Montant restant</p>
+                  <h6 class="font-weight-bolder text-warning mb-0"><span id="venteMontantRestant"></span> F</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dettes des autres années -->
+        <div class="card mb-3" id="dettesAutresCard" style="display:none;">
+          <div class="card-header pb-0">
+            <h6 class="text-dark font-weight-bolder">Dettes précédentes</h6>
+          </div>
+          <div class="card-body pt-2">
+            <div id="dettesAutresList"></div>
+            <hr class="horizontal dark">
+            <div class="row">
+              <div class="col-12">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Total des dettes précédentes</p>
+                  <h6 class="font-weight-bolder text-danger mb-0"><span id="totalDettesAutres"></span> F</h6>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Récapitulatif total -->
+        <div class="card mb-3">
+          <div class="card-header pb-0">
+            <h6 class="text-dark font-weight-bolder">Récapitulatif général</h6>
+          </div>
+          <div class="card-body pt-2">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Total général à payer</p>
+                  <h5 class="font-weight-bolder text-primary mb-0"><span id="totalGeneral"></span> F</h5>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="info-item">
+                  <p class="text-sm text-muted mb-1">Montant recommandé</p>
+                  <h5 class="font-weight-bolder text-info mb-0"><span id="montantRecommande"></span> F</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulaire de paiement -->
+        <form id="paiementModalForm" method="post">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-12">
+              <div class="input-group input-group-outline mb-3">
+                <label class="form-label">Montant du paiement</label>
+                <input class="form-control" name="montant" id="paiementMontant" type="number" step="0.01" required />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Note d'information -->
+          <div class="alert alert-info alert-dismissible text-white mb-3" role="alert">
+            <span class="alert-icon align-middle">
+              <i class="material-symbols-rounded">info</i>
+            </span>
+            <span class="alert-text">
+              <strong>Note :</strong> Si le montant saisi dépasse le solde de cette vente, l'excédent sera automatiquement appliqué aux dettes des autres années de la même école, en commençant par la plus récente.
+            </span>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" form="paiementModalForm" class="btn btn-primary">Enregistrer le paiement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modifier Modal -->
+<div class="modal fade" id="modifierModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ajouter des articles à la vente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="modifierModalForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div id="articles-container">
+            <!-- template ligne article -->
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <button id="add-article-btn" type="button" class="btn btn-outline-primary">
+              <i class="material-symbols-rounded">add</i> Ajouter un article
+            </button>
+            <div class="card">
+              <div class="card-body p-2">
+                <p class="text-sm mb-0">Prix total sélection</p>
+                <h5 class="font-weight-bolder mb-0"><span id="total-selected">0</span> F</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Ajouter à la vente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Using Bootstrap 5 modal events
+  var paiementModal = document.getElementById('paiementModal')
+  paiementModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget
+    var venteId = button.getAttribute('data-vente-id')
+    var montantTotal = parseFloat(button.getAttribute('data-montant-total')) || 0
+    var montantPaye = parseFloat(button.getAttribute('data-montant-paye')) || 0
+    var montantRestant = parseFloat(button.getAttribute('data-montant-restant')) || 0
+    var ecoleNom = button.getAttribute('data-ecole-nom') || ''
+    var annee = button.getAttribute('data-annee') || ''
+    var dettesAutresData = button.getAttribute('data-dettes-autres') || '[]'
+    var totalDettesAutres = parseFloat(button.getAttribute('data-total-dettes-autres')) || 0
     
-      // Réinitialise les valeurs
-      clone.querySelectorAll('select, input').forEach((el) => (el.value = ''))
-      container.appendChild(clone)
-    })
+    console.log('Raw dettesAutresData:', dettesAutresData)
+    console.log('Type of dettesAutresData:', typeof dettesAutresData)
+    console.log('Modal data:', {montantTotal, montantPaye, montantRestant, dettesAutresData, totalDettesAutres})
+    console.log('Parsed dettes:', dettesAutres)
     
-    // Supprimer une ligne
-    document.addEventListener('click', function (e) {
-      if (e.target.classList.contains('remove-row')) {
-        const rows = document.querySelectorAll('.cahier-row')
-        if (rows.length > 1) {
-          e.target.closest('.cahier-row').remove()
-        } else {
-          alert('Au moins un cahier est requis.')
+    var form = document.getElementById('paiementModalForm')
+    form.action = '/ventes/' + venteId + '/paiement/'
+    
+    // Remplir les informations de la vente courante
+    document.getElementById('venteEcoleNom').textContent = ecoleNom
+    document.getElementById('venteAnnee').textContent = annee
+    document.getElementById('venteMontantTotal').textContent = montantTotal.toFixed(0)
+    document.getElementById('venteMontantPaye').textContent = montantPaye.toFixed(0)
+    document.getElementById('venteMontantRestant').textContent = montantRestant.toFixed(0)
+    
+    // Parse dettes autres
+    var dettesAutres = []
+    try {
+      dettesAutres = JSON.parse(dettesAutresData)
+    } catch(e) {
+      console.error('Error parsing dettes:', e)
+    }
+    
+    // Afficher les dettes des autres années
+    var dettesCard = document.getElementById('dettesAutresCard')
+    var dettesList = document.getElementById('dettesAutresList')
+    
+    console.log('Dettes autres length:', dettesAutres.length)
+    
+    if (dettesAutres.length > 0) {
+      dettesCard.style.display = 'block'
+      dettesList.innerHTML = ''
+      
+      dettesAutres.forEach(function(dette, index) {
+        console.log('Dette', index, ':', dette)
+        var div = document.createElement('div')
+        div.className = 'row mb-2'
+        div.innerHTML = `
+          <div class="col-8">
+            <p class="text-sm mb-0">${dette.annee_scolaire}</p>
+          </div>
+          <div class="col-4 text-end">
+            <span class="text-danger font-weight-bolder">${parseFloat(dette.montant_restant).toFixed(0)} F</span>
+          </div>
+        `
+        dettesList.appendChild(div)
+      })
+      
+      document.getElementById('totalDettesAutres').textContent = totalDettesAutres.toFixed(0)
+    } else {
+      dettesCard.style.display = 'none'
+      totalDettesAutres = 0
+      console.log('Aucune dette trouvée - card cachée')
+    }
+    
+    // Calculs du récapitulatif
+    var totalGeneral = montantRestant + totalDettesAutres
+    var montantRecommande = totalGeneral
+    
+    document.getElementById('totalGeneral').textContent = totalGeneral.toFixed(0)
+    document.getElementById('montantRecommande').textContent = montantRecommande.toFixed(0)
+    
+    // Pré-remplir le montant recommandé et définir le maximum
+    var paiementInput = document.getElementById('paiementMontant')
+    paiementInput.value = montantRecommande.toFixed(0)
+    paiementInput.max = montantRecommande + 1 // Limiter le montant maximum
+    
+    // Ajouter un événement pour vérifier le montant saisi
+    paiementInput.addEventListener('input', function() {
+      var montantSaisi = parseFloat(this.value) || 0
+      var warningDiv = document.getElementById('paiementWarning')
+      
+      if (montantSaisi > montantRecommande) {
+        if (!warningDiv) {
+          var warning = document.createElement('div')
+          warning.id = 'paiementWarning'
+          warning.className = 'alert alert-warning mt-2'
+          warning.innerHTML = `
+            <span class="alert-icon align-middle">
+              <i class="material-symbols-rounded">warning</i>
+            </span>
+            <span class="alert-text">
+              Le montant saisi dépasse le total dû (${montantRecommande.toFixed(0)} F). 
+              L'excédent sera rendu à l'utilisateur.
+            </span>
+          `
+          this.parentNode.appendChild(warning)
+        }
+      } else {
+        if (warningDiv) {
+          warningDiv.remove()
         }
       }
     })
-  </script>
-  <script>
-  document.getElementById('searchInput').addEventListener('input', function () {
-    const searchValue = this.value.toLowerCase()
-    const rows = document.querySelectorAll('table tbody tr')
+  })
 
-    rows.forEach(row => {
-      const ecoleCell = row.querySelector('td') 
-      if (ecoleCell) {
-        const ecoleName = ecoleCell.textContent.toLowerCase()
-        row.style.display = ecoleName.includes(searchValue) ? '' : 'none'
-      }
+  var modifierModal = document.getElementById('modifierModal')
+  modifierModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget
+    var venteId = button.getAttribute('data-vente-id')
+    var form = document.getElementById('modifierModalForm')
+    form.action = '/ventes/' + venteId + '/modifier/'
+    // reset container
+    var container = document.getElementById('articles-container')
+    container.innerHTML = ''
+    document.getElementById('total-selected').innerText = '0'
+    // Add one article row by default
+    document.getElementById('add-article-btn').click()
+  })
+
+  // Add article row
+  document.getElementById('add-article-btn').addEventListener('click', function(){
+    var container = document.getElementById('articles-container')
+    var idx = container.children.length
+    var div = document.createElement('div')
+    div.className = 'row mb-3'
+    div.innerHTML = `
+      <div class="col-md-6">
+        <div class="input-group input-group-outline">
+          <label class="form-label">Cahier</label>
+          <select name="cahier_${idx}" class="form-control select-cahier">
+            {% for c in cahiers %}
+              <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="input-group input-group-outline">
+          <label class="form-label">Quantité</label>
+          <input name="quantite_${idx}" type="number" min="1" value="1" class="form-control qty-input" />
+        </div>
+      </div>
+      <div class="col-md-3 d-flex align-items-center">
+        <button type="button" class="btn btn-danger btn-sm btn-remove">
+          <i class="material-symbols-rounded">delete</i> Supprimer
+        </button>
+      </div>
+    `
+    container.appendChild(div)
+
+    // attach listeners
+    div.querySelector('.select-cahier').addEventListener('change', updateTotal)
+    div.querySelector('.qty-input').addEventListener('input', updateTotal)
+    div.querySelector('.btn-remove').addEventListener('click', function(){ div.remove(); updateTotal() })
+    updateTotal()
+  })
+
+  function updateTotal(){
+    var total = 0
+    document.querySelectorAll('#articles-container .row').forEach(function(row){
+      var sel = row.querySelector('.select-cahier')
+      var opt = sel.options[sel.selectedIndex]
+      var price = parseFloat(opt.getAttribute('data-price')) || 0
+      var qty = parseInt(row.querySelector('.qty-input').value) || 0
+      total += price * qty
+    })
+    document.getElementById('total-selected').innerText = total.toFixed(0)
+  }
+
+  // Submit modifier form: collect articles into JSON 'articles' field
+  document.getElementById('modifierModalForm').addEventListener('submit', function(e){
+    var container = document.getElementById('articles-container')
+    var articles = []
+    container.querySelectorAll('.row').forEach(function(row){
+      var sel = row.querySelector('.select-cahier')
+      var opt = sel.options[sel.selectedIndex]
+      var id = sel.value
+      var qty = parseInt(row.querySelector('.qty-input').value) || 0
+      if (qty > 0) articles.push({cahier_id: id, quantite: qty})
+    })
+    var input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = 'articles'
+    input.value = JSON.stringify(articles)
+    this.appendChild(input)
+  })
+
+  // Initialiser les tooltips Bootstrap
+  document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
     })
   })
 </script>
 
+<!-- Modal Nouvelle Vente -->
+<div class="modal fade" id="modalNouvelleVente" tabindex="-1" aria-labelledby="modalNouvelleVenteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNouvelleVenteLabel">
+          <i class="material-symbols-rounded me-2">add_shopping_cart</i>
+          Créer une nouvelle vente
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <form id="formNouvelleVente" method="post" action="{% url 'creer_vente' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <!-- Sélection école et année -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="nouvelle_vente_ecole" class="form-label">École <span class="text-danger">*</span></label>
+              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select" required>
+                <option value="">-- Sélectionner une école --</option>
+                {% for ecole in ecoles %}
+                  <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="nouvelle_vente_annee" class="form-label">Année scolaire <span class="text-danger">*</span></label>
+              <select name="annee_id" id="nouvelle_vente_annee" class="form-select" required>
+                {% for annee in annees %}
+                  <option value="{{ annee.id }}" {% if annee.est_active %}selected{% endif %}>{{ annee }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Dette précédente (optionnel) -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="nouvelle_vente_dette" class="form-label">Dette précédente (optionnel)</label>
+              <input type="number" step="0.01" min="0" name="dette_precedente" id="nouvelle_vente_dette" class="form-control" placeholder="0.00">
+            </div>
+            <div class="col-md-6">
+              <label for="nouvelle_vente_description_dette" class="form-label">Description de la dette</label>
+              <input type="text" name="description_dette" id="nouvelle_vente_description_dette" class="form-control" placeholder="Ex: Reliquat année 2023-2024">
+            </div>
+          </div>
+
+          <!-- Sélection des articles -->
+          <div class="row">
+            <div class="col-12">
+              <h6 class="text-dark font-weight-bolder mb-3">
+                <i class="material-symbols-rounded me-2">inventory_2</i>
+                Articles à ajouter
+              </h6>
+              
+              <!-- Note d'information -->
+              <div class="alert alert-info alert-dismissible text-white mb-3" role="alert">
+                <span class="alert-icon align-middle">
+                  <i class="material-symbols-rounded">info</i>
+                </span>
+                <span class="alert-text">
+                  <strong>Note :</strong> Si l'école a déjà une vente pour l'année scolaire sélectionnée, les articles seront ajoutés à la vente existante. Sinon, une nouvelle vente sera créée.
+                </span>
+              </div>
+              
+              <div id="articles_container">
+                <div class="article-row row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Cahier</label>
+                    <select name="articles[0][cahier_id]" class="form-select">
+                      <option value="">-- Sélectionner un cahier --</option>
+                      {% for cahier in cahiers %}
+                        <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.prix|floatformat:0 }}F</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Quantité</label>
+                    <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control" placeholder="1">
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-article" disabled>
+                      <i class="material-symbols-rounded">remove</i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <button type="button" id="addArticleBtn" class="btn btn-outline-primary btn-sm">
+                <i class="material-symbols-rounded me-1">add</i>
+                Ajouter un article
+              </button>
+            </div>
+          </div>
+
+          <!-- Récapitulatif -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="card bg-light">
+                <div class="card-body">
+                  <h6 class="card-title">Récapitulatif</h6>
+                  <div class="d-flex justify-content-between">
+                    <span>Montant articles:</span>
+                    <span id="montant_articles">0 F</span>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span>Dette précédente:</span>
+                    <span id="montant_dette">0 F</span>
+                  </div>
+                  <hr>
+                  <div class="d-flex justify-content-between fw-bold">
+                    <span>Total:</span>
+                    <span id="montant_total">0 F</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="material-symbols-rounded me-1">save</i>
+            Créer la vente
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Données des cahiers pour le JavaScript
+  const cahiersData = [
+    {% for cahier in cahiers %}
+      {id: '{{ cahier.id }}', titre: '{{ cahier.titre }}', prix: {{ cahier.prix }}},
+    {% endfor %}
+  ];
+  
+  // Gestion du modal nouvelle vente
+  document.addEventListener('DOMContentLoaded', function() {
+    let articleIndex = 1; // Commence à 1 car le premier article [0] est déjà présent
+    
+    // Fonction pour générer les options de cahiers
+    function generateCahierOptions() {
+      let options = '<option value="">-- Sélectionner un cahier --</option>';
+      cahiersData.forEach(cahier => {
+        options += `<option value="${cahier.id}" data-prix="${cahier.prix}">${cahier.titre} - ${cahier.prix}F</option>`;
+      });
+      return options;
+    }
+    
+    // Fonction pour mettre à jour le récapitulatif
+    function updateRecapitulatif() {
+      let montantArticles = 0;
+      const rows = document.querySelectorAll('.article-row');
+      
+      rows.forEach(row => {
+        const select = row.querySelector('select');
+        const quantiteInput = row.querySelector('input[type="number"]');
+        
+        if (select && select.value && quantiteInput && quantiteInput.value) {
+          const selectedOption = select.selectedOptions[0];
+          const prix = parseFloat(selectedOption?.dataset?.prix || 0);
+          const quantite = parseInt(quantiteInput.value || 0);
+          if (prix > 0 && quantite > 0) {
+            montantArticles += prix * quantite;
+          }
+        }
+      });
+      
+      const detteInput = document.getElementById('nouvelle_vente_dette');
+      const dette = parseFloat(detteInput?.value || 0);
+      const total = montantArticles + dette;
+      
+      const montantArticlesEl = document.getElementById('montant_articles');
+      const montantDetteEl = document.getElementById('montant_dette');
+      const montantTotalEl = document.getElementById('montant_total');
+      
+      if (montantArticlesEl) montantArticlesEl.textContent = montantArticles.toFixed(0) + ' F';
+      if (montantDetteEl) montantDetteEl.textContent = dette.toFixed(0) + ' F';
+      if (montantTotalEl) montantTotalEl.textContent = total.toFixed(0) + ' F';
+    }
+    
+    // Fonction pour mettre à jour les boutons de suppression
+    function updateRemoveButtons() {
+      const removeButtons = document.querySelectorAll('.remove-article');
+      removeButtons.forEach((btn) => {
+        btn.disabled = removeButtons.length <= 1;
+      });
+    }
+    
+    // Fonction pour attacher les événements à une ligne d'article
+    function attachArticleEvents(row) {
+      const select = row.querySelector('select');
+      const quantiteInput = row.querySelector('input[type="number"]');
+      const removeBtn = row.querySelector('.remove-article');
+      
+      if (select) {
+        select.addEventListener('change', updateRecapitulatif);
+      }
+      
+      if (quantiteInput) {
+        quantiteInput.addEventListener('input', updateRecapitulatif);
+      }
+      
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function() {
+          row.remove();
+          updateRemoveButtons();
+          updateRecapitulatif();
+        });
+      }
+    }
+    
+    // Initialiser les événements pour le premier article existant
+    const firstArticleRow = document.querySelector('.article-row');
+    if (firstArticleRow) {
+      attachArticleEvents(firstArticleRow);
+    }
+    
+    // Ajouter l'événement pour le champ dette
+    const detteInput = document.getElementById('nouvelle_vente_dette');
+    if (detteInput) {
+      detteInput.addEventListener('input', updateRecapitulatif);
+    }
+    
+    // Initialiser les boutons de suppression
+    updateRemoveButtons();
+    
+    // Calculer le récapitulatif initial
+    updateRecapitulatif();
+    
+    // Ajouter un article
+    const addArticleBtn = document.getElementById('addArticleBtn');
+    if (addArticleBtn) {
+      addArticleBtn.addEventListener('click', function() {
+        const container = document.getElementById('articles_container');
+        if (!container) return;
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'article-row row mb-3';
+        newRow.innerHTML = `
+          <div class="col-md-6">
+            <label class="form-label">Cahier</label>
+            <select name="articles[${articleIndex}][cahier_id]" class="form-select">
+              ${generateCahierOptions()}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Quantité</label>
+            <input type="number" min="1" value="1" name="articles[${articleIndex}][quantite]" class="form-control" placeholder="1">
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-danger btn-sm remove-article">
+              <i class="material-symbols-rounded">remove</i>
+            </button>
+          </div>
+        `;
+        
+        container.appendChild(newRow);
+        articleIndex++;
+        
+        // Attacher les événements à la nouvelle ligne
+        attachArticleEvents(newRow);
+        
+        updateRemoveButtons();
+        updateRecapitulatif();
+      });
+    }
+    
+    // Gérer la soumission du formulaire de création de vente
+    const nouvelleVenteForm = document.getElementById('formNouvelleVente');
+    if (nouvelleVenteForm) {
+      nouvelleVenteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validation : au moins un article
+        const rows = document.querySelectorAll('.article-row');
+        let articles = [];
+        
+        rows.forEach(row => {
+          const select = row.querySelector('select');
+          const quantiteInput = row.querySelector('input[type="number"]');
+          
+          if (select && select.value && quantiteInput && quantiteInput.value && parseInt(quantiteInput.value) > 0) {
+            articles.push({
+              cahier_id: select.value,
+              quantite: parseInt(quantiteInput.value)
+            });
+          }
+        });
+        
+        if (articles.length === 0) {
+          alert('Veuillez ajouter au moins un article avec une quantité valide.');
+          return;
+        }
+        
+        // Préparer les données du formulaire
+        const formData = new FormData(nouvelleVenteForm);
+        
+        // Ajouter les articles en JSON
+        formData.append('articles', JSON.stringify(articles));
+        
+        // Désactiver le bouton et afficher un indicateur de chargement
+        const submitBtn = document.querySelector('#modalNouvelleVente .btn-primary');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="material-symbols-rounded">hourglass_empty</i> Création...';
+        
+        // Envoyer la requête
+        fetch('{% url "creer_vente" %}', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Fermer le modal
+            const modalElement = document.getElementById('modalNouvelleVente');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+              modal.hide();
+            }
+            
+            // Afficher un message de succès
+            if (data.message) {
+              alert(data.message);
+            }
+            
+            // Rediriger vers la page de détail de la vente ou recharger la liste
+            if (data.redirect_url) {
+              window.location.href = data.redirect_url;
+            } else {
+              window.location.reload();
+            }
+          } else {
+            // Afficher l'erreur
+            alert('Erreur : ' + (data.error || 'Une erreur s\'est produite'));
+          }
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          alert('Erreur de communication avec le serveur');
+        })
+        .finally(() => {
+          // Réactiver le bouton
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        });
+      });
+    }
+    
+    // Réinitialiser le modal à chaque ouverture
+    const modalElement = document.getElementById('modalNouvelleVente');
+    if (modalElement) {
+      modalElement.addEventListener('show.bs.modal', function () {
+        // Réinitialiser le formulaire
+        const form = document.getElementById('formNouvelleVente');
+        if (form) {
+          form.reset();
+        }
+        
+        // Réinitialiser le container d'articles avec un seul article
+        const container = document.getElementById('articles_container');
+        if (container) {
+          container.innerHTML = `
+            <div class="article-row row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Cahier</label>
+                <select name="articles[0][cahier_id]" class="form-select">
+                  ${generateCahierOptions()}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Quantité</label>
+                <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control" placeholder="1">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-article" disabled>
+                  <i class="material-symbols-rounded">remove</i>
+                </button>
+              </div>
+            </div>
+          `;
+          
+          // Réattacher les événements au premier article
+          const firstRow = container.querySelector('.article-row');
+          if (firstRow) {
+            attachArticleEvents(firstRow);
+          }
+        }
+        
+        // Réinitialiser l'index des articles
+        articleIndex = 1;
+        
+        // Mettre à jour les boutons et le récapitulatif
+        updateRemoveButtons();
+        updateRecapitulatif();
+      });
+    }
+  });
+</script>
 {% endblock %}
