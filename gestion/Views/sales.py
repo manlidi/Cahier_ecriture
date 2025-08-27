@@ -236,7 +236,7 @@ def modifier_vente(request, vente_id):
             description = f"Ajout de {len(articles_data)} type(s) d'articles via interface web"
             vente.ajouter_articles(articles_data, description_session=description)
             
-    return redirect('vente_detail', vente_id=vente.id)
+    return redirect('ventes')
 
 
 def gerer_paiement(request, vente_id):
@@ -319,7 +319,7 @@ def gerer_paiement(request, vente_id):
             from django.contrib import messages
             messages.info(request, f"Paiement effectué avec succès. Montant rendu à l'utilisateur : {montant_excedent} F")
     
-    return redirect('vente_detail', vente_id=vente.id)
+    return redirect('ventes')
 
 
 def creer_vente(request):
@@ -400,7 +400,7 @@ def creer_vente(request):
                 'success': True,
                 'message': action_message,
                 'vente_id': vente.id,
-                'redirect_url': f'/ventes/{vente.id}/'
+                'redirect_url': f'/ventes'
             })
             
         except Exception as e:
@@ -439,7 +439,7 @@ def retirer_articles(request, vente_id):
     from django.contrib import messages
     if modifications:
         messages.success(request, f"Cahiers retirés: {', '.join(modifications)}")
-    return redirect('vente_detail', vente_id=vente.id)
+    return redirect('ventes')
 
 @require_GET
 def vente_cahiers(request, vente_id):

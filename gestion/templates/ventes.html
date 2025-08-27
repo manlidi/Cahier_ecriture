@@ -42,8 +42,8 @@
             <div class="col-lg-8 col-md-8">
               <div class="input-group input-group-outline">
                 <label class="form-label">École</label>
-                <select name="ecole" id="ecole" class="form-control">
-                  <option value="">-- Toutes les écoles --</option>
+                <select name="ecole" id="ecole" class="form-control border border-secondary">
+                  <option value=""></option>
                   {% for e in ecoles %}
                     <option value="{{ e.id }}" {% if selected_ecole == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nom }}</option>
                   {% endfor %}
@@ -566,8 +566,7 @@
     div.innerHTML = `
       <div class="col-md-6">
         <div class="input-group input-group-outline">
-          <label class="form-label">Cahier</label>
-          <select name="cahier_${idx}" class="form-control select-cahier">
+          <select name="cahier_${idx}" class="form-control select-cahier border border-secondary">
             {% for c in cahiers %}
               <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
             {% endfor %}
@@ -576,8 +575,7 @@
       </div>
       <div class="col-md-3">
         <div class="input-group input-group-outline">
-          <label class="form-label">Quantité</label>
-          <input name="quantite_${idx}" type="number" min="1" value="1" class="form-control qty-input" />
+          <input name="quantite_${idx}" type="number" min="1" value="1" class="form-control border border-secondary qty-input" />
         </div>
       </div>
       <div class="col-md-3 d-flex align-items-center">
@@ -653,7 +651,7 @@
           <div class="row mb-4">
             <div class="col-md-12">
               <label for="nouvelle_vente_ecole" class="form-label">École <span class="text-danger">*</span></label>
-              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select p-2" required>
+              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select p-2 border border-secondary" required>
                 {% for ecole in ecoles %}
                   <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
                 {% endfor %}
@@ -665,7 +663,7 @@
           <div class="row mb-4">
             <div class="col-md-12">
               <label for="nouvelle_vente_description" class="form-label">Description (optionnel)</label>
-              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control p-2" rows="2" style="border: 1px solid #ced4da;" placeholder="Description de la vente..."></textarea>
+              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control p-2 border border-secondary" rows="1" style="border: 1px solid #ced4da;" placeholder="Description de la vente..."></textarea>
             </div>
           </div>          <!-- Sélection des articles -->
           <div class="row">
@@ -689,8 +687,8 @@
                 <div class="article-row row mb-3">
                   <div class="col-md-6">
                     <label class="form-label">Cahier</label>
-                    <select name="articles[0][cahier_id]" class="form-select">
-                      <option value="">-- Sélectionner un cahier --</option>
+                    <select name="articles[0][cahier_id]" class="form-select border border-secondary">
+                      <option value=""></option>
                       {% for cahier in cahiers %}
                         <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.prix|floatformat:0 }}F</option>
                       {% endfor %}
@@ -698,7 +696,7 @@
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Quantité</label>
-                    <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control" placeholder="1">
+                    <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control border border-secondary" placeholder="1">
                   </div>
                   <div class="col-md-2 d-flex align-items-end">
                     <button type="button" class="btn btn-outline-danger btn-sm remove-article" disabled>
@@ -866,13 +864,13 @@
         newRow.innerHTML = `
           <div class="col-md-6">
             <label class="form-label">Cahier</label>
-            <select name="articles[${articleIndex}][cahier_id]" class="form-select">
+            <select name="articles[${articleIndex}][cahier_id]" class="form-select border border-secondary">
               ${generateCahierOptions()}
             </select>
           </div>
           <div class="col-md-4">
             <label class="form-label">Quantité</label>
-            <input type="number" min="1" value="1" name="articles[${articleIndex}][quantite]" class="form-control" placeholder="1">
+            <input type="number" min="1" value="1" name="articles[${articleIndex}][quantite]" class="form-control border border-secondary" placeholder="1">
           </div>
           <div class="col-md-2 d-flex align-items-end">
             <button type="button" class="btn btn-outline-danger btn-sm remove-article">
@@ -994,13 +992,13 @@
             <div class="article-row row mb-3">
               <div class="col-md-6">
                 <label class="form-label">Cahier</label>
-                <select name="articles[0][cahier_id]" class="form-select">
+                <select name="articles[0][cahier_id]" class="form-select border border-secondary">
                   ${generateCahierOptions()}
                 </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Quantité</label>
-                <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control" placeholder="1">
+                <input type="number" min="1" value="1" name="articles[0][quantite]" class="form-control border border-secondary" placeholder="1">
               </div>
               <div class="col-md-2 d-flex align-items-end">
                 <button type="button" class="btn btn-outline-danger btn-sm remove-article" disabled>
@@ -1046,13 +1044,13 @@ retirerModal.addEventListener('show.bs.modal', function (event) {
         div.innerHTML = `
           <div class="col-md-6">
             <div class="input-group input-group-outline">
-              <input type="text" class="form-control" value="${ligne.cahier_titre}" readonly />
+              <input type="text" class="form-control border border-secondary" value="${ligne.cahier_titre}" readonly />
               <input type="hidden" name="cahier_${idx}" value="${ligne.cahier_id}" />
             </div>
           </div>
           <div class="col-md-3">
             <div class="input-group input-group-outline">
-              <input name="quantite_${idx}" type="number" min="0" max="${ligne.quantite}" value="0" class="form-control" />
+              <input name="quantite_${idx}" type="number" min="0" max="${ligne.quantite}" value="0" class="form-control border border-secondary" />
             </div>
           </div>
         `
