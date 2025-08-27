@@ -187,6 +187,12 @@
                             <i class="material-symbols-rounded text-sm">add_shopping_cart</i>
                           </button>
                           {% endif %}
+
+                          <button class="btn btn-link text-danger p-2 mb-0" data-bs-toggle="modal" data-bs-target="#retirerModal"
+                                  title="Retirer des cahiers" data-bs-toggle="tooltip"
+                                  data-vente-id="{{ v.id }}">
+                            <i class="material-symbols-rounded text-sm">remove_shopping_cart</i>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -254,6 +260,31 @@
           {% endif %}
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Retirer Modal -->
+<div class="modal fade" id="retirerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Retirer des cahiers de la vente</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="retirerModalForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div id="retirer-articles-container"></div>
+          <button id="add-retirer-article-btn" type="button" class="btn btn-outline-danger mt-3">
+            <i class="material-symbols-rounded">remove</i> Retirer un cahier
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-danger">Retirer</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -998,5 +1029,39 @@
       });
     }
   });
+</script>
+<script>
+  var retirerModal = document.getElementById('retirerModal')
+retirerModal.addEventListener('show.bs.modal', function (event) {
+  var button = event.relatedTarget
+  var venteId = button.getAttribute('data-vente-id')
+  var form = document.getElementById('retirerModalForm')
+  form.action = '/ventes/' + venteId + '/retirer/'
+  var container = document.getElementById('retirer-articles-container')
+  container.innerHTML = ''
+  // Charger les cahiers de la vente via AJAX
+  fetch('/ventes/' + venteId + '/cahiers/')
+    .then(response => response.json())
+    .then(data => {
+      data.lignes.forEach(function(ligne, idx){
+        var div = document.createElement('div')
+        div.className = 'row mb-3'
+        div.innerHTML = `
+          <div class="col-md-6">
+            <div class="input-group input-group-outline">
+              <input type="text" class="form-control" value="${ligne.cahier_titre}" readonly />
+              <input type="hidden" name="cahier_${idx}" value="${ligne.cahier_id}" />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="input-group input-group-outline">
+              <input name="quantite_${idx}" type="number" min="0" max="${ligne.quantite}" value="0" class="form-control" />
+            </div>
+          </div>
+        `
+        container.appendChild(div)
+      })
+    })
+})
 </script>
 {% endblock %}

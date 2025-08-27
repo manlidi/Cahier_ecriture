@@ -10,6 +10,7 @@ from gestion.models import LigneVente, Paiement, Cahiers
 from decimal import Decimal
 from django.core.paginator import Paginator
 import json
+from django.views.decorators.http import require_POST
 
 
 def liste_ventes(request):
@@ -412,3 +413,43 @@ def creer_vente(request):
         'success': False, 
         'error': 'Méthode non autorisée'
     })
+
+
+@require_POST
+def retirer_articles(request, vente_id):
+    vente = get_object_or_404(Vente, id=vente_id)
+    lignes = vente.lignes.select_related('cahier').all()
+    modifications = []
+    for idx, ligne in enumerate(lignes):
+        cahier_id = request.POST.get(f'cahier_{idx}')
+        quantite_retirer = int(request.POST.get(f'quantite_{idx}', 0))
+        if cahier_id and quantite_retirer > 0:
+            ligne_vente = vente.lignes.filter(cahier_id=cahier_id).first()
+            if ligne_vente and quantite_retirer <= ligne_vente.quantite:
+                ligne_vente.quantite -= quantite_retirer
+                ligne_vente.montant = ligne_vente.quantite * ligne_vente.cahier.prix
+                ligne_vente.save()
+                # Optionnel: augmenter le stock du cahier
+                ligne_vente.cahier.quantite_stock += quantite_retirer
+                ligne_vente.cahier.save()
+                modifications.append(ligne_vente.cahier.titre)
+    # Optionnel: supprimer les lignes à 0
+    vente.lignes.filter(quantite=0).delete()
+    # Message de confirmation
+    from django.contrib import messages
+    if modifications:
+        messages.success(request, f"Cahiers retirés: {', '.join(modifications)}")
+    return redirect('vente_detail', vente_id=vente.id)
+
+@require_GET
+def vente_cahiers(request, vente_id):
+    vente = get_object_or_404(Vente, id=vente_id)
+    lignes = vente.lignes.select_related('cahier').all()
+    data = []
+    for ligne in lignes:
+        data.append({
+            'cahier_id': ligne.cahier.id,
+            'cahier_titre': ligne.cahier.titre,
+            'quantite': ligne.quantite,
+        })
+    return JsonResponse({'lignes': data})
