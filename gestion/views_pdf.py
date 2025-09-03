@@ -21,9 +21,6 @@ from decimal import Decimal
 
 
 def generer_facture_pdf(request, vente_id):
-    """Génère une facture PDF pour une vente avec le design de l'exemple"""
-    
-    # Récupérer la vente
     vente = get_object_or_404(Vente, id=vente_id)
     
     # S'assurer que nous avons les dernières données
@@ -42,62 +39,82 @@ def generer_facture_pdf(request, vente_id):
     # Créer le document PDF
     doc = SimpleDocTemplate(buffer, pagesize=A4,
                             leftMargin=2*cm, rightMargin=2*cm,
-                            topMargin=6*cm, bottomMargin=4*cm)
+                            topMargin=5.5*cm, bottomMargin=4*cm)
     
     story = []
     styles = getSampleStyleSheet()
     style_normal = styles["Normal"]
     style_bold = styles["Heading4"]
     style_important = styles["Heading3"]
-    
-    story.append(Spacer(1, 0.5 * cm))
+
     
     # Style pour le nom de l'école
+    style_header = ParagraphStyle(
+        'HeaderStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        fontName='Helvetica-Bold',
+        alignment=1,  
+        leading=10,
+        spaceBefore=0,
+        spaceAfter=0,
+        wordWrap='LTR'   
+    )
+
+    # Style pour les valeurs
     style_ecole = ParagraphStyle(
         'EcoleStyle',
         parent=styles['Normal'],
         fontSize=9,
         fontName='Helvetica',
-        wordWrap='CJK',
-        alignment=1,
+        alignment=1,  
         leading=10,
         spaceBefore=0,
-        spaceAfter=0
+        spaceAfter=0,
+        wordWrap='LTR'   
     )
     
     # Informations de la facture
     numero_facture = f"F-{datetime.now().year}-{str(vente.id)[:8]}"
-    date_modif_str = vente.modified_at.strftime('%d-%m-%Y %H:%M') if vente.modified_at else "—"
+    date_modif_str = vente.modified_at.strftime('%d-%m-%Y') if vente.modified_at else "—"
+    date_paiement = vente.date_paiement.strftime('%d-%m-%Y') if vente.date_paiement else "—"
     
     # Tableau d'en-tête avec informations
     info_data = [
-        ["ÉCOLE", "FACTURE", "DATE ÉDITION", "DATE MODIFICATION", "ANNÉE SCOLAIRE"],
-        [Paragraph(vente.ecole.nom, style_ecole), 
-         Paragraph(numero_facture), 
-         datetime.now().strftime('%d-%m-%Y %H:%M'),
-         date_modif_str,
-         str(vente.annee_scolaire)]
+        [
+            Paragraph("ÉCOLE", style_header),
+            Paragraph("FACTURE", style_header),
+            Paragraph("DATE D'ÉDITION", style_header),
+            Paragraph("DATE DE MODIFICATION", style_header),
+            Paragraph("DATE DE PAIEMENT", style_header),
+            Paragraph("ANNÉE SCOLAIRE", style_header)
+        ],
+        [
+            Paragraph(vente.ecole.nom, style_ecole),
+            Paragraph(numero_facture, style_ecole),
+            Paragraph(datetime.now().strftime('%d-%m-%Y'), style_ecole),
+            Paragraph(date_modif_str, style_ecole),
+            Paragraph(date_paiement, style_ecole),
+            Paragraph(str(vente.annee_scolaire), style_ecole)
+        ]
     ]
-    
-    info_table = Table(info_data, colWidths=[2.5*cm, 3.5*cm, 3*cm, 4*cm, 3*cm])
+
+    # Largeurs de colonnes
+    info_table = Table(info_data, colWidths=[4*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+
+    # Style du tableau
     info_table_style = TableStyle([
         ('GRID', (0,0), (-1,-1), 1.5, colors.black),
         ('BACKGROUND', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0,0), (-1,0), 9),
-        ('ALIGN', (0,0), (-1,0), 'CENTER'),
-        ('VALIGN', (0,0), (-1,0), 'MIDDLE'),
-        ('FONTNAME', (0,1), (-1,1), 'Helvetica'),
-        ('FONTSIZE', (0,1), (-1,1), 8),
-        ('ALIGN', (0,1), (-1,1), 'CENTER'),
-        ('VALIGN', (0,1), (-1,1), 'MIDDLE'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('TOPPADDING', (0,0), (-1,-1), 4),
         ('BOTTOMPADDING', (0,0), (-1,-1), 4),
         ('LEFTPADDING', (0,0), (-1,-1), 5),
         ('RIGHTPADDING', (0,0), (-1,-1), 5),
     ])
-    
-    info_table.setStyle(info_table_style)   
+
+    info_table.setStyle(info_table_style)
+
     story.append(info_table)
     story.append(Spacer(0.1, 0.1 * cm))
     
@@ -223,36 +240,32 @@ def generer_facture_pdf(request, vente_id):
     
     # Ligne articles
     recap_data.append([
-        "Montant articles :",
+        "Sous-total des articles :",
         f"{montant_total_articles:.2f} F"
     ])
     
     # Ligne total de cette facture
     recap_data.append([
-        "TOTAL CETTE FACTURE :",
+        "Total de la facture :",
         f"{montant_total_facture:.2f} F"
     ])
     
     # Ligne montant payé
     recap_data.append([
-        "Montant payé :",
+        "Paiements reçus :",
         f"{montant_paye:.2f} F" if montant_paye > 0 else "Aucun paiement"
     ])
     
     # Ligne montant restant sur cette facture
     recap_data.append([
-        "RESTANT CETTE FACTURE :",
+        "Solde restant dû :",
         f"{montant_restant_facture:.2f} F" if montant_restant_facture > 0 else "ENTIÈREMENT RÉGLÉE"
     ])
     
     # Si il y a d'autres dettes, ajouter le total global
     if len(dettes_par_annee) > 1:
         recap_data.append([
-            "",
-            ""
-        ])
-        recap_data.append([
-            "TOTAL DETTES ÉCOLE :",
+            "Encours global de l’établissement :",
             f"{total_dettes_ecole:.2f} F"
         ])
     
@@ -271,8 +284,8 @@ def generer_facture_pdf(request, vente_id):
     ])
     
     # Mise en forme spéciale pour certaines lignes
-    ligne_total_facture = 1  # Plus de dette précédente, donc total est toujours ligne 1
-    ligne_restant_facture = 3  # Ligne restant dû est maintenant ligne 3
+    ligne_total_facture = 1  
+    ligne_restant_facture = 3  
     
     # Ligne total facture en gris
     recap_table_style.add('BACKGROUND', (0,ligne_total_facture), (-1,ligne_total_facture), colors.lightgrey)
@@ -298,35 +311,30 @@ def generer_facture_pdf(request, vente_id):
     recap_table.setStyle(recap_table_style)
     story.append(recap_table)
     
-    # Pied de page
-    story.append(Spacer(1, 0.5*cm))
-    story.append(Paragraph("Merci pour votre confiance !", 
-                          ParagraphStyle('Thanks', parent=styles['Normal'], 
-                                       alignment=TA_CENTER, fontSize=12, 
-                                       textColor=colors.darkblue)))
-    
-    story.append(Spacer(1, 0.2*cm))
-    story.append(Paragraph(f"Facture générée le {timezone.now().strftime('%d/%m/%Y à %H:%M')}", 
-                          ParagraphStyle('Generated', parent=styles['Normal'], 
-                                       alignment=TA_CENTER, fontSize=8, 
-                                       textColor=colors.grey)))
-    
     # Construire le PDF principal
     doc.build(story)
     buffer.seek(0)
     
     # Tentative de fusion avec le papier en-tête
-    papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/papier1.pdf')
+    papier_en_tete_path = os.path.join(settings.BASE_DIR, 'static/admin/fa.pdf')
+    papier_signature_path = os.path.join(settings.BASE_DIR, 'static/admin/FACTURE.pdf')
     final_buffer = BytesIO()
-    
-    if os.path.exists(papier_en_tete_path):
+
+    if os.path.exists(papier_en_tete_path) and os.path.exists(papier_signature_path):
         try:
-            modele_pdf = PdfReader(papier_en_tete_path)
+            modele_pdf = PdfReader(papier_en_tete_path)  
+            modele_signature_pdf = PdfReader(papier_signature_path) 
             tableau_pdf = PdfReader(buffer)
             writer = PdfWriter()
             
-            for page_tableau in tableau_pdf.pages:
-                fond = modele_pdf.pages[0]
+            total_pages = len(tableau_pdf.pages)
+            
+            for idx, page_tableau in enumerate(tableau_pdf.pages):
+                if idx == total_pages - 1: 
+                    fond = modele_signature_pdf.pages[0]
+                else:
+                    fond = modele_pdf.pages[0]
+                
                 page_fusionnee = PageObject.create_blank_page(
                     width=fond.mediabox.width,
                     height=fond.mediabox.height
@@ -342,8 +350,9 @@ def generer_facture_pdf(request, vente_id):
             print(f"Erreur lors de la fusion PDF : {pdf_error}")
             final_buffer = buffer
     else:
-        print(f"Fichier papier en-tête introuvable : {papier_en_tete_path}")
+        print(f"Fichier papier en-tête introuvable")
         final_buffer = buffer
+
     
     # Créer la réponse HTTP
     response = HttpResponse(content_type='application/pdf')
