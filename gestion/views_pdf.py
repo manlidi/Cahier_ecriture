@@ -76,6 +76,7 @@ def generer_facture_pdf(request, vente_id):
     
     # Informations de la facture
     numero_facture = f"F-{datetime.now().year}-{str(vente.id)[:8]}"
+    date_creation_str = vente.created_at.strftime('%d-%m-%Y') if vente.created_at else "—"
     date_modif_str = vente.modified_at.strftime('%d-%m-%Y') if vente.modified_at else "—"
     date_paiement = vente.date_paiement.strftime('%d-%m-%Y') if vente.date_paiement else "—"
     
@@ -92,7 +93,7 @@ def generer_facture_pdf(request, vente_id):
         [
             Paragraph(vente.ecole.nom, style_ecole),
             Paragraph(numero_facture, style_ecole),
-            Paragraph(datetime.now().strftime('%d-%m-%Y'), style_ecole),
+            Paragraph(date_creation_str, style_ecole),
             Paragraph(date_modif_str, style_ecole),
             Paragraph(date_paiement, style_ecole),
             Paragraph(str(vente.annee_scolaire), style_ecole)

@@ -4,6 +4,7 @@ from django.utils import timezone
 import uuid
 from datetime import date
 from decimal import Decimal
+from datetime import timedelta
 
 
 class AnneeScolaire(models.Model):
@@ -298,6 +299,15 @@ class Vente(models.Model):
         self.save()
         
         return lignes_creees
+    
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.date_paiement:
+            self.date_paiement = timezone.now() + timedelta(days=30)
+
+        if self.pk: 
+            self.modified_at = timezone.now()
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         date_str = self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'
