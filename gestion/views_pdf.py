@@ -311,6 +311,16 @@ def generer_facture_pdf(request, vente_id):
     
     recap_table.setStyle(recap_table_style)
     story.append(recap_table)
+    story.append(Spacer(1, 0.5*cm))
+    story.append(Paragraph("Merci pour votre confiance !", 
+                          ParagraphStyle('Thanks', parent=styles['Normal'], 
+                                       alignment=TA_CENTER, fontSize=12, 
+                                       textColor=colors.darkblue)))
+    story.append(Spacer(1, 0.2*cm))
+    story.append(Paragraph(f"Facture générée le {timezone.now().strftime('%d/%m/%Y à %H:%M')}", 
+                          ParagraphStyle('Generated', parent=styles['Normal'], 
+                                       alignment=TA_CENTER, fontSize=8, 
+                                       textColor=colors.grey)))
     
     # Construire le PDF principal
     doc.build(story)
