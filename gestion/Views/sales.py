@@ -11,6 +11,8 @@ from decimal import Decimal
 from django.core.paginator import Paginator
 import json
 from django.views.decorators.http import require_POST
+from datetime import timedelta
+from django.utils import timezone
 
 
 def liste_ventes(request):
@@ -355,10 +357,11 @@ def creer_vente(request):
                 vente = vente_existante
                 action_message = 'Articles ajoutés à la vente existante'
             else:
-                # Créer une nouvelle vente
+                now = timezone.now()
                 vente = Vente.objects.create(
                     ecole=ecole,
-                    annee_scolaire=annee
+                    annee_scolaire=annee,
+                    date_paiement=now + timedelta(days=30)
                 )
                 action_message = 'Nouvelle vente créée avec succès'
             

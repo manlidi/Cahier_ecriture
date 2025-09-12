@@ -2,6 +2,7 @@ from django.shortcuts import *
 from gestion.models import AnneeScolaire, LigneVente, Cahiers
 from django.contrib import messages
 import json
+from decimal import Decimal
 
 def allcahiers(request):
     cahiers = Cahiers.objects.all()
@@ -11,7 +12,7 @@ def allcahiers(request):
 def ajouter_cahier(request):
     if request.method == "POST":
         titre = request.POST.get("titre")
-        prix = int(request.POST.get("prix"))
+        prix = Decimal(request.POST.get("prix"))
         quantite_stock = int(request.POST.get("quantite_stock"))
         Cahiers.objects.create(titre=titre, prix=prix, quantite_stock=quantite_stock)
     return redirect('cahiers')
@@ -21,7 +22,7 @@ def modifier_cahier(request, cahier_id):
     cahier = get_object_or_404(Cahiers, id=cahier_id)
     if request.method == "POST":
         cahier.titre = request.POST.get("titre")
-        cahier.prix = int(request.POST.get("prix"))
+        cahier.prix = Decimal(request.POST.get("prix"))
         cahier.quantite_stock = int(request.POST.get("quantite_stock"))
         cahier.save()
     return redirect('cahiers')

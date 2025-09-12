@@ -84,7 +84,7 @@ class AnneeScolaire(models.Model):
 class Cahiers(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     titre = models.TextField()
-    prix = models.DecimalField(max_digits=10, decimal_places=2)  # CORRECTION: Decimal au lieu d'Integer
+    prix = models.DecimalField(max_digits=10, decimal_places=2)  
     quantite_stock = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -115,27 +115,20 @@ class Vente(models.Model):
     articles_ajoutes_session = models.TextField(null=True, blank=True)
     description_dette = models.TextField(blank=True, null=True, help_text="Description de la dette (ex: 'Reliquat année 2023-2024')")
     
+
     @property
     def montant_total(self):
-        """Montant total de la vente (uniquement les lignes)"""
         return self.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
     
     @property
     def montant_paye(self):
-        """Montant total payé"""
         return self.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
     
     @property
     def montant_restant(self):
-        """Montant restant à payer"""
         return max(Decimal('0'), self.montant_total - self.montant_paye)
 
     def get_dettes_par_annee_ecole(self):
-        """
-        Récupère toutes les dettes de l'école par année scolaire
-        Retourne un dictionnaire avec les dettes par année
-        """
-        # Récupérer toutes les ventes de cette école
         ventes_ecole = Vente.objects.filter(ecole=self.ecole)\
             .select_related('annee_scolaire')\
             .order_by('-annee_scolaire__annee_debut')
@@ -168,30 +161,20 @@ class Vente(models.Model):
         return dettes_par_annee
     
     def get_total_dettes_ecole(self):
-        """Retourne le montant total des dettes de l'école"""
         dettes = self.get_dettes_par_annee_ecole()
         return sum(dette['montant_restant'] for dette in dettes.values())
 
     def est_en_retard(self): 
-        """Vérifier si la vente est en retard de paiement"""
         return
     
     def statut_paiement(self):
-        """Retourne le statut de paiement"""
         return
     
     def get_articles_par_session(self, tolerance_minutes=5):
-        """
-        Groupe les articles par session d'ajout basé sur la date/heure
-        tolerance_minutes: écart maximum en minutes pour considérer les articles comme ajoutés dans la même session
-        """
-        from datetime import timedelta
-        
         lignes = self.lignes.all().order_by('date_ajout')
         if not lignes:
             return []
         
-        # Si tolérance n'est pas spécifiée, détecter automatiquement les pauses naturelles
         if tolerance_minutes == 5:
             tolerance_minutes = self._detecter_tolerance_automatique()
         
@@ -201,19 +184,15 @@ class Vente(models.Model):
         
         for ligne in lignes:
             if not session_courante:
-                # Première ligne : commencer une nouvelle session
                 session_courante = [ligne]
                 derniere_date = ligne.date_ajout
             else:
-                # Calculer l'écart avec le dernier article ajouté
                 ecart_minutes = (ligne.date_ajout - derniere_date).total_seconds() / 60
                 
                 if ecart_minutes <= tolerance_minutes:
-                    # Écart acceptable : ajouter à la session courante
                     session_courante.append(ligne)
                     derniere_date = ligne.date_ajout
                 else:
-                    # Écart trop important : fermer la session courante et en créer une nouvelle
                     sessions.append({
                         'date_session': session_courante[0].date_ajout,
                         'lignes': session_courante.copy(),
@@ -221,11 +200,9 @@ class Vente(models.Model):
                         'nombre_articles': sum(l.quantite for l in session_courante)
                     })
                     
-                    # Commencer une nouvelle session
                     session_courante = [ligne]
                     derniere_date = ligne.date_ajout
-        
-        # Ajouter la dernière session
+
         if session_courante:
             sessions.append({
                 'date_session': session_courante[0].date_ajout,
@@ -237,37 +214,25 @@ class Vente(models.Model):
         return sessions
     
     def _detecter_tolerance_automatique(self):
-        """
-        Détecte automatiquement une tolérance appropriée basée sur les écarts entre les ajouts
-        """
         lignes = self.lignes.all().order_by('date_ajout')
         if len(lignes) <= 1:
-            return 30  # Valeur par défaut
+            return 30  
         
         ecarts = []
         for i in range(1, len(lignes)):
             ecart = (lignes[i].date_ajout - lignes[i-1].date_ajout).total_seconds() / 60
             ecarts.append(ecart)
         
-        # Trier les écarts pour identifier les "sauts" significatifs
         ecarts_tries = sorted(ecarts)
         
-        # Si il y a des écarts > 60 minutes, utiliser 20 minutes comme seuil
         if any(e > 60 for e in ecarts_tries):
             return 20
-        # Si il y a des écarts > 15 minutes, utiliser 10 minutes
         elif any(e > 15 for e in ecarts_tries):
             return 10
-        # Sinon, utiliser 5 minutes
         else:
             return 5
     
     def ajouter_articles(self, articles_data, description_session=None):
-        """
-        Ajouter des articles à la vente avec traçabilité temporelle
-        articles_data: liste de dict {'cahier': cahier_obj, 'quantite': int}
-        description_session: description optionnelle de cette session d'ajout
-        """
         lignes_creees = []
         maintenant = timezone.now()
         
@@ -283,15 +248,12 @@ class Vente(models.Model):
                 montant=montant
             )
             
-            # La date_ajout sera automatiquement définie par auto_now_add
             lignes_creees.append(ligne)
             
-            # Mettre à jour le stock si nécessaire
             if cahier.quantite_stock is not None:
                 cahier.quantite_stock = max(0, cahier.quantite_stock - quantite)
                 cahier.save()
         
-        # Mettre à jour les informations de modification de la vente
         self.modified_at = maintenant
         self.derniere_modification_type = 'ajout_articles'
         if description_session:
@@ -300,18 +262,6 @@ class Vente(models.Model):
         
         return lignes_creees
     
-    def save(self, *args, **kwargs):
-        if not self.pk and not self.date_paiement:
-            self.date_paiement = timezone.now() + timedelta(days=30)
-
-        if self.pk: 
-            self.modified_at = timezone.now()
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        date_str = self.date_paiement.strftime('%d/%m/%Y') if self.date_paiement else 'Date inconnue'
-        return f"Vente à {self.ecole.nom} le {date_str} ({self.annee_scolaire})"
 
 class Paiement(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='paiements')
@@ -336,7 +286,6 @@ class LigneVente(models.Model):
         ordering = ['date_ajout']
 
     def save(self, *args, **kwargs):
-        # Si pas de date_ajout définie, utiliser maintenant
         if not self.date_ajout:
             self.date_ajout = timezone.now()
         super().save(*args, **kwargs)
@@ -346,20 +295,16 @@ class LigneVente(models.Model):
         return f"{self.quantite} x {self.cahier.titre} pour {self.vente.ecole.nom} le {date_str}"
 
 class BilanAnneeScolaire(models.Model):
-    """Bilan annuel d'une année scolaire"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     annee_scolaire = models.OneToOneField(AnneeScolaire, on_delete=models.CASCADE, related_name='bilan')
     
-    # Métriques globales
     nombre_ventes_total = models.IntegerField(default=0)
     montant_total_ventes = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     montant_total_paye = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     montant_total_impaye = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
-    # Métriques par cahier (JSON)
-    ventes_par_cahier = models.JSONField(default=dict)  # {cahier_id: {titre, quantite_vendue, ca_genere}}
+    ventes_par_cahier = models.JSONField(default=dict)  
     
-    # Métriques par école
     nombre_ecoles_actives = models.IntegerField(default=0)
     
     date_generation = models.DateTimeField(auto_now=True)
@@ -369,22 +314,17 @@ class BilanAnneeScolaire(models.Model):
 
     @classmethod
     def generer_bilan(cls, annee_scolaire):
-        """Génère ou met à jour le bilan pour une année scolaire"""
         bilan, created = cls.objects.get_or_create(annee_scolaire=annee_scolaire)
         
-        # Récupération des ventes de l'année
         ventes = Vente.objects.filter(annee_scolaire=annee_scolaire)
         
-        # Calculs globaux
         bilan.nombre_ventes_total = ventes.count()
         bilan.montant_total_ventes = sum(v.montant_total for v in ventes)
         bilan.montant_total_paye = sum(v.montant_paye for v in ventes)
         bilan.montant_total_impaye = bilan.montant_total_ventes - bilan.montant_total_paye
         
-        # Nombre d'écoles actives
         bilan.nombre_ecoles_actives = ventes.values('ecole').distinct().count()
         
-        # Analyse par cahier
         ventes_par_cahier = {}
         cahiers = Cahiers.objects.all()
         
@@ -411,18 +351,15 @@ class BilanAnneeScolaire(models.Model):
         return bilan
 
 class BilanMensuel(models.Model):
-    """Bilan mensuel d'une année scolaire"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     annee_scolaire = models.ForeignKey(AnneeScolaire, on_delete=models.CASCADE, related_name='bilans_mensuels')
-    mois = models.IntegerField()  # 1-12
-    annee = models.IntegerField()  # 2024, 2025, etc.
+    mois = models.IntegerField()  
+    annee = models.IntegerField()  
     
-    # Métriques du mois
     nombre_ventes = models.IntegerField(default=0)
     montant_ventes = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     montant_paye = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
-    # Détail par cahier
     ventes_par_cahier = models.JSONField(default=dict)
     
     date_generation = models.DateTimeField(auto_now=True)
@@ -444,38 +381,32 @@ class BilanMensuel(models.Model):
 
     @classmethod
     def generer_bilan_mois(cls, annee_scolaire, mois, annee):
-        """Génère le bilan pour un mois donné"""
         bilan, created = cls.objects.get_or_create(
             annee_scolaire=annee_scolaire,
             mois=mois,
             annee=annee
         )
         
-        # Dates de début et fin du mois
         debut_mois = date(annee, mois, 1)
         if mois == 12:
             fin_mois = date(annee + 1, 1, 1) - timezone.timedelta(days=1)
         else:
             fin_mois = date(annee, mois + 1, 1) - timezone.timedelta(days=1)
         
-        # Ventes du mois
         ventes_mois = Vente.objects.filter(
             annee_scolaire=annee_scolaire,
             created_at__date__range=[debut_mois, fin_mois]
         )
         
-        # Paiements du mois
         paiements_mois = Paiement.objects.filter(
             vente__annee_scolaire=annee_scolaire,
             date_paiement__range=[debut_mois, fin_mois]
         )
         
-        # Calculs
         bilan.nombre_ventes = ventes_mois.count()
         bilan.montant_ventes = sum(v.montant_total for v in ventes_mois)
         bilan.montant_paye = sum(p.montant for p in paiements_mois)
         
-        # Analyse par cahier pour le mois
         ventes_par_cahier = {}
         cahiers = Cahiers.objects.all()
         
@@ -504,7 +435,6 @@ class BilanMensuel(models.Model):
 
     @classmethod
     def generer_tous_bilans_mensuels(cls, annee_scolaire):
-        """Génère tous les bilans mensuels pour une année scolaire"""
         mois_scolaires = annee_scolaire.get_mois_scolaires()
         bilans = []
         
