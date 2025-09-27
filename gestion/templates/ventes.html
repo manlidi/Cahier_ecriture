@@ -38,16 +38,66 @@
           </div>
         </div>
         <div class="card-body p-4">
+          <style>
+            .search-select-container {
+              position: relative;
+              width: 100%;
+            }
+            
+            .dropdown-list {
+              position: absolute;
+              top: 100%;
+              left: 0;
+              right: 0;
+              background: white;
+              border: 1px solid #ced4da;
+              border-top: none;
+              border-radius: 0 0 4px 4px;
+              max-height: 200px;
+              overflow-y: auto;
+              z-index: 1000;
+              display: none;
+            }
+            
+            .dropdown-item {
+              padding: 8px 12px;
+              cursor: pointer;
+              border-bottom: 1px solid #f1f1f1;
+            }
+            
+            .dropdown-item:hover {
+              background-color: #f8f9fa;
+            }
+            
+            .dropdown-item.selected {
+              background-color: #007bff;
+              color: white;
+            }
+            
+            .dropdown-item:last-child {
+              border-bottom: none;
+            }
+            
+            #ecoleSearchInput:focus + .dropdown-list,
+            .dropdown-list.show {
+              display: block;
+            }
+          </style>
           <form method="get" class="row g-3">
             <div class="col-lg-8 col-md-8">
-              <div class="input-group input-group-outline">
-                <label class="form-label">École</label>
-                <select name="ecole" id="ecole" class="form-control border border-secondary">
-                  <option value=""></option>
-                  {% for e in ecoles %}
-                    <option value="{{ e.id }}" {% if selected_ecole == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nom }}</option>
-                  {% endfor %}
-                </select>
+              <div class="input-group input-group-outline position-relative">
+                <div class="search-select-container">
+                  <input type="text" id="ecoleSearchInput" class="form-control border border-secondary" placeholder="Rechercher une école..." autocomplete="off">
+                  <select name="ecole" id="ecole" style="display: none;">
+                    <option value="">-- Toutes les écoles --</option>
+                    {% for e in ecoles %}
+                      <option value="{{ e.id }}" {% if selected_ecole == e.id|stringformat:'s' %}selected{% endif %}>{{ e.nom }}</option>
+                    {% endfor %}
+                  </select>
+                  <div id="ecoleDropdownList" class="dropdown-list">
+                    <!-- Options dynamiques ici -->
+                  </div>
+                </div>
               </div>
             </div>
             <div class="col-lg-4 col-md-4 d-flex align-items-end">
@@ -124,20 +174,25 @@
                         </div>
                       </td>
                       <td>
-                        {% if v.montant_restant <= 0 %}
-                          <span class="badge badge-sm bg-gradient-success">
-                            <i class="material-symbols-rounded text-xs me-1">check_circle</i>
-                            Payé
+                        {% if v.montant_restant > 0 and v.montant_paye == 0 %}
+                          <span class="badge badge-sm bg-gradient-danger">
+                            <i class="material-symbols-rounded text-xs me-1">error</i>
+                            Impayé
                           </span>
-                        {% elif v.montant_paye > 0 %}
+                        {% elif v.montant_restant > 0 and v.montant_paye > 0 %}
                           <span class="badge badge-sm bg-gradient-warning">
                             <i class="material-symbols-rounded text-xs me-1">schedule</i>
                             Partiel
                           </span>
-                        {% else %}
-                          <span class="badge badge-sm bg-gradient-danger">
-                            <i class="material-symbols-rounded text-xs me-1">error</i>
-                            Impayé
+                        {% elif v.montant_restant <= 0 and v.total_dettes_autres > 0 %}
+                          <span class="badge badge-sm bg-gradient-info">
+                            <i class="material-symbols-rounded text-xs me-1">warning</i>
+                            Partiellement Payé (Dette antérieure restant : {{ v.total_dettes_autres|floatformat:0 }} F)
+                          </span>
+                        {% elif v.montant_restant <= 0 and v.total_dettes_autres <= 0 %}
+                          <span class="badge badge-sm bg-gradient-success">
+                            <i class="material-symbols-rounded text-xs me-1">check_circle</i>
+                            Entièrement soldé
                           </span>
                         {% endif %}
                       </td>
@@ -164,9 +219,9 @@
                           </a>
                           
                           <!-- Bouton Paiement -->
-                          {% if v.montant_restant > 0 %}
+                          {% if v.montant_restant > 0 or v.total_dettes_autres > 0 %}
                           <button class="btn btn-link text-success p-2 mb-0" data-bs-toggle="modal" data-bs-target="#paiementModal" 
-                                  title="Ajouter un paiement" data-bs-toggle="tooltip"
+                                  title="{% if v.montant_restant > 0 %}Ajouter un paiement{% else %}Payer les dettes antérieures{% endif %}" data-bs-toggle="tooltip"
                                   data-vente-id="{{ v.id }}" 
                                   data-montant-total="{{ v.montant_total }}"
                                   data-montant-paye="{{ v.montant_paye }}"
@@ -434,6 +489,174 @@
 
 
 <script>
+  // Fonction générique pour transformer un select en champ de recherche
+  function createSearchableSelect(options) {
+    var searchInput = options.searchInput;
+    var hiddenSelect = options.hiddenSelect;
+    var dropdownList = options.dropdownList;
+    var placeholder = options.placeholder || 'Rechercher...';
+    var onSelectionChange = options.onSelectionChange || function() {};
+    
+    if (!searchInput || !hiddenSelect || !dropdownList) {
+      console.error('Éléments manquants pour le select avec recherche:', options);
+      return null;
+    }
+    
+    var allOptions = [];
+    var selectedIndex = -1;
+    
+    // Extraire toutes les options du select
+    for (var i = 0; i < hiddenSelect.options.length; i++) {
+      var option = hiddenSelect.options[i];
+      allOptions.push({
+        value: option.value,
+        text: option.text,
+        selected: option.selected
+      });
+      
+      // Pré-remplir l'input si une option est sélectionnée
+      if (option.selected && option.value !== '') {
+        searchInput.value = option.text;
+      }
+    }
+    
+    // Fonction pour créer et afficher la liste
+    function showDropdown(filteredOptions) {
+      dropdownList.innerHTML = '';
+      filteredOptions.forEach(function(option, index) {
+        var item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = option.text;
+        item.setAttribute('data-value', option.value);
+        item.setAttribute('data-index', index);
+        
+        item.addEventListener('click', function() {
+          searchInput.value = option.text;
+          hiddenSelect.value = option.value;
+          dropdownList.style.display = 'none';
+          selectedIndex = -1;
+          onSelectionChange(option);
+        });
+        
+        dropdownList.appendChild(item);
+      });
+      
+      dropdownList.style.display = filteredOptions.length > 0 ? 'block' : 'none';
+      selectedIndex = -1;
+    }
+    
+    // Fonction pour filtrer les options
+    function filterOptions(searchTerm) {
+      var filtered = allOptions.filter(function(option) {
+        return option.text.toLowerCase().includes(searchTerm.toLowerCase());
+      });
+      showDropdown(filtered);
+    }
+    
+    // Événements sur l'input de recherche
+    searchInput.addEventListener('input', function() {
+      var searchTerm = this.value;
+      if (searchTerm === '') {
+        hiddenSelect.value = '';
+        showDropdown(allOptions);
+      } else {
+        filterOptions(searchTerm);
+      }
+    });
+    
+    searchInput.addEventListener('focus', function() {
+      if (this.value === '') {
+        showDropdown(allOptions);
+      } else {
+        filterOptions(this.value);
+      }
+    });
+    
+    // Navigation au clavier
+    searchInput.addEventListener('keydown', function(e) {
+      var items = dropdownList.querySelectorAll('.dropdown-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+        updateSelection(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, -1);
+        updateSelection(items);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIndex >= 0 && items[selectedIndex]) {
+          items[selectedIndex].click();
+        }
+      } else if (e.key === 'Escape') {
+        dropdownList.style.display = 'none';
+        selectedIndex = -1;
+      }
+    });
+    
+    function updateSelection(items) {
+      items.forEach(function(item, index) {
+        if (index === selectedIndex) {
+          item.classList.add('selected');
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+    }
+    
+    // Fermer la liste quand on clique ailleurs
+    document.addEventListener('click', function(e) {
+      if (!searchInput.contains(e.target) && !dropdownList.contains(e.target)) {
+        dropdownList.style.display = 'none';
+        selectedIndex = -1;
+      }
+    });
+    
+    // Effacer la sélection si l'input est vidé
+    searchInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        var inputValue = searchInput.value;
+        var found = allOptions.find(function(opt) {
+          return opt.text === inputValue;
+        });
+        
+        if (!found) {
+          hiddenSelect.value = '';
+        }
+      }, 200);
+    });
+    
+    return {
+      refresh: function() {
+        // Recharger les options du select
+        allOptions = [];
+        for (var i = 0; i < hiddenSelect.options.length; i++) {
+          var option = hiddenSelect.options[i];
+          allOptions.push({
+            value: option.value,
+            text: option.text,
+            selected: option.selected
+          });
+        }
+      },
+      setValue: function(value) {
+        var option = allOptions.find(function(opt) {
+          return opt.value === value;
+        });
+        if (option) {
+          searchInput.value = option.text;
+          hiddenSelect.value = option.value;
+        }
+      },
+      clear: function() {
+        searchInput.value = '';
+        hiddenSelect.value = '';
+        dropdownList.style.display = 'none';
+      }
+    };
+  }
+
   // Using Bootstrap 5 modal events
   var paiementModal = document.getElementById('paiementModal')
   paiementModal.addEventListener('show.bs.modal', function (event) {
@@ -566,11 +789,17 @@
     div.innerHTML = `
       <div class="col-md-6">
         <div class="input-group input-group-outline">
-          <select name="cahier_${idx}" class="form-control select-cahier border border-secondary">
-            {% for c in cahiers %}
-              <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
-            {% endfor %}
-          </select>
+          <div class="search-select-container">
+            <input type="text" class="form-control border border-secondary cahier-search-input-modifier" placeholder="Rechercher un cahier..." autocomplete="off">
+            <select name="cahier_${idx}" class="form-control select-cahier border border-secondary" style="display: none;">
+              {% for c in cahiers %}
+                <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
+              {% endfor %}
+            </select>
+            <div class="dropdown-list cahier-dropdown-modifier">
+              <!-- Options dynamiques ici -->
+            </div>
+          </div>
         </div>
       </div>
       <div class="col-md-3">
@@ -587,7 +816,24 @@
     container.appendChild(div)
 
     // attach listeners
-    div.querySelector('.select-cahier').addEventListener('change', updateTotal)
+    var searchInput = div.querySelector('.cahier-search-input-modifier');
+    var select = div.querySelector('.select-cahier');
+    var dropdown = div.querySelector('.cahier-dropdown-modifier');
+    
+    // Initialiser le select avec recherche
+    if (searchInput && select && dropdown) {
+      createSearchableSelect({
+        searchInput: searchInput,
+        hiddenSelect: select,
+        dropdownList: dropdown,
+        placeholder: 'Rechercher un cahier...',
+        onSelectionChange: function() {
+          updateTotal();
+        }
+      });
+    }
+    
+    select.addEventListener('change', updateTotal)
     div.querySelector('.qty-input').addEventListener('input', updateTotal)
     div.querySelector('.btn-remove').addEventListener('click', function(){ div.remove(); updateTotal() })
     updateTotal()
@@ -623,12 +869,20 @@
     this.appendChild(input)
   })
 
-  // Initialiser les tooltips Bootstrap
+  // Initialiser les tooltips Bootstrap et la recherche d'école
   document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     })
+
+    // Initialiser le select École de recherche avec la fonction générique
+    createSearchableSelect({
+      searchInput: document.getElementById('ecoleSearchInput'),
+      hiddenSelect: document.getElementById('ecole'),
+      dropdownList: document.getElementById('ecoleDropdownList'),
+      placeholder: 'Rechercher une école...'
+    });
   })
 </script>
 
@@ -650,12 +904,19 @@
           <!-- Sélection école -->
           <div class="row mb-4">
             <div class="col-md-12">
-              <label for="nouvelle_vente_ecole" class="form-label">École <span class="text-danger">*</span></label>
-              <select name="ecole_id" id="nouvelle_vente_ecole" class="form-select p-2 border border-secondary" required>
-                {% for ecole in ecoles %}
-                  <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
-                {% endfor %}
-              </select>
+              <label for="nouvelle_vente_ecole_search" class="form-label">École <span class="text-danger">*</span></label>
+              <div class="search-select-container">
+                <input type="text" id="nouvelle_vente_ecole_search" class="form-control border border-secondary" placeholder="Rechercher une école..." autocomplete="off" required>
+                <select name="ecole_id" id="nouvelle_vente_ecole" style="display: none;" required>
+                  <option value="">-- Sélectionner une école --</option>
+                  {% for ecole in ecoles %}
+                    <option value="{{ ecole.id }}">{{ ecole.nom }}</option>
+                  {% endfor %}
+                </select>
+                <div id="nouvelle_vente_ecole_dropdown" class="dropdown-list">
+                  <!-- Options dynamiques ici -->
+                </div>
+              </div>
             </div>
           </div>
 
@@ -687,12 +948,18 @@
                 <div class="article-row row mb-3">
                   <div class="col-md-6">
                     <label class="form-label">Cahier</label>
-                    <select name="articles[0][cahier_id]" class="form-select border border-secondary">
-                      <option value=""></option>
-                      {% for cahier in cahiers %}
-                        <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.prix|floatformat:0 }}F</option>
-                      {% endfor %}
-                    </select>
+                    <div class="search-select-container">
+                      <input type="text" class="form-control border border-secondary cahier-search-input" placeholder="Rechercher un cahier..." autocomplete="off">
+                      <select name="articles[0][cahier_id]" class="form-select border border-secondary cahier-select" style="display: none;">
+                        <option value="" data-prix="0">-- Sélectionner un cahier --</option>
+                        {% for cahier in cahiers %}
+                          <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.prix|floatformat:0 }}F</option>
+                        {% endfor %}
+                      </select>
+                      <div class="dropdown-list cahier-dropdown">
+                        <!-- Options dynamiques ici -->
+                      </div>
+                    </div>
                   </div>
                   <div class="col-md-4">
                     <label class="form-label">Quantité</label>
@@ -813,9 +1080,24 @@
     
     // Fonction pour attacher les événements à une ligne d'article
     function attachArticleEvents(row) {
-      const select = row.querySelector('select');
+      const select = row.querySelector('.cahier-select');
+      const searchInput = row.querySelector('.cahier-search-input');
+      const dropdownList = row.querySelector('.cahier-dropdown');
       const quantiteInput = row.querySelector('input[type="number"]');
       const removeBtn = row.querySelector('.remove-article');
+      
+      // Initialiser le select avec recherche
+      if (searchInput && select && dropdownList) {
+        var searchableSelect = createSearchableSelect({
+          searchInput: searchInput,
+          hiddenSelect: select,
+          dropdownList: dropdownList,
+          placeholder: 'Rechercher un cahier...',
+          onSelectionChange: function(option) {
+            updateRecapitulatif();
+          }
+        });
+      }
       
       if (select) {
         select.addEventListener('change', updateRecapitulatif);
@@ -864,9 +1146,15 @@
         newRow.innerHTML = `
           <div class="col-md-6">
             <label class="form-label">Cahier</label>
-            <select name="articles[${articleIndex}][cahier_id]" class="form-select border border-secondary">
-              ${generateCahierOptions()}
-            </select>
+            <div class="search-select-container">
+              <input type="text" class="form-control border border-secondary cahier-search-input" placeholder="Rechercher un cahier..." autocomplete="off">
+              <select name="articles[${articleIndex}][cahier_id]" class="form-select border border-secondary cahier-select" style="display: none;">
+                ${generateCahierOptions()}
+              </select>
+              <div class="dropdown-list cahier-dropdown">
+                <!-- Options dynamiques ici -->
+              </div>
+            </div>
           </div>
           <div class="col-md-4">
             <label class="form-label">Quantité</label>
@@ -992,9 +1280,15 @@
             <div class="article-row row mb-3">
               <div class="col-md-6">
                 <label class="form-label">Cahier</label>
-                <select name="articles[0][cahier_id]" class="form-select border border-secondary">
-                  ${generateCahierOptions()}
-                </select>
+                <div class="search-select-container">
+                  <input type="text" class="form-control border border-secondary cahier-search-input" placeholder="Rechercher un cahier..." autocomplete="off">
+                  <select name="articles[0][cahier_id]" class="form-select border border-secondary cahier-select" style="display: none;">
+                    ${generateCahierOptions()}
+                  </select>
+                  <div class="dropdown-list cahier-dropdown">
+                    <!-- Options dynamiques ici -->
+                  </div>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Quantité</label>
@@ -1021,6 +1315,14 @@
         // Mettre à jour les boutons et le récapitulatif
         updateRemoveButtons();
         updateRecapitulatif();
+        
+        // Initialiser le select École avec recherche
+        var nouvelleVenteEcoleSearch = createSearchableSelect({
+          searchInput: document.getElementById('nouvelle_vente_ecole_search'),
+          hiddenSelect: document.getElementById('nouvelle_vente_ecole'),
+          dropdownList: document.getElementById('nouvelle_vente_ecole_dropdown'),
+          placeholder: 'Rechercher une école...'
+        });
       });
     }
   });
