@@ -16,48 +16,53 @@ from django.utils import timezone
 
 
 def liste_ventes(request):
-    """Liste des ventes avec filtre par école"""
-    # Récupérer le filtre GET
     ecole_id = request.GET.get('ecole')
 
-    # Préparer les queryset de base - toutes les ventes de toutes les années
-    ventes_qs = Vente.objects.select_related('ecole', 'annee_scolaire')\
+    annee_active = AnneeScolaire.get_annee_courante()
+    if not annee_active:
+        return render(request, 'ventes.html', {
+            'ventes': [],
+            'ecoles': Ecoles.objects.all(),
+            'cahiers': Cahiers.objects.all(),
+            'selected_ecole': ecole_id,
+            'message': "Aucune année scolaire active n'a été définie."
+        })
+
+    # Ventes uniquement pour l'année active
+    ventes_qs = Vente.objects.select_related('ecole', 'annee_scolaire') \
+        .filter(annee_scolaire=annee_active) \
         .order_by('-created_at')
 
     if ecole_id:
         ventes_qs = ventes_qs.filter(ecole__id=ecole_id)
 
-    # Calculs et sérialisation légère pour le template
     ventes = []
     for v in ventes_qs:
-        # Calculs manuels pour éviter les doublons des annotations SQL
         total_lignes = v.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_paye = v.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_total = total_lignes
-        montant_restant = max(Decimal('0'), montant_total - montant_paye)  # Ne peut pas être négatif
+        montant_restant = max(Decimal('0'), montant_total - montant_paye)
 
-        # Calculer les dettes des autres ventes de la même école (toutes les autres ventes, pas seulement autres années)
-        autres_ventes = Vente.objects.filter(ecole=v.ecole)\
-            .exclude(id=v.id)\
+        autres_ventes = Vente.objects.filter(ecole=v.ecole, annee_scolaire=annee_active) \
+            .exclude(id=v.id) \
             .select_related('annee_scolaire')
-        
+
         dettes_autres_annees = []
         total_dettes_autres = Decimal('0')
-        annees_dettes = {}  # Pour grouper par année
-        
+        annees_dettes = {}
+
         for autre in autres_ventes:
             total_lignes_autre = autre.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
             paye_autre = autre.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
             restant_autre = total_lignes_autre - paye_autre
-            
+
             if restant_autre > 0:
                 annee_str = str(autre.annee_scolaire)
                 if annee_str in annees_dettes:
                     annees_dettes[annee_str] += restant_autre
                 else:
                     annees_dettes[annee_str] = restant_autre
-        
-        # Convertir en liste pour le JSON
+
         for annee_str, montant in annees_dettes.items():
             dettes_autres_annees.append({
                 'annee_scolaire': annee_str,
@@ -80,12 +85,10 @@ def liste_ventes(request):
             'total_dettes_autres': float(total_dettes_autres),
         })
 
-    # Pagination
-    paginator = Paginator(ventes, 10)  # 10 ventes par page
+    paginator = Paginator(ventes, 10)
     page_number = request.GET.get('page')
     ventes_page = paginator.get_page(page_number)
 
-    # Choix pour les filtres
     ecoles = Ecoles.objects.all()
     cahiers = Cahiers.objects.all()
 
@@ -94,19 +97,18 @@ def liste_ventes(request):
         'ecoles': ecoles,
         'cahiers': cahiers,
         'selected_ecole': ecole_id,
+        'annee_active': annee_active,  
     }
     return render(request, 'ventes.html', context)
 
 
 def ventes_par_ecole(request):
-    """Page historique: permet de choisir une école et voir son historique"""
     ecoles = Ecoles.objects.all()
     return render(request, 'historique.html', {'ecoles': ecoles})
 
 
 @require_GET
 def ventes_ajax(request, ecole_id):
-    """Retourne JSON des ventes pour une école (utilisé en AJAX)"""
     ventes = Vente.objects.filter(ecole_id=ecole_id).prefetch_related('paiements', 'lignes')
     data = []
     for vente in ventes:

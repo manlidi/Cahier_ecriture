@@ -435,7 +435,7 @@ class BilanMensuel(models.Model):
 
     @classmethod
     def generer_tous_bilans_mensuels(cls, annee_scolaire):
-        mois_scolaires = annee_scolaire.get_mois_scolaires()
+        mois_scolaires = annee_scolaire.get_mois_scolaires() 
         bilans = []
         
         for mois_info in mois_scolaires:

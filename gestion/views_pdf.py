@@ -309,7 +309,7 @@ def generer_facture_pdf(request, vente_id):
     # Si il y a d'autres dettes, ajouter le total global
     if len(dettes_par_annee) > 1:
         recap_data.append([
-            "Encours global de l’établissement :",
+            "Encours global de l'établissement :",
             f"{total_dettes_ecole:.2f} F"
         ])
     
