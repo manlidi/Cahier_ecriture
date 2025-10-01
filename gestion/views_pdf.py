@@ -257,11 +257,54 @@ def generer_facture_pdf(request, vente_id):
         f"{montant_paye:.2f} F" if montant_paye > 0 else "Aucun paiement"
     ])
     
-    # Ligne montant restant sur cette facture
+    # Calculer les dettes antérieures (excluant la vente courante)
+    dettes_autres = {k: v for k, v in dettes_par_annee.items() 
+                    if any(vte.id != vente.id for vte in v['ventes'])}
+    total_dettes_autres = sum(Decimal(str(dette_info['montant_restant'])) for dette_info in dettes_autres.values())
+    
+    # Colonne STATUS (tenir compte des dettes antérieures)
+    if montant_restant_facture > 0:
+        # Facture courante pas totalement payée
+        if vente.montant_paye == 0:
+            status_text = "IMPAYÉ"
+        else:
+            status_text = "PARTIELLEMENT PAYÉ"
+    else:
+        # Facture courante payée, mais vérifier les dettes antérieures
+        if total_dettes_autres > 0:
+            status_text = "PARTIELLEMENT PAYÉ"  # Facture payée mais dettes restantes
+        else:
+            status_text = "PAYÉ"  # Tout est payé
+    
     recap_data.append([
-        "Solde restant dû :",
-        f"{montant_restant_facture:.2f} F" if montant_restant_facture > 0 else "ENTIÈREMENT RÉGLÉE"
+        "Status :",
+        status_text
     ])
+    
+    # Colonne RESTE À PAYER avec indication de la nature du montant
+    total_reste_a_payer = montant_restant_facture + total_dettes_autres
+    
+    if total_reste_a_payer > 0:
+        # Déterminer le libellé approprié avec parenthèses pour clarification
+        if montant_restant_facture > 0 and total_dettes_autres > 0:
+            # Il y a à la fois du reste sur facture ET des dettes antérieures
+            libelle_reste = "Reste à payer (Dette + Reste) :"
+        elif total_dettes_autres > 0 and montant_restant_facture == 0:
+            # Seulement des dettes antérieures
+            libelle_reste = "Reste à payer (Dette) :"
+        else:
+            # Seulement du reste sur la facture courante
+            libelle_reste = "Reste à payer (Reste) :"
+        
+        recap_data.append([
+            libelle_reste,
+            f"{total_reste_a_payer:.2f} F"
+        ])
+    else:
+        recap_data.append([
+            "Reste à payer :",
+            "0 F"
+        ])
     
     # Si il y a d'autres dettes, ajouter le total global
     if len(dettes_par_annee) > 1:
@@ -286,21 +329,36 @@ def generer_facture_pdf(request, vente_id):
     
     # Mise en forme spéciale pour certaines lignes
     ligne_total_facture = 1  
-    ligne_restant_facture = 3  
+    ligne_status = 2  # Position de la ligne Status
+    ligne_reste_a_payer = 3  # Position de la ligne Reste à payer/Dette/etc.
     
     # Ligne total facture en gris
     recap_table_style.add('BACKGROUND', (0,ligne_total_facture), (-1,ligne_total_facture), colors.lightgrey)
     recap_table_style.add('FONTNAME', (0,ligne_total_facture), (-1,ligne_total_facture), 'Helvetica-Bold')
     
-    # Colorer la ligne "montant restant facture" selon l'état
-    if montant_restant_facture <= 0:
-        recap_table_style.add('BACKGROUND', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.lightgreen)
-        recap_table_style.add('TEXTCOLOR', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.darkgreen)
-        recap_table_style.add('FONTNAME', (0,ligne_restant_facture), (-1,ligne_restant_facture), 'Helvetica-Bold')
+    # Colorer la ligne STATUS selon l'état
+    if status_text == "PAYÉ":
+        recap_table_style.add('BACKGROUND', (0,ligne_status), (-1,ligne_status), colors.lightgreen)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_status), (-1,ligne_status), colors.darkgreen)
+        recap_table_style.add('FONTNAME', (0,ligne_status), (-1,ligne_status), 'Helvetica-Bold')
+    elif status_text == "PARTIELLEMENT PAYÉ":
+        recap_table_style.add('BACKGROUND', (0,ligne_status), (-1,ligne_status), colors.yellow)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_status), (-1,ligne_status), colors.orange)
+        recap_table_style.add('FONTNAME', (0,ligne_status), (-1,ligne_status), 'Helvetica-Bold')
+    elif status_text == "IMPAYÉ":
+        recap_table_style.add('BACKGROUND', (0,ligne_status), (-1,ligne_status), colors.lightcoral)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_status), (-1,ligne_status), colors.darkred)
+        recap_table_style.add('FONTNAME', (0,ligne_status), (-1,ligne_status), 'Helvetica-Bold')
+    
+    # Colorer la ligne "reste à payer" selon l'état
+    if total_reste_a_payer <= 0:
+        recap_table_style.add('BACKGROUND', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), colors.lightgreen)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), colors.darkgreen)
+        recap_table_style.add('FONTNAME', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), 'Helvetica-Bold')
     else:
-        recap_table_style.add('BACKGROUND', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.lightcoral)
-        recap_table_style.add('TEXTCOLOR', (0,ligne_restant_facture), (-1,ligne_restant_facture), colors.darkred)
-        recap_table_style.add('FONTNAME', (0,ligne_restant_facture), (-1,ligne_restant_facture), 'Helvetica-Bold')
+        recap_table_style.add('BACKGROUND', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), colors.lightyellow)
+        recap_table_style.add('TEXTCOLOR', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), colors.orange)
+        recap_table_style.add('FONTNAME', (0,ligne_reste_a_payer), (-1,ligne_reste_a_payer), 'Helvetica-Bold')
     
     # Si il y a un total des dettes école, le mettre en évidence
     if len(dettes_par_annee) > 1:

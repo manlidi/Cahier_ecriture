@@ -184,15 +184,10 @@
                             <i class="material-symbols-rounded text-xs me-1">schedule</i>
                             Partiel
                           </span>
-                        {% elif v.montant_restant <= 0 and v.total_dettes_autres > 0 %}
-                          <span class="badge badge-sm bg-gradient-info">
-                            <i class="material-symbols-rounded text-xs me-1">warning</i>
-                            Partiellement Payé (Dette antérieure restant : {{ v.total_dettes_autres|floatformat:0 }} F)
-                          </span>
-                        {% elif v.montant_restant <= 0 and v.total_dettes_autres <= 0 %}
+                        {% elif v.montant_restant <= 0 %}
                           <span class="badge badge-sm bg-gradient-success">
                             <i class="material-symbols-rounded text-xs me-1">check_circle</i>
-                            Entièrement soldé
+                            Payé
                           </span>
                         {% endif %}
                       </td>
@@ -784,6 +779,13 @@
   document.getElementById('add-article-btn').addEventListener('click', function(){
     var container = document.getElementById('articles-container')
     var idx = container.children.length
+    
+    // Générer les options de cahiers comme dans le modal nouvelle vente
+    var cahierOptions = '<option value="">-- Sélectionner un cahier --</option>';
+    cahiersData.forEach(function(cahier) {
+      cahierOptions += `<option data-price="${cahier.prix}" value="${cahier.id}">${cahier.titre} - ${cahier.prix}F</option>`;
+    });
+    
     var div = document.createElement('div')
     div.className = 'row mb-3'
     div.innerHTML = `
@@ -792,9 +794,7 @@
           <div class="search-select-container">
             <input type="text" class="form-control border border-secondary cahier-search-input-modifier" placeholder="Rechercher un cahier..." autocomplete="off">
             <select name="cahier_${idx}" class="form-control select-cahier border border-secondary" style="display: none;">
-              {% for c in cahiers %}
-                <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
-              {% endfor %}
+              ${cahierOptions}
             </select>
             <div class="dropdown-list cahier-dropdown-modifier">
               <!-- Options dynamiques ici -->
