@@ -18,6 +18,142 @@ from PyPDF2 import PdfReader, PdfWriter, PageObject
 from io import BytesIO
 import os
 from decimal import Decimal
+from django.db.models import Sum
+from gestion.models import Ecoles, AnneeScolaire
+
+
+def generer_pdf_ventes_ecole(request, ecole_id):
+    """Génère un PDF avec l'historique des ventes d'une école"""
+    ecole = get_object_or_404(Ecoles, id=ecole_id)
+    
+    # Filtrer par année scolaire courante
+    annee_active = AnneeScolaire.get_annee_courante()
+    if not annee_active:
+        return HttpResponse("Aucune année scolaire active", status=400)
+    
+    ventes = Vente.objects.filter(
+        ecole=ecole, 
+        annee_scolaire=annee_active
+    ).prefetch_related('paiements', 'lignes').order_by('-updated_at')
+    
+    # Créer le buffer pour le PDF
+    buffer = BytesIO()
+    
+    # Créer le document PDF
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=2*cm, bottomMargin=2*cm)
+    
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Titre du document
+    titre_style = ParagraphStyle(
+        'TitreStyle',
+        parent=styles['Title'],
+        fontSize=18,
+        textColor=colors.black,
+        alignment=TA_CENTER,
+        spaceAfter=20
+    )
+    
+    story.append(Paragraph(f"Historique des ventes - {ecole.nom}", titre_style))
+    story.append(Paragraph(f"Année scolaire : {annee_active}", styles['Normal']))
+    story.append(Paragraph(f"Date de génération : {timezone.now().strftime('%d/%m/%Y à %H:%M')}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    if ventes.exists():
+        # Préparer les données pour le tableau
+        data = [['Date', 'Montant total', 'Montant payé', 'Montant restant', 'Statut']]
+        
+        total_general = Decimal('0')
+        total_paye = Decimal('0')
+        total_restant = Decimal('0')
+        
+        for vente in ventes:
+            montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            montant_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            montant_restant_vente = montant_lignes - montant_paye
+            
+            # Déterminer le statut
+            if montant_restant_vente <= 0:
+                statut = "Payée"
+            elif montant_paye > 0:
+                statut = "Partiellement payée"
+            else:
+                statut = "Non payée"
+            
+            data.append([
+                vente.created_at.strftime('%d/%m/%Y'),
+                f"{float(montant_lignes):.0f} F",
+                f"{float(montant_paye):.0f} F",
+                f"{float(montant_restant_vente):.0f} F",
+                statut
+            ])
+            
+            total_general += montant_lignes
+            total_paye += montant_paye
+            total_restant += montant_restant_vente
+        
+        # Ligne de total
+        data.append([
+            'TOTAL',
+            f"{float(total_general):.0f} F",
+            f"{float(total_paye):.0f} F", 
+            f"{float(total_restant):.0f} F",
+            ''
+        ])
+        
+        # Créer le tableau
+        tableau = Table(data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 4*cm])
+        tableau.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -2), colors.beige),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(tableau)
+        
+        # Résumé
+        story.append(Spacer(1, 30))
+        resume_style = ParagraphStyle(
+            'ResumeStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            textColor=colors.black,
+            leftIndent=20
+        )
+        
+        story.append(Paragraph(f"<b>Résumé :</b>", resume_style))
+        story.append(Paragraph(f"• Nombre de ventes : {ventes.count()}", resume_style))
+        story.append(Paragraph(f"• Chiffre d'affaires total : {float(total_general):.0f} F", resume_style))
+        story.append(Paragraph(f"• Montant total payé : {float(total_paye):.0f} F", resume_style))
+        story.append(Paragraph(f"• Montant total restant : {float(total_restant):.0f} F", resume_style))
+        
+        if total_general > 0:
+            pourcentage_paye = (total_paye / total_general) * 100
+            story.append(Paragraph(f"• Pourcentage payé : {pourcentage_paye:.1f}%", resume_style))
+    
+    else:
+        story.append(Paragraph("Aucune vente trouvée pour cette école pour l'année scolaire courante.", styles['Normal']))
+    
+    # Construire le PDF
+    doc.build(story)
+    
+    # Préparer la réponse
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="historique_ventes_{ecole.nom.replace(" ", "_")}_{annee_active}.pdf"'
+    
+    buffer.close()
+    return response
 
 
 def generer_facture_pdf(request, vente_id):
@@ -342,7 +478,7 @@ def generer_facture_pdf(request, vente_id):
         recap_table_style.add('TEXTCOLOR', (0,ligne_status), (-1,ligne_status), colors.darkgreen)
         recap_table_style.add('FONTNAME', (0,ligne_status), (-1,ligne_status), 'Helvetica-Bold')
     elif status_text == "PARTIELLEMENT PAYÉ":
-        recap_table_style.add('BACKGROUND', (0,ligne_status), (-1,ligne_status), colors.yellow)
+        recap_table_style.add('BACKGROUND', (0,ligne_status), (-1,ligne_status), colors.lightyellow)
         recap_table_style.add('TEXTCOLOR', (0,ligne_status), (-1,ligne_status), colors.orange)
         recap_table_style.add('FONTNAME', (0,ligne_status), (-1,ligne_status), 'Helvetica-Bold')
     elif status_text == "IMPAYÉ":

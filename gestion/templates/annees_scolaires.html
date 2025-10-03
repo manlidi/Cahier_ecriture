@@ -10,6 +10,30 @@
       <p class="mb-4">Gestion des années scolaires</p>
     </div>
 
+    <!-- Messages Django -->
+  {% if messages %}
+    <div class="row mb-4">
+      <div class="col-12">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow" role="alert">
+            <span class="alert-icon align-middle">
+              <i class="material-symbols-rounded">
+                {% if message.tags == 'success' %}check_circle
+                {% elif message.tags == 'error' %}error
+                {% elif message.tags == 'warning' %}warning
+                {% else %}info{% endif %}
+              </i>
+            </span>
+            <span class="alert-text text-white">{{ message }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
     <!-- Section pour créer une nouvelle année -->
     <div class="row mb-4">
       <div class="col-lg-12">
@@ -141,34 +165,6 @@
       </div>
     </div>
 
-    <!-- Informations utiles -->
-    <div class="row">
-      <div class="col-lg-12">
-        <div class="card">
-          <div class="card-header pb-0">
-            <h6>Informations importantes</h6>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="alert alert-info">
-                  <i class="material-symbols-rounded me-2">info</i>
-                  <strong>Année scolaire</strong><br>
-                  Une année scolaire s'étend généralement de Juillet à Juin de l'année suivante.
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="alert alert-warning">
-                  <i class="material-symbols-rounded me-2">warning</i>
-                  <strong>Activation</strong><br>
-                  Seule une année scolaire peut être active à la fois. Toutes les nouvelles ventes seront associées à l'année active.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
