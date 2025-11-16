@@ -5,7 +5,7 @@ from gestion.Views.school import *
 from gestion.Views.year import *
 from gestion.Views.sales import *
 from gestion.Views.sales import creer_vente
-from gestion.views_pdf import generer_facture_pdf
+from gestion.views_pdf import generer_facture_pdf, generer_pdf_ventes_ecole
 
 urlpatterns = [
     path('', home, name='home'),
@@ -43,4 +43,6 @@ urlpatterns = [
     path('ventes/<uuid:vente_id>/facture-pdf/', generer_facture_pdf, name='generer_facture_pdf'),
     path('ventes/<uuid:vente_id>/retirer/', retirer_articles, name='retirer_articles'),
     path('ventes/<uuid:vente_id>/cahiers/', vente_cahiers, name='vente_cahiers'),
+    path('vente/<uuid:vente_id>/supprimer/', supprimer_vente, name='supprimer_vente'),
+    path('generer-pdf-ventes/<uuid:ecole_id>/', generer_pdf_ventes_ecole, name='generer_pdf_ventes_ecole'),
 ]

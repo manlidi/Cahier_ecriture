@@ -171,6 +171,12 @@
                           <span class="text-xs {% if v.montant_restant > 0 %}text-warning{% else %}text-muted{% endif %}">
                             Restant: {{ v.montant_restant|floatformat:0 }} F
                           </span>
+                          {% if v.dette_totale_ecole > 0 %}
+                            <span class="text-xs text-danger mt-1" title="Dette totale de l'école toutes années confondues">
+                              <i class="material-symbols-rounded text-xs me-1">priority_high</i>
+                              Dette totale école: {{ v.dette_totale_ecole|floatformat:0 }} F
+                            </span>
+                          {% endif %}
                         </div>
                       </td>
                       <td>
@@ -184,15 +190,10 @@
                             <i class="material-symbols-rounded text-xs me-1">schedule</i>
                             Partiel
                           </span>
-                        {% elif v.montant_restant <= 0 and v.total_dettes_autres > 0 %}
-                          <span class="badge badge-sm bg-gradient-info">
-                            <i class="material-symbols-rounded text-xs me-1">warning</i>
-                            Partiellement Payé (Dette antérieure restant : {{ v.total_dettes_autres|floatformat:0 }} F)
-                          </span>
-                        {% elif v.montant_restant <= 0 and v.total_dettes_autres <= 0 %}
+                        {% elif v.montant_restant <= 0 %}
                           <span class="badge badge-sm bg-gradient-success">
                             <i class="material-symbols-rounded text-xs me-1">check_circle</i>
-                            Entièrement soldé
+                            Payé
                           </span>
                         {% endif %}
                       </td>
@@ -229,7 +230,8 @@
                                   data-ecole-nom="{{ v.ecole.nom }}"
                                   data-annee="{{ v.annee_scolaire }}"
                                   data-dettes-autres='{{ v.dettes_autres_json }}'
-                                  data-total-dettes-autres="{{ v.total_dettes_autres }}">
+                                  data-total-dettes-autres="{{ v.total_dettes_autres }}"
+                                  data-dette-totale-ecole="{{ v.dette_totale_ecole }}">
                             <i class="material-symbols-rounded text-sm">payments</i>
                           </button>
                           {% endif %}
@@ -247,6 +249,16 @@
                                   title="Retirer des cahiers" data-bs-toggle="tooltip"
                                   data-vente-id="{{ v.id }}">
                             <i class="material-symbols-rounded text-sm">remove_shopping_cart</i>
+                          </button>
+
+                          <!-- Bouton Supprimer la vente -->
+                          <button class="btn btn-link text-danger p-2 mb-0" data-bs-toggle="modal" data-bs-target="#supprimerVenteModal"
+                                  title="Supprimer la vente" data-bs-toggle="tooltip"
+                                  data-vente-id="{{ v.id }}"
+                                  data-vente-ecole="{{ v.ecole.nom }}"
+                                  data-vente-montant="{{ v.montant_total|floatformat:0 }}"
+                                  data-vente-date="{{ v.created_at.date|date:'d/m/Y' }}">
+                            <i class="material-symbols-rounded text-sm">delete_forever</i>
                           </button>
                         </div>
                       </td>
@@ -341,112 +353,109 @@
   </div>
 </div>
 
-<!-- Paiement Modal -->
+<!-- Modal de paiement modernisé -->
 <div class="modal fade" id="paiementModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Ajouter un paiement</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-header bg-gradient-secondary">
+        <h5 class="modal-title text-white font-weight-bolder">
+          <i class="material-symbols-rounded me-2">payments</i>
+          Ajouter un paiement
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <!-- Informations de la vente courante -->
-        <div class="card mb-3">
-          <div class="card-header pb-0">
-            <h6 class="text-dark font-weight-bolder">Facture courante - <span id="venteEcoleNom"></span> (<span id="venteAnnee"></span>)</h6>
+      <div class="modal-body p-4">
+        <div class="card border-0 shadow">
+          <div class="card-header bg-gradient-light">
+            <h6 class="text-dark font-weight-bolder mb-0">
+              <i class="material-symbols-rounded me-2">receipt_long</i>
+              Facture courante - <span id="venteEcoleNom"></span> (<span id="venteAnnee"></span>)
+            </h6>
           </div>
-          <div class="card-body pt-2">
-            <div class="row">
+          <div class="card-body">
+            <div class="row text-center">
               <div class="col-md-4">
-                <div class="info-item">
-                  <p class="text-sm text-muted mb-1">Montant total de la facture</p>
-                  <h6 class="font-weight-bolder text-dark mb-0"><span id="venteMontantTotal"></span> F</h6>
+                <div class="info-item p-3">
+                  <div class="icon-shape icon-sm bg-gradient-primary shadow border-radius-md mx-auto mb-2">
+                    <i class="material-symbols-rounded text-white text-sm">account_balance_wallet</i>
+                  </div>
+                  <p class="text-sm text-muted mb-1">Montant total</p>
+                  <h5 class="font-weight-bolder text-dark mb-0"><span id="venteMontantTotal"></span> F</h5>
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="info-item">
-                  <p class="text-sm text-muted mb-1">Montant déjà payé</p>
-                  <h6 class="font-weight-bolder text-success mb-0"><span id="venteMontantPaye"></span> F</h6>
+                <div class="info-item p-3">
+                  <div class="icon-shape icon-sm bg-gradient-success shadow border-radius-md mx-auto mb-2">
+                    <i class="material-symbols-rounded text-white text-sm">check_circle</i>
+                  </div>
+                  <p class="text-sm text-muted mb-1">Montant payé</p>
+                  <h5 class="font-weight-bolder text-success mb-0"><span id="venteMontantPaye"></span> F</h5>
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="info-item">
+                <div class="info-item p-3">
+                  <div class="icon-shape icon-sm bg-gradient-warning shadow border-radius-md mx-auto mb-2">
+                    <i class="material-symbols-rounded text-white text-sm">schedule</i>
+                  </div>
                   <p class="text-sm text-muted mb-1">Montant restant</p>
-                  <h6 class="font-weight-bolder text-warning mb-0"><span id="venteMontantRestant"></span> F</h6>
+                  <h5 class="font-weight-bolder text-warning mb-0"><span id="venteMontantRestant"></span> F</h5>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Dettes des autres années -->
-        <div class="card mb-3" id="dettesAutresCard" style="display:none;">
-          <div class="card-header pb-0">
-            <h6 class="text-dark font-weight-bolder">Dettes précédentes</h6>
+        <!-- Section Dette École (si elle existe) -->
+        <div id="dettesEcoleSection" class="card border-0 shadow mt-3" style="display: none;">
+          <div class="alert alert-light border-0" role="alert">
+            <div class="d-flex align-items-center">
+              <div>
+                <p class="mb-1 text-sm font-weight-bold">Dette totale de l'école : <span id="modalTotalDettesEcole"></span> F</p>
+                <p class="mb-0 text-xs">Cette dette inclut toutes les ventes impayées de cette école pour toutes les années scolaires.</p>
+              </div>
+            </div>
           </div>
-          <div class="card-body pt-2">
+        </div>
+
+        <!-- Dettes des autres années (détaillées) -->
+        <div class="card border-0 shadow mt-3" id="dettesAutresCard" style="display:none;">
+          <div class="card-header bg-gradient-light">
+            <h6 class="text-dark font-weight-bolder mb-0">
+              <i class="material-symbols-rounded me-2">history</i>
+              Dettes précédentes
+            </h6>
+          </div>
+          <div class="card-body">
             <div id="dettesAutresList"></div>
             <hr class="horizontal dark">
             <div class="row">
               <div class="col-12">
-                <div class="info-item">
+                <div class="info-item text-center">
                   <p class="text-sm text-muted mb-1">Total des dettes précédentes</p>
-                  <h6 class="font-weight-bolder text-danger mb-0"><span id="totalDettesAutres"></span> F</h6>
+                  <h5 class="font-weight-bolder text-danger mb-0"><span id="totalDettesAutres"></span> F</h5>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Récapitulatif total -->
-        <div class="card mb-3">
-          <div class="card-header pb-0">
-            <h6 class="text-dark font-weight-bolder">Récapitulatif général</h6>
-          </div>
-          <div class="card-body pt-2">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="info-item">
-                  <p class="text-sm text-muted mb-1">Total général à payer</p>
-                  <h5 class="font-weight-bolder text-primary mb-0"><span id="totalGeneral"></span> F</h5>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="info-item">
-                  <p class="text-sm text-muted mb-1">Montant recommandé</p>
-                  <h5 class="font-weight-bolder text-info mb-0"><span id="montantRecommande"></span> F</h5>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Formulaire de paiement -->
-        <form id="paiementModalForm" method="post">
+        <form id="paiementModalForm" method="post" class="mt-4">
           {% csrf_token %}
-          <div class="row">
-            <div class="col-12">
-              <div class="input-group input-group-outline mb-3">
-                <label class="form-label">Montant du paiement</label>
-                <input class="form-control" name="montant" id="paiementMontant" type="number" step="0.01" required />
-              </div>
-            </div>
+          <div class="input-group input-group-outline mb-3">
+            <input class="form-control" name="montant" id="paiementMontant" type="number" step="0.01" required placeholder="Montant du paiement (F)" placeholder="Montant du paiement (F)" />
           </div>
           
-          <!-- Note d'information -->
-          <div class="alert alert-info alert-dismissible text-white mb-3" role="alert">
-            <span class="alert-icon align-middle">
-              <i class="material-symbols-rounded">info</i>
-            </span>
-            <span class="alert-text">
-              <strong>Note :</strong> Si le montant saisi dépasse le solde de cette vente, l'excédent sera automatiquement appliqué aux dettes des autres années de la même école, en commençant par la plus récente.
-            </span>
-          </div>
         </form>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" form="paiementModalForm" class="btn btn-primary">Enregistrer le paiement</button>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="material-symbols-rounded me-1">close</i>
+          Annuler
+        </button>
+        <button type="submit" form="paiementModalForm" class="btn bg-gradient-success shadow">
+          <i class="material-symbols-rounded me-1">save</i>
+          Enregistrer le paiement
+        </button>
       </div>
     </div>
   </div>
@@ -669,6 +678,7 @@
     var annee = button.getAttribute('data-annee') || ''
     var dettesAutresData = button.getAttribute('data-dettes-autres') || '[]'
     var totalDettesAutres = parseFloat(button.getAttribute('data-total-dettes-autres')) || 0
+    var detteTotaleEcole = parseFloat(button.getAttribute('data-dette-totale-ecole')) || 0
     
     console.log('Raw dettesAutresData:', dettesAutresData)
     console.log('Type of dettesAutresData:', typeof dettesAutresData)
@@ -678,14 +688,30 @@
     var form = document.getElementById('paiementModalForm')
     form.action = '/ventes/' + venteId + '/paiement/'
     
-    // Remplir les informations de la vente courante
+    // Remplir les informations de base de la facture courante
     document.getElementById('venteEcoleNom').textContent = ecoleNom
     document.getElementById('venteAnnee').textContent = annee
-    document.getElementById('venteMontantTotal').textContent = montantTotal.toFixed(0)
-    document.getElementById('venteMontantPaye').textContent = montantPaye.toFixed(0)
-    document.getElementById('venteMontantRestant').textContent = montantRestant.toFixed(0)
+    document.getElementById('venteMontantTotal').textContent = montantTotal.toLocaleString()
+    document.getElementById('venteMontantPaye').textContent = montantPaye.toLocaleString()
+    document.getElementById('venteMontantRestant').textContent = montantRestant.toLocaleString()
     
-    // Parse dettes autres
+    // Calculer le montant recommandé initial (facture courante)
+    var montantRecommande = montantRestant
+    
+    // Afficher la dette totale de l'école si elle existe
+    var dettesEcoleSection = document.getElementById('dettesEcoleSection')
+    if (detteTotaleEcole > 0) {
+      document.getElementById('modalTotalDettesEcole').textContent = detteTotaleEcole.toLocaleString()
+      dettesEcoleSection.style.display = 'block'
+      // Le montant recommandé devient la dette totale de l'école
+      montantRecommande = detteTotaleEcole
+      console.log('Dette totale de l\'école affichée:', detteTotaleEcole)
+    } else {
+      dettesEcoleSection.style.display = 'none'
+      console.log('Aucune dette totale d\'école - section cachée')
+    }
+
+    // Parse et afficher les dettes détaillées par année (optionnel)
     var dettesAutres = []
     try {
       dettesAutres = JSON.parse(dettesAutresData)
@@ -693,75 +719,71 @@
       console.error('Error parsing dettes:', e)
     }
     
-    // Afficher les dettes des autres années
     var dettesCard = document.getElementById('dettesAutresCard')
     var dettesList = document.getElementById('dettesAutresList')
-    
-    console.log('Dettes autres length:', dettesAutres.length)
     
     if (dettesAutres.length > 0) {
       dettesCard.style.display = 'block'
       dettesList.innerHTML = ''
       
       dettesAutres.forEach(function(dette, index) {
-        console.log('Dette', index, ':', dette)
         var div = document.createElement('div')
         div.className = 'row mb-2'
         div.innerHTML = `
           <div class="col-8">
             <p class="text-sm mb-0">${dette.annee_scolaire}</p>
+            <small class="text-muted">Vente du ${dette.date_creation || 'N/A'}</small>
           </div>
           <div class="col-4 text-end">
-            <span class="text-danger font-weight-bolder">${parseFloat(dette.montant_restant).toFixed(0)} F</span>
+            <span class="text-danger font-weight-bolder">${parseFloat(dette.montant_restant).toLocaleString()} F</span>
           </div>
         `
         dettesList.appendChild(div)
       })
       
-      document.getElementById('totalDettesAutres').textContent = totalDettesAutres.toFixed(0)
+      document.getElementById('totalDettesAutres').textContent = totalDettesAutres.toLocaleString()
     } else {
       dettesCard.style.display = 'none'
-      totalDettesAutres = 0
-      console.log('Aucune dette trouvée - card cachée')
+      console.log('Aucune dette détaillée trouvée - card cachée')
     }
     
-    // Calculs du récapitulatif
-    var totalGeneral = montantRestant + totalDettesAutres
-    var montantRecommande = totalGeneral
-    
-    document.getElementById('totalGeneral').textContent = totalGeneral.toFixed(0)
-    document.getElementById('montantRecommande').textContent = montantRecommande.toFixed(0)
-    
-    // Pré-remplir le montant recommandé et définir le maximum
+    // Pré-remplir le champ avec le montant recommandé (inclut la dette totale)
     var paiementInput = document.getElementById('paiementMontant')
     paiementInput.value = montantRecommande.toFixed(0)
-    paiementInput.max = montantRecommande + 1 // Limiter le montant maximum
     
-    // Ajouter un événement pour vérifier le montant saisi
+    // Supprimer les anciens écouteurs d'événements
+    var newInput = paiementInput.cloneNode(true)
+    paiementInput.parentNode.replaceChild(newInput, paiementInput)
+    paiementInput = document.getElementById('paiementMontant')
+    
+    // Ajouter validation du montant de paiement
     paiementInput.addEventListener('input', function() {
       var montantSaisi = parseFloat(this.value) || 0
-      var warningDiv = document.getElementById('paiementWarning')
+      var existingWarning = document.getElementById('paiementWarning')
+      
+      // Supprimer l'ancien avertissement s'il existe
+      if (existingWarning) {
+        existingWarning.remove()
+      }
       
       if (montantSaisi > montantRecommande) {
-        if (!warningDiv) {
-          var warning = document.createElement('div')
-          warning.id = 'paiementWarning'
-          warning.className = 'alert alert-warning mt-2'
-          warning.innerHTML = `
-            <span class="alert-icon align-middle">
-              <i class="material-symbols-rounded">warning</i>
-            </span>
-            <span class="alert-text">
-              Le montant saisi dépasse le total dû (${montantRecommande.toFixed(0)} F). 
-              L'excédent sera rendu à l'utilisateur.
-            </span>
-          `
-          this.parentNode.appendChild(warning)
-        }
-      } else {
-        if (warningDiv) {
-          warningDiv.remove()
-        }
+        var warning = document.createElement('div')
+        warning.id = 'paiementWarning'
+        warning.className = 'alert alert-info border-0 mt-2'
+        warning.innerHTML = `
+          <div class="d-flex align-items-center">
+            <div class="icon-shape icon-sm bg-gradient-info shadow border-radius-md me-3">
+              <i class="material-symbols-rounded text-white text-sm">info</i>
+            </div>
+            <div>
+              <p class="mb-0 text-sm">
+                <strong>Attention :</strong> Le montant saisi (${montantSaisi.toLocaleString()} F) dépasse le montant recommandé (${montantRecommande.toLocaleString()} F).<br>
+                <small class="text-muted">L'excédent sera considéré comme un paiement anticipé.</small>
+              </p>
+            </div>
+          </div>
+        `
+        this.closest('.input-group').parentNode.appendChild(warning)
       }
     })
   })
@@ -784,6 +806,13 @@
   document.getElementById('add-article-btn').addEventListener('click', function(){
     var container = document.getElementById('articles-container')
     var idx = container.children.length
+    
+    // Générer les options de cahiers comme dans le modal nouvelle vente
+    var cahierOptions = '<option value="">-- Sélectionner un cahier --</option>';
+    cahiersData.forEach(function(cahier) {
+      cahierOptions += `<option data-price="${cahier.prix}" value="${cahier.id}">${cahier.titre} - ${cahier.prix}F</option>`;
+    });
+    
     var div = document.createElement('div')
     div.className = 'row mb-3'
     div.innerHTML = `
@@ -792,9 +821,7 @@
           <div class="search-select-container">
             <input type="text" class="form-control border border-secondary cahier-search-input-modifier" placeholder="Rechercher un cahier..." autocomplete="off">
             <select name="cahier_${idx}" class="form-control select-cahier border border-secondary" style="display: none;">
-              {% for c in cahiers %}
-                <option data-price="{{ c.prix }}" value="{{ c.id }}">{{ c.titre }} - {{ c.prix }} F (stock: {{ c.quantite_stock }})</option>
-              {% endfor %}
+              ${cahierOptions}
             </select>
             <div class="dropdown-list cahier-dropdown-modifier">
               <!-- Options dynamiques ici -->
@@ -920,29 +947,15 @@
             </div>
           </div>
 
-          <!-- Description (optionnel) -->
-          <div class="row mb-4">
-            <div class="col-md-12">
-              <label for="nouvelle_vente_description" class="form-label">Description (optionnel)</label>
-              <textarea name="description_dette" id="nouvelle_vente_description" class="form-control p-2 border border-secondary" rows="1" style="border: 1px solid #ced4da;" placeholder="Description de la vente..."></textarea>
-            </div>
-          </div>          <!-- Sélection des articles -->
+          <hr class="horizontal dark">
+
+        <!-- Sélection des articles -->
           <div class="row">
             <div class="col-12">
               <h6 class="text-dark font-weight-bolder mb-3">
                 <i class="material-symbols-rounded me-2">inventory_2</i>
                 Articles à ajouter
               </h6>
-              
-              <!-- Note d'information -->
-              <div class="alert alert-info alert-dismissible text-white mb-3" role="alert">
-                <span class="alert-icon align-middle">
-                  <i class="material-symbols-rounded">info</i>
-                </span>
-                <span class="alert-text">
-                  <strong>Note :</strong> Si l'école a déjà une vente pour l'année scolaire sélectionnée, les articles seront ajoutés à la vente existante. Sinon, une nouvelle vente sera créée.
-                </span>
-              </div>
               
               <div id="articles_container">
                 <div class="article-row row mb-3">
@@ -1361,4 +1374,76 @@ retirerModal.addEventListener('show.bs.modal', function (event) {
     })
 })
 </script>
+
+<!-- Modal de suppression de vente -->
+<div class="modal fade" id="supprimerVenteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-secondary">
+        <h5 class="modal-title text-white font-weight-bolder">
+          Confirmer la suppression
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="text-center">
+          <h5 class="text-dark mb-3">Êtes-vous sûr de vouloir supprimer cette vente ?</h5>
+          <div class="alert alert-light border-0" role="alert">
+            <div class="d-flex align-items-start">
+              <div class="text-start">
+                <p class="mb-2"><strong>Informations de la vente :</strong></p>
+                <ul class="list-unstyled mb-2">
+                  <li><strong>École :</strong> <span id="supprimerVenteEcole"></span></li>
+                  <li><strong>Date :</strong> <span id="supprimerVenteDate"></span></li>
+                  <li><strong>Montant :</strong> <span id="supprimerVenteMontant"></span> F</li>
+                </ul>
+                <p class="text-sm mb-0">
+                  <i class="material-symbols-rounded text-xs me-1">warning</i>
+                  <strong>Attention :</strong> Cette action est irréversible. Tous les articles et paiements associés seront également supprimés.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="material-symbols-rounded me-1">close</i>
+          Annuler
+        </button>
+        <form id="supprimerVenteForm" method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn bg-gradient-danger shadow">
+            <i class="material-symbols-rounded me-1">delete_forever</i>
+            Supprimer définitivement
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Gestion du modal de suppression de vente
+  var supprimerVenteModal = document.getElementById('supprimerVenteModal')
+  if (supprimerVenteModal) {
+    supprimerVenteModal.addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget
+      var venteId = button.getAttribute('data-vente-id')
+      var venteEcole = button.getAttribute('data-vente-ecole')
+      var venteMontant = button.getAttribute('data-vente-montant')
+      var venteDate = button.getAttribute('data-vente-date')
+      
+      // Remplir les informations dans le modal
+      document.getElementById('supprimerVenteEcole').textContent = venteEcole || 'N/A'
+      document.getElementById('supprimerVenteDate').textContent = venteDate || 'N/A'
+      document.getElementById('supprimerVenteMontant').textContent = venteMontant || '0'
+      
+      // Mettre à jour l'action du formulaire
+      var form = document.getElementById('supprimerVenteForm')
+      form.action = '/vente/' + venteId + '/supprimer/'
+    })
+  }
+</script>
+
 {% endblock %}

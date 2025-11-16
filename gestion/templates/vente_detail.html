@@ -276,68 +276,8 @@
 
   <!-- Articles par type (vue classique) et Historique des paiements -->
   <div class="row mb-4">
-    <!-- Articles par type -->
-    <div class="col-md-6">
-      <div class="card shadow-lg border-0 h-100">
-        <div class="card-header bg-gradient-dark p-3">
-          <div class="row align-items-center">
-            <div class="col">
-              <h6 class="mb-0 text-white font-weight-bolder">
-                <i class="material-symbols-rounded me-2">list_alt</i>
-                Articles par type
-              </h6>
-              <p class="text-white-50 text-sm mb-0">Vue groupée par type de cahier</p>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          {% if ligne_ventes %}
-            <div class="table-responsive">
-              <table class="table align-items-center mb-0">
-                <thead class="bg-gray-100">
-                  <tr>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Type de cahier</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center">Quantité</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Montant</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for ligne in ligne_ventes %}
-                  <tr>
-                    <td class="ps-4">
-                      <div class="d-flex align-items-center">
-                        <div class="icon-shape icon-sm bg-gradient-success shadow border-radius-md me-3">
-                          <i class="material-symbols-rounded text-white text-sm">book</i>
-                        </div>
-                        <span class="text-sm font-weight-bold">{{ ligne.cahier.titre }}</span>
-                      </div>
-                    </td>
-                    <td class="text-center">
-                      <span class="badge badge-lg bg-gradient-primary">{{ ligne.quantite_totale }}</span>
-                    </td>
-                    <td class="text-end pe-4">
-                      <span class="text-lg font-weight-bold text-success">{{ ligne.montant_total|floatformat:0 }} F</span>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="text-center p-5">
-              <div class="icon-shape icon-xxl bg-gradient-light shadow border-radius-xl mx-auto mb-3">
-                <i class="material-symbols-rounded text-muted" style="font-size: 3rem;">inventory_2</i>
-              </div>
-              <h5 class="text-muted mb-2">Aucun article</h5>
-              <p class="text-sm text-muted">Cette vente ne contient aucun article pour le moment.</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
     <!-- Historique des paiements -->
-    <div class="col-md-6">
+    <div class="col-md-12">
       <div class="card shadow-lg border-0 h-100">
         <div class="card-header bg-gradient-dark p-3">
           <div class="row align-items-center">
@@ -663,25 +603,14 @@
 
         <!-- Section Dette École (si elle existe) -->
         <div id="dettesEcoleSection" class="card border-0 shadow mt-3" style="display: none;">
-          <div class="card-header bg-gradient-warning">
-            <h6 class="text-white font-weight-bolder mb-0">
-              <i class="material-symbols-rounded me-2">warning</i>
-              Autres dettes de l'école
-            </h6>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-warning border-0" role="alert">
+            <div class="alert alert-light border-0" role="alert">
               <div class="d-flex align-items-center">
-                <div class="icon-shape icon-sm bg-gradient-warning shadow border-radius-md me-3">
-                  <i class="material-symbols-rounded text-white text-sm">info</i>
-                </div>
                 <div>
                   <p class="mb-1 text-sm font-weight-bold">Dette totale de l'école : <span id="modalTotalDettesAutres"></span> F</p>
-                  <p class="mb-0 text-xs text-muted">Le paiement peut être appliqué aux autres ventes impayées si le montant dépasse cette facture.</p>
+                  <p class="mb-0 text-xs">Le paiement peut être appliqué aux autres ventes impayées si le montant dépasse cette facture.</p>
                 </div>
               </div>
             </div>
-          </div>
         </div>
 
         <form id="paiementModalForm" method="post" class="mt-4">
@@ -689,17 +618,6 @@
           <div class="input-group input-group-outline mb-3">
             <label class="form-label">Montant du paiement (F)</label>
             <input class="form-control" name="montant" id="paiementMontant" type="number" step="0.01" required />
-          </div>
-          
-          <div class="alert alert-info border-0 shadow-sm" role="alert">
-            <div class="d-flex align-items-center">
-              <div class="icon-shape icon-sm bg-gradient-info shadow border-radius-md me-3">
-                <i class="material-symbols-rounded text-white text-sm">info</i>
-              </div>
-              <span class="text-sm">
-                <strong>Astuce :</strong> Le montant recommandé correspond au solde restant de cette vente.
-              </span>
-            </div>
           </div>
         </form>
       </div>

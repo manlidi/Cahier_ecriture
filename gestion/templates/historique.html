@@ -43,8 +43,10 @@
     }
 
     $.getJSON(`/ventes-ajax/${ecoleId}/`, function (data) {
-      if (data.ventes.length === 0) {
-        $('#ventes-container').html('<div class="alert alert-info">Aucune vente pour cette école.</div>');
+      console.log('Données reçues:', data); // Pour debug
+      
+      if (!data.ventes || data.ventes.length === 0) {
+        $('#ventes-container').html('<div class="alert alert-info">Aucune vente trouvée pour cette école pour l\'année scolaire courante.</div>');
         return;
       }
 
@@ -70,13 +72,28 @@
                   <tbody>`;
 
       data.ventes.forEach(v => {
+        // Formater les montants
+        const montantTotal = parseFloat(v.montant_total).toFixed(0);
+        const montantPaye = parseFloat(v.montant_paye).toFixed(0);
+        const montantRestant = parseFloat(v.montant_restant).toFixed(0);
+        
+        // Classe CSS pour le statut
+        let statutClass = 'badge ';
+        if (v.statut === 'Payée') {
+          statutClass += 'bg-success';
+        } else if (v.statut === 'Partiellement payée') {
+          statutClass += 'bg-warning';
+        } else {
+          statutClass += 'bg-danger';
+        }
+        
         html += `
           <tr>
             <td>${v.date}</td>
-            <td>${v.montant_total}</td>
-            <td>${v.montant_paye}</td>
-            <td>${v.montant_restant}</td>
-            <td>${v.statut}</td>
+            <td>${montantTotal} F</td>
+            <td>${montantPaye} F</td>
+            <td>${montantRestant} F</td>
+            <td><span class="${statutClass}">${v.statut}</span></td>
             <td>${v.paiement_dates.join(', ')}</td>
           </tr>`;
       });
@@ -98,6 +115,9 @@
         </div>`;
 
       $('#ventes-container').html(html);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+      console.error('Erreur Ajax:', textStatus, errorThrown);
+      $('#ventes-container').html('<div class="alert alert-danger">Erreur lors du chargement des données. Veuillez réessayer.</div>');
     });
   });
 
@@ -112,11 +132,26 @@
     const pdfUrl = `/generer-pdf-ventes/${ecoleSelectionnee}/`;
     const printWindow = window.open(pdfUrl, '_blank');
     
+    if (!printWindow) {
+      alert('Veuillez autoriser les pop-ups pour cette fonction');
+      return;
+    }
+    
+    // Gérer les erreurs de chargement
+    printWindow.addEventListener('error', function() {
+      alert('Erreur lors du chargement du PDF');
+    });
+    
     // Attendre que le PDF se charge puis déclencher l'impression
     printWindow.onload = function() {
       setTimeout(() => {
-        printWindow.print();
-      }, 500);
+        try {
+          printWindow.print();
+        } catch(e) {
+          console.error('Erreur lors de l\'impression:', e);
+          alert('Erreur lors de l\'impression du PDF');
+        }
+      }, 1000);
     };
   }
 
@@ -128,12 +163,37 @@
     }
     
     const pdfUrl = `/generer-pdf-ventes/${ecoleSelectionnee}/`;
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = `ventes_ecole_${ecoleSelectionnee}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    // Créer un élément de chargement
+    const buttonElement = event.target.closest('button');
+    const originalText = buttonElement.innerHTML;
+    buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Téléchargement...';
+    buttonElement.disabled = true;
+    
+    // Tester si l'URL existe avant de télécharger
+    fetch(pdfUrl, { method: 'HEAD' })
+      .then(response => {
+        if (response.ok) {
+          // L'URL existe, procéder au téléchargement
+          const link = document.createElement('a');
+          link.href = pdfUrl;
+          link.download = `historique_ventes_ecole_${ecoleSelectionnee}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          throw new Error('Fichier PDF non disponible');
+        }
+      })
+      .catch(error => {
+        console.error('Erreur lors du téléchargement:', error);
+        alert('Erreur : Le fichier PDF n\'est pas disponible. Veuillez réessayer.');
+      })
+      .finally(() => {
+        // Restaurer le bouton
+        buttonElement.innerHTML = originalText;
+        buttonElement.disabled = false;
+      });
   }
 </script>
 

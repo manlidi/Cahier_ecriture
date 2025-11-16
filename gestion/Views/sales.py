@@ -31,7 +31,7 @@ def liste_ventes(request):
     # Ventes uniquement pour l'année active
     ventes_qs = Vente.objects.select_related('ecole', 'annee_scolaire') \
         .filter(annee_scolaire=annee_active) \
-        .order_by('-created_at')
+        .order_by('-updated_at')
 
     if ecole_id:
         ventes_qs = ventes_qs.filter(ecole__id=ecole_id)
@@ -70,6 +70,9 @@ def liste_ventes(request):
             })
             total_dettes_autres += montant
 
+        # Calculer la dette totale de l'école (utilise les méthodes du modèle)
+        dette_totale_ecole = v.get_total_dettes_ecole()
+
         ventes.append({
             'id': v.id,
             'short_id': str(v.id)[:8],
@@ -83,6 +86,7 @@ def liste_ventes(request):
             'dettes_autres_annees': dettes_autres_annees,
             'dettes_autres_json': json.dumps(dettes_autres_annees),
             'total_dettes_autres': float(total_dettes_autres),
+            'dette_totale_ecole': float(dette_totale_ecole),
         })
 
     paginator = Paginator(ventes, 10)
@@ -109,17 +113,43 @@ def ventes_par_ecole(request):
 
 @require_GET
 def ventes_ajax(request, ecole_id):
-    ventes = Vente.objects.filter(ecole_id=ecole_id).prefetch_related('paiements', 'lignes')
+    # Filtrer par année scolaire courante comme les autres vues
+    annee_active = AnneeScolaire.get_annee_courante()
+    if not annee_active:
+        return JsonResponse({'ventes': []})
+    
+    ventes = Vente.objects.filter(
+        ecole_id=ecole_id, 
+        annee_scolaire=annee_active
+    ).prefetch_related('paiements', 'lignes').order_by('-updated_at')
+    
     data = []
     for vente in ventes:
         montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        montant_restant = montant_lignes - montant_paye
+        
+        # Déterminer le statut
+        if montant_restant <= 0:
+            statut = "Payée"
+        elif montant_paye > 0:
+            statut = "Partiellement payée"
+        else:
+            statut = "Non payée"
+        
+        # Récupérer les dates de paiement
+        paiement_dates = []
+        for paiement in vente.paiements.all():
+            paiement_dates.append(paiement.date_paiement.strftime('%d/%m/%Y'))
+        
         data.append({
             'id': str(vente.id),
-            'date': vente.created_at.isoformat(),
+            'date': vente.created_at.strftime('%d/%m/%Y'),
             'montant_total': float(montant_lignes),
             'montant_paye': float(montant_paye),
-            'montant_restant': float(montant_lignes - montant_paye),
+            'montant_restant': float(montant_restant),
+            'statut': statut,
+            'paiement_dates': paiement_dates if paiement_dates else ['Aucun paiement']
         })
     return JsonResponse({'ventes': data})
 
@@ -458,3 +488,33 @@ def vente_cahiers(request, vente_id):
             'quantite': ligne.quantite,
         })
     return JsonResponse({'lignes': data})
+
+
+@require_POST
+def supprimer_vente(request, vente_id):
+    """Supprimer une vente et tous ses éléments associés"""
+    vente = get_object_or_404(Vente, id=vente_id)
+    
+    try:
+        # Récupérer les informations pour le message
+        ecole_nom = vente.ecole.nom
+        montant_total = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        
+        # Supprimer la vente (les lignes et paiements seront supprimés en cascade)
+        vente.delete()
+        
+        # Message de confirmation
+        from django.contrib import messages
+        messages.success(
+            request, 
+            f"La vente de l'école '{ecole_nom}' d'un montant de {montant_total} F a été supprimée avec succès."
+        )
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(
+            request, 
+            f"Erreur lors de la suppression de la vente : {str(e)}"
+        )
+    
+    return redirect('ventes')
