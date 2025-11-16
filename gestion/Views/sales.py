@@ -29,11 +29,9 @@ def liste_ventes(request):
         })
 
     # Ventes uniquement pour l'année active
-    # Tri par modified_at si disponible, sinon par created_at
     ventes_qs = Vente.objects.select_related('ecole', 'annee_scolaire') \
         .filter(annee_scolaire=annee_active) \
-        .extra(select={'order_date': 'COALESCE(modified_at, created_at)'}) \
-        .order_by('-order_date')
+        .order_by('-created_at')
 
     if ecole_id:
         ventes_qs = ventes_qs.filter(ecole__id=ecole_id)
@@ -78,7 +76,6 @@ def liste_ventes(request):
             'ecole': v.ecole,
             'annee_scolaire': v.annee_scolaire,
             'created_at': v.created_at,
-            'modified_at': v.modified_at,  # Ajout pour affichage
             'montant_total': float(montant_total),
             'montant_paye': float(montant_paye),
             'montant_restant': float(montant_restant),
@@ -103,6 +100,7 @@ def liste_ventes(request):
         'annee_active': annee_active,  
     }
     return render(request, 'ventes.html', context)
+
 
 def ventes_par_ecole(request):
     ecoles = Ecoles.objects.all()
@@ -366,7 +364,6 @@ def creer_vente(request):
                     ecole=ecole,
                     annee_scolaire=annee,
                     date_paiement=now + timedelta(days=30),
-                    modified_at=timezone.now()  
                 )
                 action_message = 'Nouvelle vente créée avec succès'
             
