@@ -35,6 +35,7 @@
                   <tr>
                     <th scope="col">Ecole</th>
                     <th scope="col">Adresse</th>
+                    <th scope="col">Représentant</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -43,6 +44,7 @@
                   <tr>
                     <td class="border">{{ ecole.nom }}</td>
                     <td class="border">{{ ecole.adresse }}</td>
+                    <td class="border">{{ ecole.representant }}</td>
                     <td class="border">
                       <a
                         href="#"
@@ -52,6 +54,7 @@
                         data-id="{{ ecole.id }}"
                         data-nom="{{ ecole.nom }}"
                         data-adresse="{{ ecole.adresse }}"
+                        data-representant="{{ ecole.representant }}"
                         title="Modifier"
                       >Modifier
                       </a>
@@ -118,6 +121,15 @@
                   required
                 />
               </div>
+              <div class="mb-3">
+                <label for="representant" class="form-label">Représentant de l'école</label>
+                <input
+                  type="text"
+                  class="form-control border border-secondary"
+                  name="representant"
+                  required
+                />
+              </div>
             </div>
             <div class="modal-footer">
               <button type="submit" class="btn btn-dark">Enregistrer</button>
@@ -141,15 +153,18 @@
     const id = button.getAttribute("data-id");
     const nom = button.getAttribute("data-nom");
     const adresse = button.getAttribute("data-adresse");
+    const representant = button.getAttribute("data-representant");
 
     const form = addEcoleModal.querySelector("form");
     const nomInput = form.querySelector('input[name="nom"]');
     const adresseInput = form.querySelector('input[name="adresse"]');
+    const representantInput = form.querySelector('input[name="representant"]');
     const idInput = form.querySelector('input[name="ecole_id"]');
 
     if (id) {
       nomInput.value = nom;
       adresseInput.value = adresse;
+      representantInput.value = representant;
       idInput.value = id;
       form.action = `/ecoles/modifier/${id}/`;
       addEcoleModal.querySelector(".modal-title").textContent =
@@ -157,6 +172,7 @@
     } else {
       nomInput.value = "";
       adresseInput.value = "";
+      representantInput.value = "";
       idInput.value = "";
       form.action = "{% url 'ajouter_ecole' %}";
       addEcoleModal.querySelector(".modal-title").textContent =

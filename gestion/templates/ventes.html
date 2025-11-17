@@ -878,7 +878,6 @@
     document.getElementById('total-selected').innerText = total.toFixed(0)
   }
 
-  // Submit modifier form: collect articles into JSON 'articles' field
   document.getElementById('modifierModalForm').addEventListener('submit', function(e){
     var container = document.getElementById('articles-container')
     var articles = []
@@ -896,14 +895,12 @@
     this.appendChild(input)
   })
 
-  // Initialiser les tooltips Bootstrap et la recherche d'école
   document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'))
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl)
     })
 
-    // Initialiser le select École de recherche avec la fonction générique
     createSearchableSelect({
       searchInput: document.getElementById('ecoleSearchInput'),
       hiddenSelect: document.getElementById('ecole'),
@@ -913,7 +910,6 @@
   })
 </script>
 
-<!-- Modal Nouvelle Vente -->
 <div class="modal fade" id="modalNouvelleVente" tabindex="-1" aria-labelledby="modalNouvelleVenteLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -966,7 +962,7 @@
                       <select name="articles[0][cahier_id]" class="form-select border border-secondary cahier-select" style="display: none;">
                         <option value="" data-prix="0">-- Sélectionner un cahier --</option>
                         {% for cahier in cahiers %}
-                          <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.prix|floatformat:0 }}F</option>
+                          <option value="{{ cahier.id }}" data-prix="{{ cahier.prix }}">{{ cahier.titre }} - {{ cahier.quantite_stock }}</option>
                         {% endfor %}
                       </select>
                       <div class="dropdown-list cahier-dropdown">
@@ -1034,7 +1030,7 @@
   // Données des cahiers pour le JavaScript
   const cahiersData = [
     {% for cahier in cahiers %}
-      {id: '{{ cahier.id }}', titre: '{{ cahier.titre }}', prix: {{ cahier.prix }}},
+      {id: '{{ cahier.id }}', titre: '{{ cahier.titre }}', quantite_stock: {{ cahier.quantite_stock }}},
     {% endfor %}
   ];
   
@@ -1046,7 +1042,7 @@
     function generateCahierOptions() {
       let options = '<option value="">-- Sélectionner un cahier --</option>';
       cahiersData.forEach(cahier => {
-        options += `<option value="${cahier.id}" data-prix="${cahier.prix}">${cahier.titre} - ${cahier.prix}F</option>`;
+        options += `<option value="${cahier.id}" data-prix="${cahier.quantite_stock}">${cahier.titre} - ${cahier.quantite_stock}</option>`;
       });
       return options;
     }
