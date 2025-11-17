@@ -5,6 +5,7 @@ from gestion.Views.school import *
 from gestion.Views.year import *
 from gestion.Views.sales import *
 from gestion.Views.sales import creer_vente
+from gestion.Views.notifications import *
 from gestion.views_pdf import generer_facture_pdf, generer_pdf_ventes_ecole
 
 urlpatterns = [
@@ -33,6 +34,16 @@ urlpatterns = [
     path('bilans-mensuels/<uuid:annee_id>/<int:mois>/<int:annee>/', detail_bilan_mensuel, name='detail_bilan_mensuel'),
     
     path('comparaison-annees/', comparaison_annees, name='comparaison_annees'),
+    
+    # URLs pour les notifications
+    path('notifications/', notifications_list, name='notifications_list'),
+    path('notifications/detail/<uuid:notification_id>/', notification_detail, name='notification_detail'),
+    path('notifications/marquer-lu/<uuid:notification_id>/', marquer_comme_lu, name='marquer_comme_lu'),
+    path('notifications/supprimer/<uuid:notification_id>/', supprimer_notification, name='supprimer_notification'),
+    path('notifications/emails/', gestion_emails, name='gestion_emails'),
+    path('notifications/test/', test_notifications, name='test_notifications'),
+    path('notifications/api/count/', get_notification_count, name='get_notification_count'),
+    
     path('ventes/', liste_ventes, name='ventes'),
     path('ventes/creer/', creer_vente, name='creer_vente'),
     path('ventes-ecole/', ventes_par_ecole, name='ventes_par_ecole'),

@@ -1,5 +1,6 @@
 from django.shortcuts import *
 from gestion.models import AnneeScolaire, BilanMensuel, BilanAnneeScolaire, Cahiers, Vente, LigneVente, Paiement
+from .services import NotificationService
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 from reportlab.lib import colors
@@ -17,6 +18,15 @@ from datetime import date
 from django.db import models
 
 def home(request):
+    # Vérification automatique des notifications à chaque chargement de la page d'accueil
+    notification_service = NotificationService()
+    try:
+        notification_service.verifier_notifications()
+        notification_service.envoyer_notifications_en_attente()
+    except Exception as e:
+        # Log l'erreur mais ne pas interrompre le chargement de la page
+        print(f"Erreur lors de la vérification automatique des notifications: {e}")
+    
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     last_week = today - timedelta(days=7)

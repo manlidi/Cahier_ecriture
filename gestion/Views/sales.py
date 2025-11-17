@@ -1,5 +1,6 @@
 from django.shortcuts import *
 from gestion.models import Vente, AnneeScolaire, Ecoles
+from gestion.services import NotificationService
 from django.db.models import Sum
 from decimal import Decimal
 from gestion.models import Cahiers
@@ -16,6 +17,15 @@ from django.utils import timezone
 
 
 def liste_ventes(request):
+    # Vérification automatique des notifications lors de la consultation des ventes
+    notification_service = NotificationService()
+    try:
+        notification_service.verifier_notifications()
+        notification_service.envoyer_notifications_en_attente()
+    except Exception as e:
+        # Log l'erreur mais ne pas interrompre le chargement de la page
+        print(f"Erreur lors de la vérification automatique des notifications: {e}")
+        
     ecole_id = request.GET.get('ecole')
 
     annee_active = AnneeScolaire.get_annee_courante()

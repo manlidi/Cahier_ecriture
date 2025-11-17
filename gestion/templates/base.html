@@ -339,6 +339,31 @@
   </script>
   <script async defer src="https://buttons.github.io/buttons.js"></script>
   <script src="{% static 'assets/js/material-dashboard.min.js' %}"></script>
+  
+  <!-- Script pour les notifications -->
+  <script>
+  // Fonction pour mettre à jour le compteur de notifications
+  function updateNotificationCount() {
+    fetch('{% url "get_notification_count" %}')
+      .then(response => response.json())
+      .then(data => {
+        const badge = document.querySelector('.notification-count');
+        if (data.count > 0) {
+          badge.textContent = data.count;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      })
+      .catch(error => console.log('Erreur lors de la récupération des notifications:', error));
+  }
+
+  // Mettre à jour le compteur au chargement de la page
+  document.addEventListener('DOMContentLoaded', updateNotificationCount);
+
+  // Mettre à jour le compteur toutes les 5 minutes
+  setInterval(updateNotificationCount, 300000);
+  </script>
 </body>
 
 </html>

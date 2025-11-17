@@ -1,10 +1,20 @@
 from django.shortcuts import *
 from gestion.models import AnneeScolaire, LigneVente, Cahiers
+from gestion.services import NotificationService
 from django.contrib import messages
 import json
 from decimal import Decimal
 
 def allcahiers(request):
+    # Vérification automatique des notifications lors de la consultation des cahiers
+    notification_service = NotificationService()
+    try:
+        notification_service.verifier_notifications()
+        notification_service.envoyer_notifications_en_attente()
+    except Exception as e:
+        # Log l'erreur mais ne pas interrompre le chargement de la page
+        print(f"Erreur lors de la vérification automatique des notifications: {e}")
+    
     cahiers = Cahiers.objects.all()
     return render(request, 'cahiers.html', {'cahiers': cahiers})
 

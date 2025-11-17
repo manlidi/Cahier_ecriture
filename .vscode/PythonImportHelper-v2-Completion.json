@@ -49,6 +49,14 @@
         "documentation": {}
     },
     {
+        "label": "messages",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
         "label": "admin",
         "importPath": "django.contrib",
         "description": "django.contrib",
@@ -105,6 +113,14 @@
         "documentation": {}
     },
     {
+        "label": "settings",
+        "importPath": "django.conf",
+        "description": "django.conf",
+        "isExtraImport": true,
+        "detail": "django.conf",
+        "documentation": {}
+    },
+    {
         "label": "get_wsgi_application",
         "importPath": "django.core.wsgi",
         "description": "django.core.wsgi",
@@ -114,6 +130,30 @@
     },
     {
         "label": "*",
+        "importPath": "django.shortcuts",
+        "description": "django.shortcuts",
+        "isExtraImport": true,
+        "detail": "django.shortcuts",
+        "documentation": {}
+    },
+    {
+        "label": "render",
+        "importPath": "django.shortcuts",
+        "description": "django.shortcuts",
+        "isExtraImport": true,
+        "detail": "django.shortcuts",
+        "documentation": {}
+    },
+    {
+        "label": "redirect",
+        "importPath": "django.shortcuts",
+        "description": "django.shortcuts",
+        "isExtraImport": true,
+        "detail": "django.shortcuts",
+        "documentation": {}
+    },
+    {
+        "label": "get_object_or_404",
         "importPath": "django.shortcuts",
         "description": "django.shortcuts",
         "isExtraImport": true,
@@ -409,6 +449,30 @@
         "documentation": {}
     },
     {
+        "label": "NotificationService",
+        "importPath": "gestion.services",
+        "description": "gestion.services",
+        "isExtraImport": true,
+        "detail": "gestion.services",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationService",
+        "importPath": "gestion.services",
+        "description": "gestion.services",
+        "isExtraImport": true,
+        "detail": "gestion.services",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationService",
+        "importPath": "gestion.services",
+        "description": "gestion.services",
+        "isExtraImport": true,
+        "detail": "gestion.services",
+        "documentation": {}
+    },
+    {
         "label": "json",
         "kind": 6,
         "isExtraImport": true,
@@ -466,6 +530,30 @@
         "documentation": {}
     },
     {
+        "label": "Paginator",
+        "importPath": "django.core.paginator",
+        "description": "django.core.paginator",
+        "isExtraImport": true,
+        "detail": "django.core.paginator",
+        "documentation": {}
+    },
+    {
+        "label": "Paginator",
+        "importPath": "django.core.paginator",
+        "description": "django.core.paginator",
+        "isExtraImport": true,
+        "detail": "django.core.paginator",
+        "documentation": {}
+    },
+    {
+        "label": "Q",
+        "importPath": "django.db.models",
+        "description": "django.db.models",
+        "isExtraImport": true,
+        "detail": "django.db.models",
+        "documentation": {}
+    },
+    {
         "label": "Sum",
         "importPath": "django.db.models",
         "description": "django.db.models",
@@ -514,11 +602,27 @@
         "documentation": {}
     },
     {
+        "label": "JsonResponse",
+        "importPath": "django.http",
+        "description": "django.http",
+        "isExtraImport": true,
+        "detail": "django.http",
+        "documentation": {}
+    },
+    {
         "label": "HttpResponse",
         "importPath": "django.http",
         "description": "django.http",
         "isExtraImport": true,
         "detail": "django.http",
+        "documentation": {}
+    },
+    {
+        "label": "require_http_methods",
+        "importPath": "django.views.decorators.http",
+        "description": "django.views.decorators.http",
+        "isExtraImport": true,
+        "detail": "django.views.decorators.http",
         "documentation": {}
     },
     {
@@ -538,14 +642,6 @@
         "documentation": {}
     },
     {
-        "label": "Paginator",
-        "importPath": "django.core.paginator",
-        "description": "django.core.paginator",
-        "isExtraImport": true,
-        "detail": "django.core.paginator",
-        "documentation": {}
-    },
-    {
         "label": "timedelta",
         "importPath": "datetime",
         "description": "datetime",
@@ -663,6 +759,22 @@
         "description": "django.utils",
         "isExtraImport": true,
         "detail": "django.utils",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "django.utils",
+        "description": "django.utils",
+        "isExtraImport": true,
+        "detail": "django.utils",
+        "documentation": {}
+    },
+    {
+        "label": "BaseCommand",
+        "importPath": "django.core.management.base",
+        "description": "django.core.management.base",
+        "isExtraImport": true,
+        "detail": "django.core.management.base",
         "documentation": {}
     },
     {
@@ -786,6 +898,22 @@
         "documentation": {}
     },
     {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
         "label": "models",
         "importPath": "django.db",
         "description": "django.db",
@@ -846,6 +974,23 @@
         "documentation": {}
     },
     {
+        "label": "send_mail",
+        "importPath": "django.core.mail",
+        "description": "django.core.mail",
+        "isExtraImport": true,
+        "detail": "django.core.mail",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
         "label": "TestCase",
         "importPath": "django.test",
         "description": "django.test",
@@ -899,6 +1044,14 @@
         "description": "gestion.Views.sales",
         "isExtraImport": true,
         "detail": "gestion.Views.sales",
+        "documentation": {}
+    },
+    {
+        "label": "*",
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "isExtraImport": true,
+        "detail": "gestion.Views.notifications",
         "documentation": {}
     },
     {
@@ -1364,7 +1517,7 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "STATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "STATIC_URL = 'static/'\nSTATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1373,7 +1526,7 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "STATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "STATIC_ROOT = BASE_DIR / 'static'\nSTATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests\nEMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1382,7 +1535,7 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "STATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "STATICFILES_DIRS = [BASE_DIR / 'gestion' / 'static']\nMEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests\nEMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production\nEMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1391,7 +1544,7 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "MEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "MEDIA_URL = '/images/'\nMEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests\nEMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production\nEMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider\nEMAIL_PORT = 587",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1400,7 +1553,7 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "MEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "MEDIA_ROOT = os.path.join(BASE_DIR, 'images')\n# Default primary key field type\n# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field\nDEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests\nEMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production\nEMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider\nEMAIL_PORT = 587\nEMAIL_USE_TLS = True",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1409,7 +1562,97 @@
         "kind": 5,
         "importPath": "GC.settings",
         "description": "GC.settings",
-        "peekOfCode": "DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'",
+        "peekOfCode": "DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'\n# Configuration des emails\n# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests\nEMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production\nEMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider\nEMAIL_PORT = 587\nEMAIL_USE_TLS = True\nEMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_BACKEND",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production\nEMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider\nEMAIL_PORT = 587\nEMAIL_USE_TLS = True\nEMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_HOST",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider\nEMAIL_PORT = 587\nEMAIL_USE_TLS = True\nEMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_PORT",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_PORT = 587\nEMAIL_USE_TLS = True\nEMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_USE_TLS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_USE_TLS = True\nEMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_HOST_USER",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_HOST_USER = ''  # À remplir avec votre email\nEMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "EMAIL_HOST_PASSWORD",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "EMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application\nDEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_FROM_EMAIL",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "DEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'\n# Configuration des notifications\nNOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "NOTIFICATION_SEUIL_STOCK",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "NOTIFICATION_SEUIL_STOCK = 100\nNOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "NOTIFICATION_EMAIL_ACTIF",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "NOTIFICATION_EMAIL_ACTIF = True\n# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)\nNOTIFICATION_ECHEANCE_JOURS = 7",
+        "detail": "GC.settings",
+        "documentation": {}
+    },
+    {
+        "label": "NOTIFICATION_ECHEANCE_JOURS",
+        "kind": 5,
+        "importPath": "GC.settings",
+        "description": "GC.settings",
+        "peekOfCode": "NOTIFICATION_ECHEANCE_JOURS = 7",
         "detail": "GC.settings",
         "documentation": {}
     },
@@ -1436,7 +1679,7 @@
         "kind": 2,
         "importPath": "gestion.Views.book",
         "description": "gestion.Views.book",
-        "peekOfCode": "def allcahiers(request):\n    cahiers = Cahiers.objects.all()\n    return render(request, 'cahiers.html', {'cahiers': cahiers})\ndef ajouter_cahier(request):\n    if request.method == \"POST\":\n        titre = request.POST.get(\"titre\")\n        prix = Decimal(request.POST.get(\"prix\"))\n        quantite_stock = int(request.POST.get(\"quantite_stock\"))\n        Cahiers.objects.create(titre=titre, prix=prix, quantite_stock=quantite_stock)\n    return redirect('cahiers')",
+        "peekOfCode": "def allcahiers(request):\n    # Vérification automatique des notifications lors de la consultation des cahiers\n    notification_service = NotificationService()\n    try:\n        notification_service.verifier_notifications()\n        notification_service.envoyer_notifications_en_attente()\n    except Exception as e:\n        # Log l'erreur mais ne pas interrompre le chargement de la page\n        print(f\"Erreur lors de la vérification automatique des notifications: {e}\")\n    cahiers = Cahiers.objects.all()",
         "detail": "gestion.Views.book",
         "documentation": {}
     },
@@ -1486,11 +1729,74 @@
         "documentation": {}
     },
     {
+        "label": "notifications_list",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def notifications_list(request):\n    \"\"\"Vue pour afficher la liste des notifications\"\"\"\n    # Vérification automatique et envoi des notifications à chaque chargement\n    notification_service = NotificationService()\n    try:\n        notification_service.verifier_notifications()\n        notification_service.envoyer_notifications_en_attente()\n    except Exception as e:\n        # Log l'erreur mais ne pas interrompre le chargement de la page\n        print(f\"Erreur lors de la vérification automatique des notifications: {e}\")",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "notification_detail",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def notification_detail(request, notification_id):\n    \"\"\"Vue pour afficher le détail d'une notification\"\"\"\n    notification = get_object_or_404(Notification, id=notification_id)\n    # Marquer comme lue\n    if not notification.est_lu:\n        notification.marquer_comme_lu()\n        messages.info(request, 'Notification marquée comme lue.')\n    return render(request, 'notifications/detail.html', {\n        'notification': notification\n    })",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "marquer_comme_lu",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def marquer_comme_lu(request, notification_id):\n    \"\"\"Marque une notification comme lue via AJAX\"\"\"\n    notification = get_object_or_404(Notification, id=notification_id)\n    notification.marquer_comme_lu()\n    return JsonResponse({\n        'success': True,\n        'message': 'Notification marquée comme lue'\n    })\n@require_http_methods([\"POST\"])\ndef supprimer_notification(request, notification_id):",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_notification",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def supprimer_notification(request, notification_id):\n    \"\"\"Supprime une notification\"\"\"\n    notification = get_object_or_404(Notification, id=notification_id)\n    notification.delete()\n    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':\n        return JsonResponse({\n            'success': True,\n            'message': 'Notification supprimée'\n        })\n    messages.success(request, 'Notification supprimée.')",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "gestion_emails",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def gestion_emails(request):\n    \"\"\"Vue pour gérer les emails de notification\"\"\"\n    emails = EmailNotification.objects.all().order_by('nom', 'email')\n    if request.method == 'POST':\n        action = request.POST.get('action')\n        if action == 'ajouter':\n            email = request.POST.get('email', '').strip()\n            nom = request.POST.get('nom', '').strip()\n            if email:\n                email_obj, created = EmailNotification.objects.get_or_create(",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "test_notifications",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def test_notifications(request):\n    \"\"\"Vue pour tester le système de notifications (dev uniquement)\"\"\"\n    if request.method == 'POST':\n        resultats = NotificationService.executer_verification_periodique()\n        messages.info(request, \n            f\"Test terminé: {resultats['nouvelles_notifications']} nouvelles notifications, \"\n            f\"{resultats['emails_reussis']}/{resultats['emails_traites']} emails envoyés.\"\n        )\n    return render(request, 'notifications/test.html')\ndef get_notification_count(request):",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
+        "label": "get_notification_count",
+        "kind": 2,
+        "importPath": "gestion.Views.notifications",
+        "description": "gestion.Views.notifications",
+        "peekOfCode": "def get_notification_count(request):\n    \"\"\"API pour récupérer le nombre de notifications non lues\"\"\"\n    count = Notification.objects.filter(est_lu=False).count()\n    return JsonResponse({'count': count})",
+        "detail": "gestion.Views.notifications",
+        "documentation": {}
+    },
+    {
         "label": "liste_ventes",
         "kind": 2,
         "importPath": "gestion.Views.sales",
         "description": "gestion.Views.sales",
-        "peekOfCode": "def liste_ventes(request):\n    ecole_id = request.GET.get('ecole')\n    annee_active = AnneeScolaire.get_annee_courante()\n    if not annee_active:\n        return render(request, 'ventes.html', {\n            'ventes': [],\n            'ecoles': Ecoles.objects.all(),\n            'cahiers': Cahiers.objects.all(),\n            'selected_ecole': ecole_id,\n            'message': \"Aucune année scolaire active n'a été définie.\"",
+        "peekOfCode": "def liste_ventes(request):\n    # Vérification automatique des notifications lors de la consultation des ventes\n    notification_service = NotificationService()\n    try:\n        notification_service.verifier_notifications()\n        notification_service.envoyer_notifications_en_attente()\n    except Exception as e:\n        # Log l'erreur mais ne pas interrompre le chargement de la page\n        print(f\"Erreur lors de la vérification automatique des notifications: {e}\")\n    ecole_id = request.GET.get('ecole')",
         "detail": "gestion.Views.sales",
         "documentation": {}
     },
@@ -1657,6 +1963,15 @@
         "documentation": {}
     },
     {
+        "label": "Command",
+        "kind": 6,
+        "importPath": "gestion.management.commands.verifier_notifications",
+        "description": "gestion.management.commands.verifier_notifications",
+        "peekOfCode": "class Command(BaseCommand):\n    help = 'Vérifie les stocks et envoie les notifications'\n    def handle(self, *args, **options):\n        self.stdout.write('Début de la vérification des notifications...')\n        resultats = NotificationService.executer_verification_periodique()\n        self.stdout.write(\n            self.style.SUCCESS(\n                f'Vérification terminée:\\n'\n                f'- {resultats[\"nouvelles_notifications\"]} nouvelles notifications créées\\n'\n                f'- {resultats[\"emails_traites\"]} emails traités\\n'",
+        "detail": "gestion.management.commands.verifier_notifications",
+        "documentation": {}
+    },
+    {
         "label": "Migration",
         "kind": 6,
         "importPath": "gestion.migrations.0001_initial",
@@ -1717,6 +2032,33 @@
         "description": "gestion.migrations.0007_ecoles_representant",
         "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0006_remove_vente_dette_precedente'),\n    ]\n    operations = [\n        migrations.AddField(\n            model_name='ecoles',\n            name='representant',\n            field=models.TextField(blank=True, default=''),\n        ),",
         "detail": "gestion.migrations.0007_ecoles_representant",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0008_emailnotification_notification",
+        "description": "gestion.migrations.0008_emailnotification_notification",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0007_ecoles_representant'),\n    ]\n    operations = [\n        migrations.CreateModel(\n            name='EmailNotification',\n            fields=[\n                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),\n                ('email', models.EmailField(max_length=254)),",
+        "detail": "gestion.migrations.0008_emailnotification_notification",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationAdmin",
+        "kind": 6,
+        "importPath": "gestion.admin",
+        "description": "gestion.admin",
+        "peekOfCode": "class NotificationAdmin(admin.ModelAdmin):\n    list_display = ['titre', 'type_notification', 'est_lu', 'email_envoye', 'date_creation']\n    list_filter = ['type_notification', 'est_lu', 'email_envoye', 'date_creation']\n    search_fields = ['titre', 'message']\n    readonly_fields = ['date_creation', 'date_lecture']\n    def get_queryset(self, request):\n        return super().get_queryset(request).select_related('cahier', 'vente')\n@admin.register(EmailNotification)\nclass EmailNotificationAdmin(admin.ModelAdmin):\n    list_display = ['email', 'nom', 'est_actif', 'date_ajout']",
+        "detail": "gestion.admin",
+        "documentation": {}
+    },
+    {
+        "label": "EmailNotificationAdmin",
+        "kind": 6,
+        "importPath": "gestion.admin",
+        "description": "gestion.admin",
+        "peekOfCode": "class EmailNotificationAdmin(admin.ModelAdmin):\n    list_display = ['email', 'nom', 'est_actif', 'date_ajout']\n    list_filter = ['est_actif', 'date_ajout']\n    search_fields = ['email', 'nom']\n# Gardez vos autres registrations existantes si il y en a",
+        "detail": "gestion.admin",
         "documentation": {}
     },
     {
@@ -1801,6 +2143,51 @@
         "documentation": {}
     },
     {
+        "label": "TypeNotification",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class TypeNotification(models.TextChoices):\n    STOCK_FAIBLE = 'stock_faible', 'Stock faible'\n    ECHEANCE_PAIEMENT = 'echeance_paiement', 'Échéance de paiement'\nclass Notification(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    type_notification = models.CharField(max_length=20, choices=TypeNotification.choices)\n    titre = models.CharField(max_length=255)\n    message = models.TextField()\n    # Relations optionnelles selon le type\n    cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE, null=True, blank=True)",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "Notification",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class Notification(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    type_notification = models.CharField(max_length=20, choices=TypeNotification.choices)\n    titre = models.CharField(max_length=255)\n    message = models.TextField()\n    # Relations optionnelles selon le type\n    cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE, null=True, blank=True)\n    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, null=True, blank=True)\n    est_lu = models.BooleanField(default=False)\n    email_envoye = models.BooleanField(default=False)",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "EmailNotification",
+        "kind": 6,
+        "importPath": "gestion.models",
+        "description": "gestion.models",
+        "peekOfCode": "class EmailNotification(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    email = models.EmailField()\n    nom = models.CharField(max_length=100, blank=True)\n    est_actif = models.BooleanField(default=True)\n    date_ajout = models.DateTimeField(auto_now_add=True)\n    class Meta:\n        unique_together = ['email']\n        ordering = ['nom', 'email']\n    def __str__(self):",
+        "detail": "gestion.models",
+        "documentation": {}
+    },
+    {
+        "label": "NotificationService",
+        "kind": 6,
+        "importPath": "gestion.services",
+        "description": "gestion.services",
+        "peekOfCode": "class NotificationService:\n    \"\"\"Service pour gérer les notifications\"\"\"\n    @staticmethod\n    def verifier_stock_faible():\n        \"\"\"Vérifie les stocks faibles et crée des notifications\"\"\"\n        seuil_stock = getattr(settings, 'NOTIFICATION_SEUIL_STOCK', 100)\n        cahiers_stock_faible = Cahiers.objects.filter(quantite_stock__lte=seuil_stock)\n        notifications_creees = []\n        for cahier in cahiers_stock_faible:\n            # Vérifier si une notification existe déjà pour ce cahier",
+        "detail": "gestion.services",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "gestion.services",
+        "description": "gestion.services",
+        "peekOfCode": "logger = logging.getLogger(__name__)\nclass NotificationService:\n    \"\"\"Service pour gérer les notifications\"\"\"\n    @staticmethod\n    def verifier_stock_faible():\n        \"\"\"Vérifie les stocks faibles et crée des notifications\"\"\"\n        seuil_stock = getattr(settings, 'NOTIFICATION_SEUIL_STOCK', 100)\n        cahiers_stock_faible = Cahiers.objects.filter(quantite_stock__lte=seuil_stock)\n        notifications_creees = []\n        for cahier in cahiers_stock_faible:",
+        "detail": "gestion.services",
+        "documentation": {}
+    },
+    {
         "label": "urlpatterns",
         "kind": 5,
         "importPath": "gestion.urls",
@@ -1814,7 +2201,7 @@
         "kind": 2,
         "importPath": "gestion.views",
         "description": "gestion.views",
-        "peekOfCode": "def home(request):\n    today = timezone.now().date()\n    yesterday = today - timedelta(days=1)\n    last_week = today - timedelta(days=7)\n    last_month = today - timedelta(days=30)\n    # Année scolaire courante\n    annee_courante = AnneeScolaire.get_annee_courante()\n    if not annee_courante:\n        # Créer automatiquement l'année scolaire courante si elle n'existe pas\n        annee_courante_num = today.year if today.month >= 7 else today.year - 1",
+        "peekOfCode": "def home(request):\n    # Vérification automatique des notifications à chaque chargement de la page d'accueil\n    notification_service = NotificationService()\n    try:\n        notification_service.verifier_notifications()\n        notification_service.envoyer_notifications_en_attente()\n    except Exception as e:\n        # Log l'erreur mais ne pas interrompre le chargement de la page\n        print(f\"Erreur lors de la vérification automatique des notifications: {e}\")\n    today = timezone.now().date()",
         "detail": "gestion.views",
         "documentation": {}
     },

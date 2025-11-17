@@ -448,3 +448,48 @@ class BilanMensuel(models.Model):
             bilans.append(bilan)
         
         return bilans
+
+class TypeNotification(models.TextChoices):
+    STOCK_FAIBLE = 'stock_faible', 'Stock faible'
+    ECHEANCE_PAIEMENT = 'echeance_paiement', 'Échéance de paiement'
+
+class Notification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    type_notification = models.CharField(max_length=20, choices=TypeNotification.choices)
+    titre = models.CharField(max_length=255)
+    message = models.TextField()
+    
+    # Relations optionnelles selon le type
+    cahier = models.ForeignKey(Cahiers, on_delete=models.CASCADE, null=True, blank=True)
+    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, null=True, blank=True)
+    
+    est_lu = models.BooleanField(default=False)
+    email_envoye = models.BooleanField(default=False)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_lecture = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"{self.get_type_notification_display()} - {self.titre}"
+    
+    def marquer_comme_lu(self):
+        if not self.est_lu:
+            self.est_lu = True
+            self.date_lecture = timezone.now()
+            self.save()
+
+class EmailNotification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField()
+    nom = models.CharField(max_length=100, blank=True)
+    est_actif = models.BooleanField(default=True)
+    date_ajout = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['email']
+        ordering = ['nom', 'email']
+    
+    def __str__(self):
+        return f"{self.nom} ({self.email})" if self.nom else self.email

@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Détail notification{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">
+                    <i class="material-symbols-rounded me-2">
+                        {% if notification.type_notification == 'stock_faible' %}
+                            inventory
+                        {% else %}
+                            notification_important
+                        {% endif %}
+                    </i>
+                    {{ notification.titre }}
+                </h3>
+                <p class="mb-4">
+                    Détail de la notification et informations associées.
+                    <a href="{% url 'notifications_list' %}" class="btn btn-outline-dark btn-sm ms-2">
+                        <i class="material-symbols-rounded">arrow_back</i>
+                        Retour aux notifications
+                    </a>
+                    {% if not notification.est_lu %}
+                        <form method="post" action="{% url 'marquer_comme_lu' notification.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-dark btn-sm ms-1">
+                                <i class="material-symbols-rounded text-white">mark_email_read</i>
+                                Marquer comme lue
+                            </button>
+                        </form>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Contenu de la notification</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <p class="mb-0 text-sm font-weight-bold">Type:</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <span class="badge bg-secondary">{{ notification.get_type_notification_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <p class="mb-0 text-sm font-weight-bold">Message:</p>
+                        </div>
+                        <div class="col-sm-9">
+                            <p class="text-sm mb-0">{{ notification.message }}</p>
+                        </div>
+                    </div>
+
+                    {% if notification.cahier %}
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <p class="mb-0 text-sm font-weight-bold">Cahier concerné:</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="border rounded p-2">
+                                    <h6 class="mb-1">{{ notification.cahier.titre }}</h6>
+                                    <p class="text-sm text-muted mb-0">
+                                        Stock: {{ notification.cahier.quantite_stock }} | Prix: {{ notification.cahier.prix }} F
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if notification.vente %}
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <p class="mb-0 text-sm font-weight-bold">Vente concernée:</p>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="border rounded p-2">
+                                    <h6 class="mb-1">{{ notification.vente.ecole.nom }}</h6>
+                                    <p class="text-sm text-muted mb-0">
+                                        Montant: {{ notification.vente.montant_total }} F | Date: {{ notification.vente.created_at|date:'d/m/Y' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informations détaillées -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Informations détaillées</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <p class="mb-0 text-sm font-weight-bold">Statut:</p>
+                        </div>
+                        <div class="col-sm-6">
+                            {% if notification.est_lu %}
+                                <span class="badge bg-success">Lue</span>
+                            {% else %}
+                                <span class="badge bg-warning">Non lue</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <p class="mb-0 text-sm font-weight-bold">Email envoyé:</p>
+                        </div>
+                        <div class="col-sm-6">
+                            {% if notification.email_envoye %}
+                                <span class="badge bg-success">Oui</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr class="horizontal gray-light my-3">
+                    
+                    <div class="mb-3">
+                        <p class="text-sm font-weight-bold mb-1">Créée le:</p>
+                        <p class="text-sm mb-0">{{ notification.date_creation|date:'d/m/Y H:i' }}</p>
+                        <small class="text-muted">{{ notification.date_creation|naturaltime }}</small>
+                    </div>
+                    
+                    {% if notification.date_lecture %}
+                        <div class="mb-3">
+                            <p class="text-sm font-weight-bold mb-1">Lue le:</p>
+                            <p class="text-sm mb-0">{{ notification.date_lecture|date:'d/m/Y H:i' }}</p>
+                            <small class="text-muted">{{ notification.date_lecture|naturaltime }}</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

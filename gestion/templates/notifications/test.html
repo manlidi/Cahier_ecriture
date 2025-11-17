@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Test notifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">
+                    <i class="material-symbols-rounded me-2">science</i>
+                    Test du système de notifications
+                </h3>
+                <p class="mb-4">
+                    Outils de test et de vérification manuelle du système de notifications.
+                    <a href="{% url 'notifications_list' %}" class="btn btn-outline-dark btn-sm ms-2">
+                        <i class="material-symbols-rounded">arrow_back</i>
+                        Retour aux notifications
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Section d'alerte -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header pb-0">
+                            <h6>
+                                <i class="material-symbols-rounded me-2">warning</i>
+                                Information importante
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-sm mb-0">
+                                <strong>Attention:</strong> Cette fonctionnalité est destinée aux tests et au développement uniquement.
+                                Elle va vérifier tous les stocks et créer des notifications si nécessaire.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section d'action -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header pb-0">
+                            <h6>
+                                <i class="material-symbols-rounded me-2">play_circle</i>
+                                Lancer les tests
+                            </h6>
+                        </div>
+                        <div class="card-body text-center">
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary" onclick="return confirm('Lancer la vérification des notifications ?')">
+                                    <i class="material-symbols-rounded me-1">play_arrow</i>
+                                    Lancer la vérification
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section d'informations -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header pb-0">
+                            <h6>
+                                <i class="material-symbols-rounded me-2">info</i>
+                                Actions effectuées
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-symbols-rounded me-2">inventory</i>
+                                        <span class="text-sm">Vérifier les stocks ≤ 100</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-symbols-rounded me-2">notification_add</i>
+                                        <span class="text-sm">Créer les notifications</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="material-symbols-rounded me-2">email</i>
+                                        <span class="text-sm">Envoyer les emails</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

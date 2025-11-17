@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications_fix.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">Notifications</h3>
+                <p class="mb-4">
+                    Gestion des alertes de stock et échéances de paiement.
+                    <a href="{% url 'gestion_emails' %}" class="btn btn-outline-dark btn-sm ms-2">
+                        <i class="material-symbols-rounded">mail</i>
+                        Gérer les emails
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                    <div class="card">
+                        <div class="card-header p-2 ps-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-sm mb-0 text-capitalize">Total</p>
+                                    <h4 class="mb-0">{{ stats.total }}</h4>
+                                </div>
+                                <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
+                                    <i class="material-symbols-rounded text-white">notifications</i>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="dark horizontal my-0" />
+                        <div class="card-footer p-2 ps-3">
+                            <p class="mb-0 text-sm">
+                                <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
+                                notifications créées
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                    <div class="card">
+                        <div class="card-header p-2 ps-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-sm mb-0 text-capitalize">Non lues</p>
+                                    <h4 class="mb-0">{{ stats.non_lues }}</h4>
+                                </div>
+                                <div class="icon icon-md icon-shape bg-gradient-warning shadow-warning shadow text-center border-radius-lg">
+                                    <i class="material-symbols-rounded text-white">circle_notifications</i>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="dark horizontal my-0" />
+                        <div class="card-footer p-2 ps-3">
+                            <p class="mb-0 text-sm">
+                                {% if stats.non_lues > 0 %}
+                                    <span class="text-warning font-weight-bolder">Attention requise</span>
+                                {% else %}
+                                    <span class="text-success font-weight-bolder">Tout est lu</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                    <div class="card">
+                        <div class="card-header p-2 ps-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-sm mb-0 text-capitalize">Stock faible</p>
+                                    <h4 class="mb-0">{{ stats.stock_faible }}</h4>
+                                </div>
+                                <div class="icon icon-md icon-shape bg-gradient-info shadow-info shadow text-center border-radius-lg">
+                                    <i class="material-symbols-rounded text-white">inventory</i>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="dark horizontal my-0" />
+                        <div class="card-footer p-2 ps-3">
+                            <p class="mb-0 text-sm">
+                                <i class="material-symbols-rounded text-sm my-auto me-1">warning</i>
+                                cahiers en rupture
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card">
+                        <div class="card-header p-2 ps-3">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <p class="text-sm mb-0 text-capitalize">Échéances</p>
+                                    <h4 class="mb-0">{{ stats.echeances|default:0 }}</h4>
+                                </div>
+                                <div class="icon icon-md icon-shape bg-gradient-success shadow-success shadow text-center border-radius-lg">
+                                    <i class="material-symbols-rounded text-white">event</i>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="dark horizontal my-0" />
+                        <div class="card-footer p-2 ps-3">
+                            <p class="mb-0 text-sm">
+                                <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
+                                paiements à venir
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtres et Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="row">
+                        <div class="col-lg-6 col-7">
+                            <h6>Liste des notifications</h6>
+                            <p class="text-sm mb-0">
+                                <i class="fa fa-check text-info" aria-hidden="true"></i>
+                                <span class="font-weight-bold ms-1">{{ page_obj.paginator.count }} notifications trouvées</span>
+                            </p>
+                        </div>
+                        <div class="col-lg-6 col-5 my-auto text-end">
+                            {% if stats.non_lues > 0 %}
+                                <span class="badge bg-gradient-warning">{{ stats.non_lues }} non lues</span>
+                            {% else %}
+                                <span class="badge bg-gradient-success">Tout lu</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filtres -->
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="row mb-3 px-3">
+                        <div class="col-12">
+                            <form method="get" class="row g-3">
+                                <div class="col-md-3">
+                                    <select name="type" class="form-select form-select-sm">
+                                        <option value="">Tous les types</option>
+                                        {% for value, label in types_notification %}
+                                            <option value="{{ value }}" {% if type_filtre == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="statut" class="form-select form-select-sm">
+                                        <option value="">Tous les statuts</option>
+                                        <option value="non_lu" {% if statut_filtre == 'non_lu' %}selected{% endif %}>Non lues</option>
+                                        <option value="lu" {% if statut_filtre == 'lu' %}selected{% endif %}>Lues</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="q" class="form-control form-control-sm" 
+                                           placeholder="Rechercher..." value="{{ recherche }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="material-symbols-rounded text-white">search</i>
+                                        Filtrer
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Liste des notifications -->
+                    <div class="table-responsive p-0" style="overflow: visible;">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Notification
+                                    </th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                        Type
+                                    </th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Date
+                                    </th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Statut
+                                    </th>
+                                    <th class="text-secondary opacity-7">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for notification in page_obj %}
+                                <tr id="notification-{{ notification.id }}" {% if not notification.est_lu %}class="table-warning"{% endif %}>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div>
+                                                <div class="icon icon-shape icon-sm shadow border-radius-md {% if notification.type_notification == 'stock_faible' %}bg-gradient-warning{% else %}bg-gradient-info{% endif %} text-center me-2 d-flex align-items-center justify-content-center">
+                                                    <i class="material-symbols-rounded text-white">
+                                                        {% if notification.type_notification == 'stock_faible' %}
+                                                            inventory
+                                                        {% else %}
+                                                            notification_important
+                                                        {% endif %}
+                                                    </i>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ notification.titre }}</h6>
+                                                <p class="text-xs text-secondary mb-0">
+                                                    {{ notification.message|truncatechars:80 }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">
+                                            <span class="badge badge-sm {% if notification.type_notification == 'stock_faible' %}bg-gradient-warning{% else %}bg-gradient-info{% endif %}">
+                                                {{ notification.get_type_notification_display }}
+                                            </span>
+                                        </p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-xs">
+                                            {{ notification.date_creation|naturaltime }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        {% if notification.est_lu %}
+                                            <span class="badge badge-sm bg-gradient-success">Lue</span>
+                                        {% else %}
+                                            <span class="badge badge-sm bg-gradient-warning">Non lue</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle position-relative">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="material-symbols-rounded me-1" style="font-size: 16px;">more_vert</i>
+                                                Actions
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
+                                                <a class="dropdown-item" href="{% url 'notification_detail' notification.id %}">
+                                                    <i class="material-symbols-rounded me-2">visibility</i>
+                                                    Voir
+                                                </a>
+                                                {% if not notification.est_lu %}
+                                                    <a class="dropdown-item mark-read-btn" href="#" data-id="{{ notification.id }}">
+                                                        <i class="material-symbols-rounded me-2">mark_email_read</i>
+                                                        Marquer comme lue
+                                                    </a>
+                                                {% endif %}
+                                                <a class="dropdown-item text-danger delete-btn" href="#" data-id="{{ notification.id }}">
+                                                    <i class="material-symbols-rounded me-2">delete</i>
+                                                    Supprimer
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="text-center">
+                                            <i class="material-symbols-rounded opacity-3" style="font-size: 3rem;">notifications_off</i>
+                                            <p class="text-muted mt-2">Aucune notification trouvée.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-3">
+                        <nav>
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}">
+                                            Précédent
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}">
+                                                {{ num }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if type_filtre %}&type={{ type_filtre }}{% endif %}{% if statut_filtre %}&statut={{ statut_filtre }}{% endif %}{% if recherche %}&q={{ recherche }}{% endif %}">
+                                            Suivant
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du marquage comme lu
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const notificationId = this.dataset.id;
+            
+            fetch(`{% url 'marquer_comme_lu' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', notificationId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const row = document.getElementById(`notification-${notificationId}`);
+                    row.classList.remove('table-warning');
+                    this.closest('.dropdown').innerHTML = '<span class="text-success">Marquée comme lue</span>';
+                }
+            });
+        });
+    });
+
+    // Gestion de la suppression
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                const notificationId = this.dataset.id;
+                
+                fetch(`{% url 'supprimer_notification' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', notificationId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`notification-${notificationId}`).remove();
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+

@@ -128,3 +128,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'images')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuration des emails
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour les tests
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Pour la production
+EMAIL_HOST = 'smtp.gmail.com'  # Changez selon votre provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''  # À remplir avec votre email
+EMAIL_HOST_PASSWORD = ''  # À remplir avec votre mot de passe d'application
+DEFAULT_FROM_EMAIL = 'noreply@cahier-ecriture.com'
+
+# Configuration des notifications
+NOTIFICATION_SEUIL_STOCK = 100
+NOTIFICATION_EMAIL_ACTIF = True
+# Nombre de jours avant échéance pour générer une notification (par défaut 7 jours)
+NOTIFICATION_ECHEANCE_JOURS = 7

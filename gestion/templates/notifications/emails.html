@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des emails{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/notifications_fix.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="ms-3">
+                <h3 class="mb-0 h4 font-weight-bolder">
+                    <i class="material-symbols-rounded me-2">email</i>
+                    Gestion des emails de notification
+                </h3>
+                <p class="mb-4">
+                    Configuration des adresses emails qui recevront les notifications d'alertes.
+                    <a href="{% url 'notifications_list' %}" class="btn btn-outline-dark btn-sm ms-2">
+                        <i class="material-symbols-rounded">arrow_back</i>
+                        Retour aux notifications
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Ajouter un email</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="ajouter">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="input-group input-group-outline">
+                                    <label class="form-label">Adresse email</label>
+                                    <input type="email" name="email" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group input-group-outline">
+                                    <label class="form-label">Nom (optionnel)</label>
+                                    <input type="text" name="nom" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="material-symbols-rounded">add</i>
+                                    Ajouter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Liste des emails de notification</h6>
+                </div>
+                <div class="card-body px-0 pb-2" style="overflow: visible;">
+                    <div class="table-responsive p-0" style="overflow: visible;">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Email
+                                    </th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">
+                                        Nom
+                                    </th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Statut
+                                    </th>
+                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">
+                                        Date d'ajout
+                                    </th>
+                                    <th class="text-secondary opacity-7">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for email in emails %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ email.email }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">
+                                            {{ email.nom|default:'-' }}
+                                        </p>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        {% if email.est_actif %}
+                                            <span class="badge bg-success">Actif</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="text-xs">
+                                            {{ email.date_ajout|date:'d/m/Y H:i' }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle position-relative">
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="material-symbols-rounded me-1" style="font-size: 16px;">more_vert</i>
+                                                Actions
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-end" style="z-index: 1050;">
+                                                <form method="post" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="toggle_actif">
+                                                    <input type="hidden" name="email_id" value="{{ email.id }}">
+                                                    <button type="submit" class="dropdown-item">
+                                                        {% if email.est_actif %}
+                                                            <i class="material-symbols-rounded me-2">pause</i>
+                                                            Désactiver
+                                                        {% else %}
+                                                            <i class="material-symbols-rounded me-2">play_arrow</i>
+                                                            Activer
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                                
+                                                <form method="post" class="d-inline" onsubmit="return confirm('Supprimer cet email ?')">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="supprimer">
+                                                    <input type="hidden" name="email_id" value="{{ email.id }}">
+                                                    <button type="submit" class="dropdown-item text-danger">
+                                                        <i class="material-symbols-rounded me-2">delete</i>
+                                                        Supprimer
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <p class="text-muted">Aucun email configuré.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
