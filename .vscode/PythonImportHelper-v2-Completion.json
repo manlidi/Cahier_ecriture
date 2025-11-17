@@ -770,6 +770,22 @@
         "documentation": {}
     },
     {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
         "label": "models",
         "importPath": "django.db",
         "description": "django.db",
@@ -1564,7 +1580,7 @@
         "kind": 2,
         "importPath": "gestion.Views.school",
         "description": "gestion.Views.school",
-        "peekOfCode": "def allecoles(request):\n    ecoles = Ecoles.objects.all()\n    return render(request, 'ecoles.html', {'ecoles': ecoles})\ndef ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        Ecoles.objects.create(nom=nom, adresse=adresse)\n    return redirect('ecoles')\ndef modifier_ecole(request, ecole_id):",
+        "peekOfCode": "def allecoles(request):\n    ecoles = Ecoles.objects.all()\n    return render(request, 'ecoles.html', {'ecoles': ecoles})\ndef ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        representant = request.POST.get(\"representant\")\n        Ecoles.objects.create(nom=nom, adresse=adresse, representant=representant)\n    return redirect('ecoles')",
         "detail": "gestion.Views.school",
         "documentation": {}
     },
@@ -1573,7 +1589,7 @@
         "kind": 2,
         "importPath": "gestion.Views.school",
         "description": "gestion.Views.school",
-        "peekOfCode": "def ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        Ecoles.objects.create(nom=nom, adresse=adresse)\n    return redirect('ecoles')\ndef modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":\n        ecole.nom = request.POST.get(\"nom\")",
+        "peekOfCode": "def ajouter_ecole(request):\n    if request.method == \"POST\":\n        nom = request.POST.get(\"nom\")\n        adresse = request.POST.get(\"adresse\")\n        representant = request.POST.get(\"representant\")\n        Ecoles.objects.create(nom=nom, adresse=adresse, representant=representant)\n    return redirect('ecoles')\ndef modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":",
         "detail": "gestion.Views.school",
         "documentation": {}
     },
@@ -1582,7 +1598,7 @@
         "kind": 2,
         "importPath": "gestion.Views.school",
         "description": "gestion.Views.school",
-        "peekOfCode": "def modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":\n        ecole.nom = request.POST.get(\"nom\")\n        ecole.adresse = request.POST.get(\"adresse\")\n        ecole.save()\n    return redirect('ecoles')\ndef supprimer_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    ecole.delete()",
+        "peekOfCode": "def modifier_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)\n    if request.method == \"POST\":\n        ecole.nom = request.POST.get(\"nom\")\n        ecole.adresse = request.POST.get(\"adresse\")\n        ecole.representant = request.POST.get(\"representant\")\n        ecole.save()\n    return redirect('ecoles')\ndef supprimer_ecole(request, ecole_id):\n    ecole = get_object_or_404(Ecoles, id=ecole_id)",
         "detail": "gestion.Views.school",
         "documentation": {}
     },
@@ -1695,6 +1711,15 @@
         "documentation": {}
     },
     {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0007_ecoles_representant",
+        "description": "gestion.migrations.0007_ecoles_representant",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0006_remove_vente_dette_precedente'),\n    ]\n    operations = [\n        migrations.AddField(\n            model_name='ecoles',\n            name='representant',\n            field=models.TextField(blank=True, default=''),\n        ),",
+        "detail": "gestion.migrations.0007_ecoles_representant",
+        "documentation": {}
+    },
+    {
         "label": "GestionConfig",
         "kind": 6,
         "importPath": "gestion.apps",
@@ -1726,7 +1751,7 @@
         "kind": 6,
         "importPath": "gestion.models",
         "description": "gestion.models",
-        "peekOfCode": "class Ecoles(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    nom = models.TextField()\n    adresse = models.TextField()\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n    def __str__(self):\n        return self.nom\nclass Vente(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)",
+        "peekOfCode": "class Ecoles(models.Model):\n    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)\n    nom = models.TextField()\n    adresse = models.TextField()\n    representant = models.TextField(default='', blank=True)\n    created_at = models.DateTimeField(auto_now_add=True)\n    updated_at = models.DateTimeField(auto_now=True)\n    def __str__(self):\n        return self.nom\nclass Vente(models.Model):",
         "detail": "gestion.models",
         "documentation": {}
     },
@@ -1852,7 +1877,7 @@
         "kind": 2,
         "importPath": "gestion.views_pdf",
         "description": "gestion.views_pdf",
-        "peekOfCode": "def generer_facture_pdf(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    # S'assurer que nous avons les dernières données\n    vente.refresh_from_db()\n    # Créer le buffer pour le PDF\n    buffer = BytesIO()\n    # Styles\n    styles_paragraph = getSampleStyleSheet()\n    style_cellule = styles_paragraph['BodyText']\n    style_cellule.wordWrap = 'CJK'",
+        "peekOfCode": "def generer_facture_pdf(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    vente.refresh_from_db()\n    buffer = BytesIO()\n    # Styles\n    styles_paragraph = getSampleStyleSheet()\n    style_cellule = styles_paragraph['BodyText']\n    style_cellule.wordWrap = 'CJK'\n    style_cellule.leading = 11\n    style_cellule.fontSize = 9",
         "detail": "gestion.views_pdf",
         "documentation": {}
     },

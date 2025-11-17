@@ -10,7 +10,8 @@ def ajouter_ecole(request):
     if request.method == "POST":
         nom = request.POST.get("nom")
         adresse = request.POST.get("adresse")
-        Ecoles.objects.create(nom=nom, adresse=adresse)
+        representant = request.POST.get("representant")
+        Ecoles.objects.create(nom=nom, adresse=adresse, representant=representant)
     return redirect('ecoles')
 
 
@@ -19,6 +20,7 @@ def modifier_ecole(request, ecole_id):
     if request.method == "POST":
         ecole.nom = request.POST.get("nom")
         ecole.adresse = request.POST.get("adresse")
+        ecole.representant = request.POST.get("representant")
         ecole.save()
     return redirect('ecoles')
 

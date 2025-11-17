@@ -159,10 +159,8 @@ def generer_pdf_ventes_ecole(request, ecole_id):
 def generer_facture_pdf(request, vente_id):
     vente = get_object_or_404(Vente, id=vente_id)
     
-    # S'assurer que nous avons les dernières données
     vente.refresh_from_db()
     
-    # Créer le buffer pour le PDF
     buffer = BytesIO()
     
     # Styles
@@ -210,16 +208,43 @@ def generer_facture_pdf(request, vente_id):
         wordWrap='LTR'   
     )
     
+    # Style pour le nom de l'école en rouge
+    style_nom_ecole = ParagraphStyle(
+        'NomEcoleStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        fontName='Helvetica-Bold',
+        alignment=1,  # Centré
+        textColor=colors.darkred,
+        spaceBefore=0,
+        spaceAfter=5
+    )
+    style_representant = ParagraphStyle(
+        'RepresentantEcoleStyle',
+        parent=styles['Normal'],
+        fontSize=10,
+        fontName='Helvetica-Bold',
+        alignment=1,  # Centré
+        textColor=colors.black,
+        spaceBefore=0,
+        spaceAfter=5
+    )
+    
     # Informations de la facture
+    representant = vente.ecole.representant if vente.ecole.representant else "—"
     numero_facture = f"F-{datetime.now().year}-{str(vente.id)[:8]}"
     date_creation_str = vente.created_at.strftime('%d-%m-%Y') if vente.created_at else "—"
     date_modif_str = vente.modified_at.strftime('%d-%m-%Y') if vente.modified_at else "—"
     date_paiement = vente.date_paiement.strftime('%d-%m-%Y') if vente.date_paiement else "—"
     
-    # Tableau d'en-tête avec informations
+    # Afficher le nom de l'école en rouge au-dessus du tableau
+    story.append(Paragraph(vente.ecole.nom, style_nom_ecole))
+    story.append(Paragraph(f"<b>Représenté par :</b> {representant}", style_representant))
+    story.append(Spacer(0.1, 0.2 * cm))
+    
+    # Tableau d'en-tête avec informations (sans la colonne école)
     info_data = [
         [
-            Paragraph("ÉCOLE", style_header),
             Paragraph("FACTURE", style_header),
             Paragraph("DATE D'ÉDITION", style_header),
             Paragraph("DATE DE MODIFICATION", style_header),
@@ -227,7 +252,6 @@ def generer_facture_pdf(request, vente_id):
             Paragraph("ANNÉE SCOLAIRE", style_header)
         ],
         [
-            Paragraph(vente.ecole.nom, style_ecole),
             Paragraph(numero_facture, style_ecole),
             Paragraph(date_creation_str, style_ecole),
             Paragraph(date_modif_str, style_ecole),
@@ -236,8 +260,8 @@ def generer_facture_pdf(request, vente_id):
         ]
     ]
 
-    # Largeurs de colonnes
-    info_table = Table(info_data, colWidths=[4*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm, 2.5*cm])
+    # Largeurs de colonnes (ajustées sans la colonne école)
+    info_table = Table(info_data, colWidths=[3*cm, 3*cm, 3*cm, 3*cm, 3*cm])
 
     # Style du tableau
     info_table_style = TableStyle([
@@ -505,6 +529,33 @@ def generer_facture_pdf(request, vente_id):
     
     recap_table.setStyle(recap_table_style)
     story.append(recap_table)
+    story.append(Spacer(1, 0.5*cm))
+    if paiements_vente.exists():
+        style_paiement = ParagraphStyle(
+            'PaiementStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica',
+            textColor=colors.red,
+            spaceBefore=2,
+            spaceAfter=2
+        )
+        
+        style_paiement_bold = ParagraphStyle(
+            'PaiementBoldStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Bold',
+            textColor=colors.darkred,
+            spaceBefore=2,
+            spaceAfter=2
+        )
+        
+        story.append(Paragraph("<b>HISTORIQUE DES PAIEMENTS :</b>", style_paiement_bold))
+        for paiement in paiements_vente:
+            paiement_text = f"Tranche {paiement.numero_tranche} : {paiement.montant:.2f} FCFA payé le {paiement.date_paiement.strftime('%d-%m-%Y')}"
+            story.append(Paragraph(paiement_text, style_paiement_bold))
+        
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("Merci pour votre confiance !", 
                           ParagraphStyle('Thanks', parent=styles['Normal'], 

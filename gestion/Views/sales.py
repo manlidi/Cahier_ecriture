@@ -393,7 +393,7 @@ def creer_vente(request):
                 vente = Vente.objects.create(
                     ecole=ecole,
                     annee_scolaire=annee,
-                    date_paiement=now + timedelta(days=30)
+                    date_paiement=now + timedelta(days=30),
                 )
                 action_message = 'Nouvelle vente créée avec succès'
             
