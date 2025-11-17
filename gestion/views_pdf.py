@@ -553,7 +553,7 @@ def generer_facture_pdf(request, vente_id):
         
         story.append(Paragraph("<b>HISTORIQUE DES PAIEMENTS :</b>", style_paiement_bold))
         for paiement in paiements_vente:
-            paiement_text = f"Tranche {paiement.numero_tranche} : {paiement.montant:.2f} F payé le {paiement.date_paiement.strftime('%d-%m-%Y')}"
+            paiement_text = f"Tranche {paiement.numero_tranche} : {paiement.montant:.2f} FCFA payé le {paiement.date_paiement.strftime('%d-%m-%Y')}"
             story.append(Paragraph(paiement_text, style_paiement_bold))
         
     story.append(Spacer(1, 0.5*cm))
