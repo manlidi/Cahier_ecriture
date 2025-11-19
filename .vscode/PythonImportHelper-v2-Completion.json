@@ -1758,7 +1758,7 @@
         "kind": 2,
         "importPath": "gestion.Views.notifications",
         "description": "gestion.Views.notifications",
-        "peekOfCode": "def notification_detail(request, notification_id):\n    \"\"\"Vue pour afficher le détail d'une notification\"\"\"\n    notification = get_object_or_404(Notification, id=notification_id)\n    # Marquer comme lue\n    if not notification.est_lu:\n        notification.marquer_comme_lu()\n        messages.info(request, 'Notification marquée comme lue.')\n    return render(request, 'notifications/detail.html', {\n        'notification': notification\n    })",
+        "peekOfCode": "def notification_detail(request, notification_id):\n    \"\"\"Vue pour afficher le détail d'une notification\"\"\"\n    notification = get_object_or_404(Notification, id=notification_id)\n    # Marquer comme lue (sans message car c'est automatique)\n    if not notification.est_lu:\n        notification.marquer_comme_lu()\n    return render(request, 'notifications/detail.html', {\n        'notification': notification\n    })\n@require_http_methods([\"POST\"])",
         "detail": "gestion.Views.notifications",
         "documentation": {}
     },

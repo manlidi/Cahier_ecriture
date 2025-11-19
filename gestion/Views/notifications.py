@@ -69,10 +69,9 @@ def notification_detail(request, notification_id):
     """Vue pour afficher le détail d'une notification"""
     notification = get_object_or_404(Notification, id=notification_id)
     
-    # Marquer comme lue
+    # Marquer comme lue (sans message car c'est automatique)
     if not notification.est_lu:
         notification.marquer_comme_lu()
-        messages.info(request, 'Notification marquée comme lue.')
     
     return render(request, 'notifications/detail.html', {
         'notification': notification
