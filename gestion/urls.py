@@ -51,6 +51,7 @@ urlpatterns = [
     path('ventes/<uuid:vente_id>/', vente_detail, name='vente_detail'),
     path('ventes/<uuid:vente_id>/modifier/', modifier_vente, name='modifier_vente'),
     path('ventes/<uuid:vente_id>/paiement/', gerer_paiement, name='gerer_paiement'),
+    path('ventes/<uuid:vente_id>/paiement/<int:paiement_id>/annuler/', annuler_paiement, name='annuler_paiement'),
     path('ventes/<uuid:vente_id>/facture-pdf/', generer_facture_pdf, name='generer_facture_pdf'),
     path('ventes/<uuid:vente_id>/retirer/', retirer_articles, name='retirer_articles'),
     path('ventes/<uuid:vente_id>/cahiers/', vente_cahiers, name='vente_cahiers'),

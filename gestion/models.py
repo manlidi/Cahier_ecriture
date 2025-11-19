@@ -269,12 +269,15 @@ class Paiement(models.Model):
     montant = models.DecimalField(max_digits=10, decimal_places=2)
     date_paiement = models.DateField(auto_now_add=True)
     numero_tranche = models.IntegerField(default=1)
+    est_annule = models.BooleanField(default=False)
+    date_annulation = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['numero_tranche']
 
     def __str__(self):
-        return f"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}"
+        statut = " (ANNULÉ)" if self.est_annule else ""
+        return f"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}{statut}"
 
 class LigneVente(models.Model):
     vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='lignes')

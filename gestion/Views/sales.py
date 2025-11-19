@@ -49,7 +49,7 @@ def liste_ventes(request):
     ventes = []
     for v in ventes_qs:
         total_lignes = v.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        montant_paye = v.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        montant_paye = v.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_total = total_lignes
         montant_restant = max(Decimal('0'), montant_total - montant_paye)
 
@@ -63,7 +63,7 @@ def liste_ventes(request):
 
         for autre in autres_ventes:
             total_lignes_autre = autre.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-            paye_autre = autre.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            paye_autre = autre.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
             restant_autre = total_lignes_autre - paye_autre
 
             if restant_autre > 0:
@@ -136,7 +136,7 @@ def ventes_ajax(request, ecole_id):
     data = []
     for vente in ventes:
         montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        montant_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        montant_paye = vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_restant = montant_lignes - montant_paye
         
         # Déterminer le statut
@@ -169,9 +169,9 @@ def vente_detail(request, vente_id):
     lignes = vente.lignes.select_related('cahier').all()
     paiements = vente.paiements.all()
 
-    # Calculs
+    # Calculs (exclure les paiements annulés)
     montant_lignes = lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-    montant_paye = paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+    montant_paye = paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
     montant_total = montant_lignes
     montant_restant = montant_total - montant_paye
 
@@ -189,7 +189,7 @@ def vente_detail(request, vente_id):
     
     for autre_vente in autres_ventes:
         total_lignes_autre = autre_vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        paye_autre = autre_vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        paye_autre = autre_vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
         restant_autre = total_lignes_autre - paye_autre
         
         if restant_autre > 0:
@@ -288,9 +288,9 @@ def gerer_paiement(request, vente_id):
     if request.method == 'POST':
         montant_donne = Decimal(request.POST.get('montant', '0') or '0')
         
-        # Calculer le montant restant de la vente courante
+        # Calculer le montant restant de la vente courante (exclure les paiements annulés)
         montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-        montant_paye_actuel = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        montant_paye_actuel = vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
         montant_restant_vente = max(Decimal('0'), montant_lignes - montant_paye_actuel)
         
         # Calculer le total des dettes des autres ventes (toutes années confondues)
@@ -304,7 +304,7 @@ def gerer_paiement(request, vente_id):
         
         for autre_vente in autres_ventes:
             total_lignes_autre = autre_vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-            paye_autre = autre_vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            paye_autre = autre_vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
             restant_autre = max(Decimal('0'), total_lignes_autre - paye_autre)
             
             if restant_autre > 0:
@@ -528,3 +528,92 @@ def supprimer_vente(request, vente_id):
         )
     
     return redirect('ventes')
+
+
+@require_POST
+def supprimer_vente(request, vente_id):
+    """Supprimer une vente et tous ses éléments associés"""
+    vente = get_object_or_404(Vente, id=vente_id)
+    
+    try:
+        # Récupérer les informations pour le message
+        ecole_nom = vente.ecole.nom
+        montant_total = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        
+        # Supprimer la vente (les lignes et paiements seront supprimés en cascade)
+        vente.delete()
+        
+        # Message de confirmation
+        from django.contrib import messages
+        messages.success(
+            request, 
+            f"La vente de l'école '{ecole_nom}' d'un montant de {montant_total} F a été supprimée avec succès."
+        )
+        
+    except Exception as e:
+        from django.contrib import messages
+        messages.error(
+            request, 
+            f"Erreur lors de la suppression de la vente : {str(e)}"
+        )
+    
+    return redirect('ventes')
+
+
+@require_POST
+def annuler_paiement(request, vente_id, paiement_id):
+    """Marquer un paiement comme annulé (sans le supprimer pour garder l'historique)"""
+    try:
+        vente = get_object_or_404(Vente, id=vente_id)
+        paiement = get_object_or_404(Paiement, id=paiement_id, vente=vente)
+        
+        # Vérifier si le paiement n'est pas déjà annulé
+        if paiement.est_annule:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Ce paiement est déjà annulé'
+                }, status=400)
+            
+            from django.contrib import messages
+            messages.warning(request, 'Ce paiement est déjà annulé')
+            return redirect('vente_detail', vente_id=vente_id)
+        
+        # Sauvegarder les informations pour le message
+        montant_annule = paiement.montant
+        numero_tranche = paiement.numero_tranche
+        
+        # Marquer le paiement comme annulé
+        paiement.est_annule = True
+        paiement.date_annulation = timezone.now()
+        paiement.save()
+        
+        # Si c'est une requête AJAX, retourner JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Paiement de la tranche {numero_tranche} ({montant_annule} F) annulé avec succès',
+                'montant_annule': float(montant_annule)
+            })
+        
+        # Sinon, redirection avec message
+        from django.contrib import messages
+        messages.success(
+            request,
+            f'Paiement de la tranche {numero_tranche} ({montant_annule} F) annulé avec succès'
+        )
+        return redirect('vente_detail', vente_id=vente_id)
+        
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': f'Erreur lors de l\'annulation du paiement : {str(e)}'
+            }, status=400)
+        
+        from django.contrib import messages
+        messages.error(
+            request,
+            f'Erreur lors de l\'annulation du paiement : {str(e)}'
+        )
+        return redirect('vente_detail', vente_id=vente_id)

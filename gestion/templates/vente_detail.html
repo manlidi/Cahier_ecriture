@@ -311,25 +311,49 @@
                   <tr>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-4">Date</th>
                     <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tranche</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end pe-4">Montant</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-end">Montant</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 text-center pe-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for paiement in paiements %}
-                  <tr>
+                  <tr id="paiement-{{ paiement.id }}" {% if paiement.est_annule %}style="opacity: 0.6; text-decoration: line-through;"{% endif %}>
                     <td class="ps-4">
                       <div class="d-flex align-items-center">
-                        <div class="icon-shape icon-sm bg-gradient-primary shadow border-radius-md me-3">
-                          <i class="material-symbols-rounded text-white text-sm">calendar_today</i>
+                        <div class="icon-shape icon-sm {% if paiement.est_annule %}bg-gradient-secondary{% else %}bg-gradient-primary{% endif %} shadow border-radius-md me-3">
+                          <i class="material-symbols-rounded text-white text-sm">{% if paiement.est_annule %}cancel{% else %}calendar_today{% endif %}</i>
                         </div>
-                        <span class="text-sm font-weight-bold">{{ paiement.date_paiement|date:"d/m/Y" }}</span>
+                        <div>
+                          <span class="text-sm font-weight-bold">{{ paiement.date_paiement|date:"d/m/Y" }}</span>
+                          {% if paiement.est_annule %}
+                            <br><small class="text-danger">Annulé le {{ paiement.date_annulation|date:"d/m/Y" }}</small>
+                          {% endif %}
+                        </div>
                       </div>
                     </td>
                     <td>
-                      <span class="badge badge-sm bg-gradient-info">Tranche {{ paiement.numero_tranche }}</span>
+                      {% if paiement.est_annule %}
+                        <span class="badge badge-sm bg-gradient-secondary">Tranche {{ paiement.numero_tranche }} - ANNULÉ</span>
+                      {% else %}
+                        <span class="badge badge-sm bg-gradient-info">Tranche {{ paiement.numero_tranche }}</span>
+                      {% endif %}
                     </td>
-                    <td class="text-end pe-4">
-                      <span class="text-lg font-weight-bold text-success">{{ paiement.montant|floatformat:0 }} F</span>
+                    <td class="text-end">
+                      <span class="text-lg font-weight-bold {% if paiement.est_annule %}text-secondary{% else %}text-success{% endif %}">{{ paiement.montant|floatformat:0 }} F</span>
+                    </td>
+                    <td class="text-center pe-4">
+                      {% if not paiement.est_annule %}
+                        <button class="btn btn-link text-danger p-0 mb-0 annuler-paiement-btn" 
+                                data-paiement-id="{{ paiement.id }}"
+                                data-vente-id="{{ vente.id }}"
+                                data-montant="{{ paiement.montant|floatformat:0 }}"
+                                data-tranche="{{ paiement.numero_tranche }}"
+                                title="Annuler ce paiement">
+                          <i class="material-symbols-rounded text-lg">cancel</i>
+                        </button>
+                      {% else %}
+                        <span class="text-muted text-xs">Annulé</span>
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}
@@ -677,6 +701,43 @@
       console.log('Supprimer ligne:', ligneId)
     }
   }
+
+  // Gestion de l'annulation de paiement
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.annuler-paiement-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const paiementId = this.dataset.paiementId;
+        const venteId = this.dataset.venteId;
+        const montant = this.dataset.montant;
+        const tranche = this.dataset.tranche;
+        
+        if (confirm(`Êtes-vous sûr de vouloir annuler le paiement de la tranche ${tranche} (${montant} F) ?\n\nCette action est irréversible et le stock des cahiers sera restauré.`)) {
+          fetch(`/ventes/${venteId}/paiement/${paiementId}/annuler/`, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}',
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Recharger la page pour afficher les changements
+              window.location.reload();
+            } else {
+              alert('Erreur: ' + (data.message || 'Impossible d\'annuler le paiement'));
+            }
+          })
+          .catch(error => {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue lors de l\'annulation du paiement');
+          });
+        }
+      });
+    });
+  });
 </script>
 
 {% endblock %}
