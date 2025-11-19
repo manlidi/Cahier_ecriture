@@ -10,6 +10,7 @@
 
 {% block content %}
 <div class="container-fluid py-2">
+    {% csrf_token %}
     <div class="row">
         <div class="col-12">
             <div class="ms-3">
@@ -330,16 +331,31 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Récupérer le token CSRF
+    function getCsrfToken() {
+        const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenElement) {
+            return tokenElement.value;
+        }
+        // Fallback: chercher dans les cookies
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+
     // Gestion du marquage comme lu
     document.querySelectorAll('.mark-read-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const notificationId = this.dataset.id;
+            const csrfToken = getCsrfToken();
             
             fetch(`{% url 'marquer_comme_lu' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', notificationId), {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-CSRFToken': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
@@ -349,7 +365,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const row = document.getElementById(`notification-${notificationId}`);
                     row.classList.remove('table-warning');
                     this.closest('.dropdown').innerHTML = '<span class="text-success">Marquée comme lue</span>';
+                } else {
+                    alert('Erreur lors du marquage: ' + (data.message || 'Erreur inconnue'));
                 }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors du marquage de la notification');
             });
         });
     });
@@ -360,19 +382,45 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
                 const notificationId = this.dataset.id;
+                const csrfToken = getCsrfToken();
+                
+                if (!csrfToken) {
+                    alert('Erreur: Token CSRF non trouvé. Veuillez recharger la page.');
+                    return;
+                }
                 
                 fetch(`{% url 'supprimer_notification' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', notificationId), {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erreur réseau: ' + response.status);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
-                        document.getElementById(`notification-${notificationId}`).remove();
+                        const row = document.getElementById(`notification-${notificationId}`);
+                        if (row) {
+                            row.remove();
+                            // Vérifier s'il reste des notifications
+                            const tbody = document.querySelector('tbody');
+                            if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                                window.location.reload();
+                            }
+                        }
+                    } else {
+                        alert('Erreur lors de la suppression: ' + (data.message || 'Erreur inconnue'));
                     }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors de la suppression de la notification: ' + error.message);
                 });
             }
         });

@@ -72,7 +72,7 @@ def generer_pdf_ventes_ecole(request, ecole_id):
         
         for vente in ventes:
             montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-            montant_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            montant_paye = vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
             montant_restant_vente = montant_lignes - montant_paye
             
             # Déterminer le statut
@@ -389,8 +389,8 @@ def generer_facture_pdf(request, vente_id):
     montant_total_articles = sum(Decimal(str(ligne.montant)) for ligne in vente.lignes.all())
     montant_total_facture = montant_total_articles
     
-    # Calculs des paiements
-    paiements_vente = vente.paiements.all().order_by('date_paiement')
+    # Calculs des paiements (exclure les paiements annulés)
+    paiements_vente = vente.paiements.filter(est_annule=False).order_by('date_paiement')
     montant_paye = sum(Decimal(str(p.montant)) for p in paiements_vente)
     montant_restant_facture = montant_total_facture - montant_paye
     

@@ -914,6 +914,22 @@
         "documentation": {}
     },
     {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
         "label": "models",
         "importPath": "django.db",
         "description": "django.db",
@@ -1823,7 +1839,7 @@
         "kind": 2,
         "importPath": "gestion.Views.sales",
         "description": "gestion.Views.sales",
-        "peekOfCode": "def vente_detail(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    lignes = vente.lignes.select_related('cahier').all()\n    paiements = vente.paiements.all()\n    # Calculs\n    montant_lignes = lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n    montant_paye = paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n    montant_total = montant_lignes\n    montant_restant = montant_total - montant_paye\n    # Calculer la dette totale de l'école (toutes les ventes impayées)",
+        "peekOfCode": "def vente_detail(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    lignes = vente.lignes.select_related('cahier').all()\n    paiements = vente.paiements.all()\n    # Calculs (exclure les paiements annulés)\n    montant_lignes = lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n    montant_paye = paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')\n    montant_total = montant_lignes\n    montant_restant = montant_total - montant_paye\n    # Calculer la dette totale de l'école (toutes les ventes impayées)",
         "detail": "gestion.Views.sales",
         "documentation": {}
     },
@@ -1841,7 +1857,7 @@
         "kind": 2,
         "importPath": "gestion.Views.sales",
         "description": "gestion.Views.sales",
-        "peekOfCode": "def gerer_paiement(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    if request.method == 'POST':\n        montant_donne = Decimal(request.POST.get('montant', '0') or '0')\n        # Calculer le montant restant de la vente courante\n        montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        montant_paye_actuel = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        montant_restant_vente = max(Decimal('0'), montant_lignes - montant_paye_actuel)\n        # Calculer le total des dettes des autres ventes (toutes années confondues)\n        autres_ventes = Vente.objects.filter(ecole=vente.ecole)\\",
+        "peekOfCode": "def gerer_paiement(request, vente_id):\n    vente = get_object_or_404(Vente, id=vente_id)\n    if request.method == 'POST':\n        montant_donne = Decimal(request.POST.get('montant', '0') or '0')\n        # Calculer le montant restant de la vente courante (exclure les paiements annulés)\n        montant_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        montant_paye_actuel = vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        montant_restant_vente = max(Decimal('0'), montant_lignes - montant_paye_actuel)\n        # Calculer le total des dettes des autres ventes (toutes années confondues)\n        autres_ventes = Vente.objects.filter(ecole=vente.ecole)\\",
         "detail": "gestion.Views.sales",
         "documentation": {}
     },
@@ -1878,6 +1894,24 @@
         "importPath": "gestion.Views.sales",
         "description": "gestion.Views.sales",
         "peekOfCode": "def supprimer_vente(request, vente_id):\n    \"\"\"Supprimer une vente et tous ses éléments associés\"\"\"\n    vente = get_object_or_404(Vente, id=vente_id)\n    try:\n        # Récupérer les informations pour le message\n        ecole_nom = vente.ecole.nom\n        montant_total = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        # Supprimer la vente (les lignes et paiements seront supprimés en cascade)\n        vente.delete()\n        # Message de confirmation",
+        "detail": "gestion.Views.sales",
+        "documentation": {}
+    },
+    {
+        "label": "supprimer_vente",
+        "kind": 2,
+        "importPath": "gestion.Views.sales",
+        "description": "gestion.Views.sales",
+        "peekOfCode": "def supprimer_vente(request, vente_id):\n    \"\"\"Supprimer une vente et tous ses éléments associés\"\"\"\n    vente = get_object_or_404(Vente, id=vente_id)\n    try:\n        # Récupérer les informations pour le message\n        ecole_nom = vente.ecole.nom\n        montant_total = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')\n        # Supprimer la vente (les lignes et paiements seront supprimés en cascade)\n        vente.delete()\n        # Message de confirmation",
+        "detail": "gestion.Views.sales",
+        "documentation": {}
+    },
+    {
+        "label": "annuler_paiement",
+        "kind": 2,
+        "importPath": "gestion.Views.sales",
+        "description": "gestion.Views.sales",
+        "peekOfCode": "def annuler_paiement(request, vente_id, paiement_id):\n    \"\"\"Marquer un paiement comme annulé (sans le supprimer pour garder l'historique)\"\"\"\n    try:\n        vente = get_object_or_404(Vente, id=vente_id)\n        paiement = get_object_or_404(Paiement, id=paiement_id, vente=vente)\n        # Vérifier si le paiement n'est pas déjà annulé\n        if paiement.est_annule:\n            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':\n                return JsonResponse({\n                    'success': False,",
         "detail": "gestion.Views.sales",
         "documentation": {}
     },
@@ -2044,6 +2078,15 @@
         "documentation": {}
     },
     {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "gestion.migrations.0009_paiement_date_annulation_paiement_est_annule",
+        "description": "gestion.migrations.0009_paiement_date_annulation_paiement_est_annule",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('gestion', '0008_emailnotification_notification'),\n    ]\n    operations = [\n        migrations.AddField(\n            model_name='paiement',\n            name='date_annulation',\n            field=models.DateTimeField(blank=True, null=True),\n        ),",
+        "detail": "gestion.migrations.0009_paiement_date_annulation_paiement_est_annule",
+        "documentation": {}
+    },
+    {
         "label": "NotificationAdmin",
         "kind": 6,
         "importPath": "gestion.admin",
@@ -2111,7 +2154,7 @@
         "kind": 6,
         "importPath": "gestion.models",
         "description": "gestion.models",
-        "peekOfCode": "class Paiement(models.Model):\n    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='paiements')\n    montant = models.DecimalField(max_digits=10, decimal_places=2)\n    date_paiement = models.DateField(auto_now_add=True)\n    numero_tranche = models.IntegerField(default=1)\n    class Meta:\n        ordering = ['numero_tranche']\n    def __str__(self):\n        return f\"{self.vente.ecole.nom} - Tranche {self.numero_tranche} - {self.montant} F le {self.date_paiement}\"\nclass LigneVente(models.Model):",
+        "peekOfCode": "class Paiement(models.Model):\n    vente = models.ForeignKey(Vente, on_delete=models.CASCADE, related_name='paiements')\n    montant = models.DecimalField(max_digits=10, decimal_places=2)\n    date_paiement = models.DateField(auto_now_add=True)\n    numero_tranche = models.IntegerField(default=1)\n    est_annule = models.BooleanField(default=False)\n    date_annulation = models.DateTimeField(null=True, blank=True)\n    class Meta:\n        ordering = ['numero_tranche']\n    def __str__(self):",
         "detail": "gestion.models",
         "documentation": {}
     },
