@@ -40,9 +40,9 @@ def home(request):
         annee_courante = AnneeScolaire.creer_annee_scolaire(annee_courante_num)
         annee_courante.activer()
     
-    # Filtrer les données par année scolaire courante
+    # Filtrer les données par année scolaire courante (exclure les paiements annulés)
     ventes_annee = Vente.objects.filter(annee_scolaire=annee_courante)
-    paiements_annee = Paiement.objects.filter(vente__annee_scolaire=annee_courante)
+    paiements_annee = Paiement.objects.filter(vente__annee_scolaire=annee_courante, est_annule=False)
     
     # Revenus d'aujourd'hui (année courante)
     revenus_aujourd_hui = paiements_annee.filter(
@@ -114,11 +114,11 @@ def home(request):
             'revenus': float(revenus)
         })
     
-    # Top 5 des écoles par chiffre d'affaires (année courante)
+    # Top 5 des écoles par chiffre d'affaires (année courante, exclure les paiements annulés)
     top_ecoles = ventes_annee.values(
         'ecole__nom'
     ).annotate(
-        total_ca=Sum('paiements__montant'),
+        total_ca=Sum('paiements__montant', filter=models.Q(paiements__est_annule=False)),
         nb_ventes=Count('id', distinct=True)
     ).order_by('-total_ca')[:5]
     
@@ -237,7 +237,7 @@ def detail_bilan_annuel(request, annee_id):
     ).annotate(
         total_ca=Sum('lignes__montant'),
         nb_ventes=Count('id', distinct=True),
-        total_paye=Sum('paiements__montant')
+        total_paye=Sum('paiements__montant', filter=models.Q(paiements__est_annule=False))
     ).order_by('-total_ca')[:5]
     
     context = {
@@ -370,10 +370,11 @@ def detail_bilan_mensuel(request, annee_id, mois, annee):
         created_at__date__range=[debut_mois, fin_mois]
     ).select_related('ecole').prefetch_related('lignes__cahier', 'paiements')
 
-    # Paiements du mois
+    # Paiements du mois (exclure les paiements annulés)
     paiements_mois = Paiement.objects.filter(
         vente__annee_scolaire=annee_scolaire,
-        date_paiement__range=[debut_mois, fin_mois]
+        date_paiement__range=[debut_mois, fin_mois],
+        est_annule=False
     ).select_related('vente__ecole')
 
     # Données des cahiers

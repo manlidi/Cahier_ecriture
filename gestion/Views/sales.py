@@ -147,9 +147,9 @@ def ventes_ajax(request, ecole_id):
         else:
             statut = "Non payée"
         
-        # Récupérer les dates de paiement
+        # Récupérer les dates de paiement (exclure les paiements annulés)
         paiement_dates = []
-        for paiement in vente.paiements.all():
+        for paiement in vente.paiements.filter(est_annule=False):
             paiement_dates.append(paiement.date_paiement.strftime('%d/%m/%Y'))
         
         data.append({
@@ -319,8 +319,8 @@ def gerer_paiement(request, vente_id):
         montant_excedent = montant_donne - montant_paiement
         
         if montant_paiement > 0:
-            # Enregistrer le paiement pour la vente courante
-            last = vente.paiements.order_by('-numero_tranche').first()
+            # Enregistrer le paiement pour la vente courante (exclure les paiements annulés pour le calcul du numéro de tranche)
+            last = vente.paiements.filter(est_annule=False).order_by('-numero_tranche').first()
             numero = (last.numero_tranche + 1) if last else 1
             
             # Montant à appliquer à cette vente
@@ -344,8 +344,8 @@ def gerer_paiement(request, vente_id):
                 # Montant à appliquer à cette autre vente
                 montant_pour_autre_vente = min(excedent, restant_autre)
                 
-                # Trouver le dernier numéro de tranche pour cette vente
-                last_autre = autre_vente.paiements.order_by('-numero_tranche').first()
+                # Trouver le dernier numéro de tranche pour cette vente (exclure les paiements annulés)
+                last_autre = autre_vente.paiements.filter(est_annule=False).order_by('-numero_tranche').first()
                 numero_autre = (last_autre.numero_tranche + 1) if last_autre else 1
                 
                 # Créer le paiement pour l'autre vente

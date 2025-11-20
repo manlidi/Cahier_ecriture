@@ -123,7 +123,8 @@ class Vente(models.Model):
     
     @property
     def montant_paye(self):
-        return self.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        # Exclure les paiements annulés
+        return self.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
     
     @property
     def montant_restant(self):
@@ -139,7 +140,8 @@ class Vente(models.Model):
         for vente in ventes_ecole:
             annee_str = str(vente.annee_scolaire)
             total_lignes = vente.lignes.aggregate(total=Sum('montant'))['total'] or Decimal('0')
-            total_paye = vente.paiements.aggregate(total=Sum('montant'))['total'] or Decimal('0')
+            # Exclure les paiements annulés
+            total_paye = vente.paiements.filter(est_annule=False).aggregate(total=Sum('montant'))['total'] or Decimal('0')
             restant = total_lignes - total_paye
             
             if restant > 0:
@@ -402,9 +404,11 @@ class BilanMensuel(models.Model):
             created_at__date__range=[debut_mois, fin_mois]
         )
         
+        # Exclure les paiements annulés du bilan
         paiements_mois = Paiement.objects.filter(
             vente__annee_scolaire=annee_scolaire,
-            date_paiement__range=[debut_mois, fin_mois]
+            date_paiement__range=[debut_mois, fin_mois],
+            est_annule=False
         )
         
         bilan.nombre_ventes = ventes_mois.count()
