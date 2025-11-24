@@ -33,8 +33,15 @@ def modifier_cahier(request, cahier_id):
     if request.method == "POST":
         cahier.titre = request.POST.get("titre")
         cahier.prix = Decimal(request.POST.get("prix"))
-        cahier.quantite_stock = int(request.POST.get("quantite_stock"))
+        ancien_stock = cahier.quantite_stock
+        nouveau_stock = int(request.POST.get("quantite_stock"))
+        cahier.quantite_stock = nouveau_stock
         cahier.save()
+        
+        # Si le stock a augmenté, supprimer les notifications de stock faible
+        if nouveau_stock > ancien_stock:
+            NotificationService.supprimer_notifications_stock_cahier(cahier_id)
+        
     return redirect('cahiers')
 
 
@@ -112,6 +119,9 @@ def ajouter_stock(request):
         cahier = get_object_or_404(Cahiers, id=cahier_id)
         cahier.quantite_stock += quantite
         cahier.save()
+        
+        # Supprimer les notifications de stock faible si le stock est maintenant suffisant
+        NotificationService.supprimer_notifications_stock_cahier(cahier_id)
 
         messages.success(request, f'Stock ajouté pour le cahier "{cahier.titre}".')
     return redirect('cahiers')

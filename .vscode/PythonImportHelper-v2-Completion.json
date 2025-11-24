@@ -1713,7 +1713,7 @@
         "kind": 2,
         "importPath": "gestion.Views.book",
         "description": "gestion.Views.book",
-        "peekOfCode": "def modifier_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)\n    if request.method == \"POST\":\n        cahier.titre = request.POST.get(\"titre\")\n        cahier.prix = Decimal(request.POST.get(\"prix\"))\n        cahier.quantite_stock = int(request.POST.get(\"quantite_stock\"))\n        cahier.save()\n    return redirect('cahiers')\ndef supprimer_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)",
+        "peekOfCode": "def modifier_cahier(request, cahier_id):\n    cahier = get_object_or_404(Cahiers, id=cahier_id)\n    if request.method == \"POST\":\n        cahier.titre = request.POST.get(\"titre\")\n        cahier.prix = Decimal(request.POST.get(\"prix\"))\n        ancien_stock = cahier.quantite_stock\n        nouveau_stock = int(request.POST.get(\"quantite_stock\"))\n        cahier.quantite_stock = nouveau_stock\n        cahier.save()\n        # Si le stock a augmenté, supprimer les notifications de stock faible",
         "detail": "gestion.Views.book",
         "documentation": {}
     },
@@ -1740,7 +1740,7 @@
         "kind": 2,
         "importPath": "gestion.Views.book",
         "description": "gestion.Views.book",
-        "peekOfCode": "def ajouter_stock(request):\n    if request.method == 'POST':\n        cahier_id = request.POST.get('cahier_id')\n        quantite = int(request.POST.get('quantite', 0))\n        cahier = get_object_or_404(Cahiers, id=cahier_id)\n        cahier.quantite_stock += quantite\n        cahier.save()\n        messages.success(request, f'Stock ajouté pour le cahier \"{cahier.titre}\".')\n    return redirect('cahiers')",
+        "peekOfCode": "def ajouter_stock(request):\n    if request.method == 'POST':\n        cahier_id = request.POST.get('cahier_id')\n        quantite = int(request.POST.get('quantite', 0))\n        cahier = get_object_or_404(Cahiers, id=cahier_id)\n        cahier.quantite_stock += quantite\n        cahier.save()\n        # Supprimer les notifications de stock faible si le stock est maintenant suffisant\n        NotificationService.supprimer_notifications_stock_cahier(cahier_id)\n        messages.success(request, f'Stock ajouté pour le cahier \"{cahier.titre}\".')",
         "detail": "gestion.Views.book",
         "documentation": {}
     },

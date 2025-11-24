@@ -143,6 +143,41 @@ class NotificationService:
         
         return resultats
     
+    def verifier_notifications(self):
+        """Vérifie et crée les notifications nécessaires (wrapper pour compatibilité)"""
+        self.verifier_stock_faible()
+        self.verifier_echeances()
+    
+    def envoyer_notifications_en_attente(self):
+        """Envoie les emails pour les notifications en attente (wrapper pour compatibilité)"""
+        self.traiter_notifications_en_attente()
+    
+    @staticmethod
+    def supprimer_notifications_stock_cahier(cahier_id):
+        """Supprime toutes les notifications de stock faible pour un cahier donné si le stock est suffisant"""
+        from django.conf import settings
+        
+        seuil_stock = getattr(settings, 'NOTIFICATION_SEUIL_STOCK', 100)
+        
+        try:
+            cahier = Cahiers.objects.get(id=cahier_id)
+            
+            # Si le stock est maintenant supérieur au seuil, supprimer TOUTES les notifications (lues ou non)
+            if cahier.quantite_stock > seuil_stock:
+                notifications_supprimees = Notification.objects.filter(
+                    type_notification=TypeNotification.STOCK_FAIBLE,
+                    cahier=cahier
+                ).delete()
+                
+                logger.info(f"Suppression de {notifications_supprimees[0]} notification(s) de stock faible pour le cahier {cahier.titre}")
+                return notifications_supprimees[0]
+            
+            return 0
+            
+        except Cahiers.DoesNotExist:
+            logger.warning(f"Cahier {cahier_id} introuvable pour suppression de notifications")
+            return 0
+    
     @staticmethod
     def executer_verification_periodique():
         """Exécute toutes les vérifications périodiques"""
