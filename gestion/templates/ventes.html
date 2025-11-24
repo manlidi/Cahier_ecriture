@@ -1030,10 +1030,10 @@
   // Données des cahiers pour le JavaScript
   const cahiersData = [
     {% for cahier in cahiers %}
-      {id: '{{ cahier.id }}', titre: '{{ cahier.titre }}', quantite_stock: {{ cahier.quantite_stock }}},
+      {id: '{{ cahier.id }}', titre: '{{ cahier.titre }}', prix: {{ cahier.prix }}, quantite_stock: {{ cahier.quantite_stock }}},
     {% endfor %}
   ];
-  
+
   // Gestion du modal nouvelle vente
   document.addEventListener('DOMContentLoaded', function() {
     let articleIndex = 1; // Commence à 1 car le premier article [0] est déjà présent
@@ -1042,7 +1042,7 @@
     function generateCahierOptions() {
       let options = '<option value="">-- Sélectionner un cahier --</option>';
       cahiersData.forEach(cahier => {
-        options += `<option value="${cahier.id}" data-prix="${cahier.quantite_stock}">${cahier.titre} - ${cahier.quantite_stock}</option>`;
+        options += `<option value="${cahier.id}" data-prix="${cahier.prix}">${cahier.titre} - ${cahier.quantite_stock}</option>`;
       });
       return options;
     }

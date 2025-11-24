@@ -358,7 +358,6 @@ def gerer_paiement(request, vente_id):
                 # Réduire l'excédent
                 excedent -= montant_pour_autre_vente
         
-        # Ajouter un message d'information si il y a eu un excédent refusé APRÈS avoir payé toutes les dettes
         if montant_excedent > 0:
             from django.contrib import messages
             messages.info(request, f"Paiement effectué avec succès. Montant rendu à l'utilisateur : {montant_excedent} F")
